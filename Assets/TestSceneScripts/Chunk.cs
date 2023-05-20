@@ -61,7 +61,17 @@ public class Chunk : MonoBehaviour {
             {
                 for (int z = 0; z < depth; z++)
                 {
-                    if (voxels[x, y, z].material.name != "air")
+                    bool occluded = true;
+                    if (y == 0 || voxels[x, y - 1, z].material.name == "air") occluded = false;
+                    if (y == (height - 1) || voxels[x, y + 1, z].material.name == "air") occluded = false;
+
+                    if (x == 0 || voxels[x - 1, y, z].material.name == "air") occluded = false;
+                    if (x == (width - 1) || voxels[x + 1, y, z].material.name == "air") occluded = false;
+
+                    if (z == 0 || voxels[x, y, z - 1].material.name == "air") occluded = false;
+                    if (z == (depth - 1) || voxels[x, y, z + 1].material.name == "air") occluded = false;
+
+                    if (voxels[x, y, z].material.name != "air" && !occluded)
                     {
                         string fab = "Prefabs/" + voxels[x, y, z].material.name;
                         Vector3 pos = new Vector3(x + xOffset, y + yOffset, z + zOffset);

@@ -4,9 +4,9 @@ using UnityEngine;
 
 public class World : MonoBehaviour
 {
-    public const int chunksX = 2;
-    public const int chunksY = 1;
-    public const int chunksZ = 2;
+    public const int chunksX = 4;
+    public const int chunksY = 2;
+    public const int chunksZ = 4;
 
     private Chunk[,,] chunks = new Chunk[chunksX, chunksY, chunksZ];
 
@@ -53,7 +53,7 @@ public class World : MonoBehaviour
         Material[,,] terrain = new Material[width, height, depth];
 
         float scale = 0.1f;  // Adjust this value to change the 'roughness' of your terrain
-        float heightScale = 10.0f;  // Adjust this value to change the maximum height of the terrain
+        float heightScale = 20.0f;  // Adjust this value to change the maximum height of the terrain
 
         for (int x = 0; x < width; x++)
         {
