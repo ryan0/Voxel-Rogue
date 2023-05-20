@@ -1,0 +1,91 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class World : MonoBehaviour
+{
+    public const int chunksX = 2;
+    public const int chunksY = 1;
+    public const int chunksZ = 2;
+
+    private Chunk[,,] chunks = new Chunk[chunksX, chunksY, chunksZ];
+
+    // Start is called before the first frame update
+    void Start()
+    {
+        Material[,,] terrainData = genTerrain();
+
+        for (int x = 0; x < chunksX; x++)
+        {
+            for (int y = 0; y < chunksY; y++)
+            {
+                for (int z = 0; z < chunksZ; z++)
+                {
+                    Chunk.CreateChunk(x, y, z, terrainData);
+                }
+            }
+        }
+    }
+
+    // Update is called once per frame
+    void Update()
+    {
+        
+    }
+
+    private static float PerlinNoise3D(float x, float y, float z)
+    {
+        float xy = Mathf.PerlinNoise(x, y);
+        float xz = Mathf.PerlinNoise(x, z);
+        float yz = Mathf.PerlinNoise(y, z);
+        float yx = Mathf.PerlinNoise(y, x);
+        float zx = Mathf.PerlinNoise(z, x);
+        float zy = Mathf.PerlinNoise(z, y);
+
+        return (xy + xz + yz + yx + zx + zy) / 6f;
+    }
+
+    private static Material[,,] genTerrain()
+    {
+        int width = chunksX * Chunk.width;
+        int height = chunksY * Chunk.height;
+        int depth = chunksZ * Chunk.depth;
+        Material[,,] terrain = new Material[width, height, depth];
+
+        float scale = 0.1f;  // Adjust this value to change the 'roughness' of your terrain
+        float heightScale = 10.0f;  // Adjust this value to change the maximum height of the terrain
+
+        for (int x = 0; x < width; x++)
+        {
+            for (int z = 0; z < depth; z++)
+            {
+                // Calculate the height of the terrain at this point
+                int terrainHeight = Mathf.FloorToInt(Mathf.PerlinNoise(x * scale, z * scale) * heightScale);
+
+                for (int y = 0; y < height; y++)
+                {
+                    if (y < terrainHeight)
+                    {
+                        // Below the terrain height, we fill with Voxel types
+                        // Here, we make a simple decision: if it's the top layer, place Dirt; otherwise, Stone
+                        if (y == terrainHeight - 1)
+                        {
+                            terrain[x, y, z] = Material.dirt;
+                        }
+                        else
+                        {
+                            terrain[x, y, z] = Material.stone;
+                        }
+                    }
+                    else
+                    {
+                        // Above the terrain height, we fill with Air
+                        terrain[x, y, z] = Material.air;
+                    }
+                }
+            }
+        }
+
+        return terrain;
+    }
+}

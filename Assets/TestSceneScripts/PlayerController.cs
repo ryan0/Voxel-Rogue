@@ -17,6 +17,7 @@ public class PlayerController : MonoBehaviour
     {
         characterController = GetComponent<CharacterController>();
         cameraTransform = Camera.main.transform;
+        Cursor.visible = false;
     }
 
     private void Update()
@@ -28,12 +29,15 @@ public class PlayerController : MonoBehaviour
     private void Move()
     {
         float moveX = Input.GetAxisRaw("Horizontal");
+        float moveY = Input.GetAxisRaw("Flight");
         float moveZ = Input.GetAxisRaw("Vertical");
+        
 
         Vector3 moveHorizontal = transform.right * moveX;
-        Vector3 moveVertical = transform.forward * moveZ;
+        Vector3 moveVertical = transform.up * moveY;
+        Vector3 moveForward = transform.forward * moveZ;
 
-        moveDirection = (moveHorizontal + moveVertical).normalized * speed;
+        moveDirection = (moveHorizontal + moveVertical + moveForward).normalized * speed;
 
         characterController.Move(moveDirection * Time.deltaTime);
     }
