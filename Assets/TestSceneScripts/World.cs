@@ -13,7 +13,7 @@ public class World : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        Material[,,] terrainData = genTerrain();
+        Substance[,,] terrainData = genTerrain();
 
         for (int x = 0; x < chunksX; x++)
         {
@@ -45,12 +45,12 @@ public class World : MonoBehaviour
         return (xy + xz + yz + yx + zx + zy) / 6f;
     }
 
-    private static Material[,,] genTerrain()
+    private static Substance[,,] genTerrain()
     {
         int width = chunksX * Chunk.width;
         int height = chunksY * Chunk.height;
         int depth = chunksZ * Chunk.depth;
-        Material[,,] terrain = new Material[width, height, depth];
+        Substance[,,] terrain = new Substance[width, height, depth];
 
         float scale = 0.1f;  // Adjust this value to change the 'roughness' of your terrain
         float heightScale = 20.0f;  // Adjust this value to change the maximum height of the terrain
@@ -70,17 +70,17 @@ public class World : MonoBehaviour
                         // Here, we make a simple decision: if it's the top layer, place Dirt; otherwise, Stone
                         if (y == terrainHeight - 1)
                         {
-                            terrain[x, y, z] = Material.dirt;
+                            terrain[x, y, z] = Substance.dirt;
                         }
                         else
                         {
-                            terrain[x, y, z] = Material.stone;
+                            terrain[x, y, z] = Substance.stone;
                         }
                     }
                     else
                     {
                         // Above the terrain height, we fill with Air
-                        terrain[x, y, z] = Material.air;
+                        terrain[x, y, z] = Substance.air;
                     }
                 }
             }

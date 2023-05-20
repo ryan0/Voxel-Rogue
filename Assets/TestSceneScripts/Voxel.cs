@@ -4,13 +4,14 @@ using UnityEngine;
 
 public class Voxel
 {
-    public Material material;
+    public Substance substance;
     //private int Temperature = 60;
     
 
-    public Voxel(Material material_)
+    public Voxel(Substance substance_)
     {
-        material = material_;
+        substance = substance_;
+        
     }
 
 }
