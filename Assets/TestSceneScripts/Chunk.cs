@@ -19,6 +19,18 @@ public class Chunk : MonoBehaviour {
         GenerateVoxelMesh();
     }
 
+    private void Update()
+    {
+        if (Input.GetKey("["))
+        {
+            UpdateTemperatures(0);
+        }
+        if (Input.GetKey("]"))
+        {
+            UpdateTemperatures(1);
+        }
+    }
+
     public static Chunk CreateChunk(int xIndex, int yIndex, int zIndex, Substance[,,] terrainData)
     {
         GameObject obj = new GameObject("Chunk");
@@ -77,6 +89,39 @@ public class Chunk : MonoBehaviour {
                         Vector3 pos = new Vector3(x + xOffset, y + yOffset, z + zOffset);
                         voxelRepresentation.transform.position = pos;
                         voxelMesh[x, y, z] = voxelRepresentation;
+                    }
+                }
+            }
+        }
+    }
+
+    void UpdateTemperatures(int direction)
+    {
+        if(direction == 0)
+        {
+            for (int x = 0; x < width; x++)
+            {
+                for (int y = 0; y < height; y++)
+                {
+                    for (int z = 0; z < depth; z++)
+                    {
+                        voxels[x, y, z].Temperature -= 10;
+                        Debug.Log(voxels[x, y, z].Temperature);
+                    }
+                }
+            }
+        }
+
+        if (direction == 1)
+        {
+            for (int x = 0; x < width; x++)
+            {
+                for (int y = 0; y < height; y++)
+                {
+                    for (int z = 0; z < depth; z++)
+                    {
+                        voxels[x, y, z].Temperature += 10;
+                        Debug.Log(voxels[x, y, z].Temperature);
                     }
                 }
             }

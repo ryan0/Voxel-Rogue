@@ -32,11 +32,13 @@ public class Substance
     public static readonly Substance dirt = new Substance("dirt", State.SOLID, 0);
     public static readonly Substance stone = new Substance("stone", State.SOLID, 0);
     public static readonly Substance wood = new Substance("wood", State.SOLID, 20);
+    public static readonly Substance ice = new Substance("ice", State.SOLID, 0);
 
 
     //Liquids
     public static readonly Substance water = new Substance("water", State.LIQUID, 0);
     public static readonly Substance oil = new Substance("oil", State.LIQUID, 50);
+    public static readonly Substance lava = new Substance("lava", State.LIQUID, 100);
 
 
     //Gases

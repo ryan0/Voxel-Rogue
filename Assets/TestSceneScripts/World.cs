@@ -54,6 +54,10 @@ public class World : MonoBehaviour
 
         float scale = 0.1f;  // Adjust this value to change the 'roughness' of your terrain
         float heightScale = 20.0f;  // Adjust this value to change the maximum height of the terrain
+        float waterScale = 0.02f;  // Adjust this value to change the 'roughness' of your water distribution (smaller for larger bodies)
+        float waterThreshold = 0.6f;  // Above this value, we place water
+
+        int waterLevel = 10; // Y coordinate below which we place water
 
         for (int x = 0; x < width; x++)
         {
@@ -62,13 +66,16 @@ public class World : MonoBehaviour
                 // Calculate the height of the terrain at this point
                 int terrainHeight = Mathf.FloorToInt(Mathf.PerlinNoise(x * scale, z * scale) * heightScale);
 
+                // Calculate the water noise at this point
+                float waterNoise = Mathf.PerlinNoise(x * waterScale, z * waterScale);
+
                 for (int y = 0; y < height; y++)
                 {
                     if (y < terrainHeight)
                     {
                         // Below the terrain height, we fill with Voxel types
                         // Here, we make a simple decision: if it's the top layer, place Dirt; otherwise, Stone
-                        if (y == terrainHeight - 1)
+                        if (y == terrainHeight - 1 && y >= waterLevel)
                         {
                             terrain[x, y, z] = Substance.dirt;
                         }
@@ -79,8 +86,15 @@ public class World : MonoBehaviour
                     }
                     else
                     {
-                        // Above the terrain height, we fill with Air
-                        terrain[x, y, z] = Substance.air;
+                        // Above the terrain height, we fill with Air or Water based on the water noise
+                        if (waterNoise > waterThreshold && y <= waterLevel)
+                        {
+                            terrain[x, y, z] = Substance.water;
+                        }
+                        else
+                        {
+                            terrain[x, y, z] = Substance.air;
+                        }
                     }
                 }
             }
@@ -88,4 +102,5 @@ public class World : MonoBehaviour
 
         return terrain;
     }
+
 }
