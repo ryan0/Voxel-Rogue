@@ -14,6 +14,9 @@ public class PlayerController : MonoBehaviour
     private Transform cameraTransform;
     private float rayDistance = 100f;
 
+    [SerializeField]
+    private World world;
+
 
     private void Start()
     {
@@ -69,7 +72,17 @@ public class PlayerController : MonoBehaviour
 
         if (Physics.Raycast(ray, out hit, rayDistance))
         {
-            Debug.Log("Raycast hit at position: " + hit.point);
+            Vector3 point = hit.point * (1 / Voxel.size);
+
+            int x = (int)point.x;
+            int y = (int)point.y;
+            int z = (int)point.z;
+
+            //Debug.Log("hit voxel: " + x + ", " + y + ", " + z);
+
+            world.destroyVoxelAt(x, y, z);
+
+
             Debug.DrawLine(ray.origin, hit.point, Color.red); // Draw a red line to the point of collision
         }
         else
