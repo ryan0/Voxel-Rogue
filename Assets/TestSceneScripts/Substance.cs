@@ -18,6 +18,7 @@ public class Substance
     public readonly int flammablity;
     
     private static int nextId = 0;
+    private static readonly Dictionary<int, Substance> substanceLookUp = new Dictionary<int, Substance>();
     private Substance(string name, State state, int flammablity)
     {
         this.name = name;
@@ -25,8 +26,13 @@ public class Substance
         this.flammablity = flammablity;
 
         this.id = nextId++;
+        substanceLookUp.Add(this.id, this);
     }
 
+    public static Substance getById(int id)
+    {
+        return substanceLookUp[id];
+    }
 
     //Solids
     public static readonly Substance dirt = new Substance("dirt", State.SOLID, 0);

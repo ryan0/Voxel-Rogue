@@ -14,28 +14,42 @@ public class Voxel
         
     }
 
-    void changeState()
+    public bool changeState()
     {
+        bool stateChanged = false;
+
+
+        if (substance.name == "water" || substance.name == "steam" || substance.name == "ice")
+        {
+            Debug.Log(substance.name);
+            Debug.Log(substance.id);
+            Debug.Log(Temperature);
+        }
+
         if (Temperature >= 100)
         {
             if (substance == Substance.water)
             {
                 substance = Substance.steam;
+                stateChanged = true;
             }
             if (substance == Substance.wood || substance == Substance.oil)
             {
                 substance = Substance.smoke;
+                stateChanged = true;
             }
             if (substance == Substance.stone)
             {
                 substance = Substance.lava;
+                stateChanged = true;
             }
         }
-        if (Temperature <= 0)
+        else if (Temperature <= 0)
         {
             if (substance == Substance.water)
             {
                 substance = Substance.ice;
+                stateChanged = true;
             }
         }
         else
@@ -43,12 +57,16 @@ public class Voxel
             if (substance == Substance.lava)
             {
                 substance = Substance.stone;
+                stateChanged = true;
             }
             if (substance == Substance.ice || substance == Substance.steam)
             {
                 substance = Substance.water;
+                stateChanged = true;
             }
         }
+
+        return stateChanged;
     }
 
 }

@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public class Chunk : MonoBehaviour {
-    public const int width = 8;
-    public const int height = 8;
-    public const int depth = 8;
+    public const int width =  64;
+    public const int height = 64;
+    public const int depth =  64;
 
     private int xIndex = 0;
     private int yIndex = 0;
@@ -14,6 +14,8 @@ public class Chunk : MonoBehaviour {
     private Voxel[,,] voxels = new Voxel[width, height, depth];
     private GameObject[,,] voxelMesh = new GameObject[width, height, depth];
 
+    private Dictionary<int, GameObject> meshData = new Dictionary<int, GameObject>();
+
     private void Start()
     {
         GenerateVoxelMesh();
@@ -21,13 +23,39 @@ public class Chunk : MonoBehaviour {
 
     private void Update()
     {
-        if (Input.GetKey("["))
+        if (Input.GetKeyDown("["))
         {
             UpdateTemperatures(0);
         }
-        if (Input.GetKey("]"))
+        if (Input.GetKeyDown("]"))
         {
             UpdateTemperatures(1);
+        }
+    }
+
+    void UpdateTemperatures(int direction)
+    {
+        for (int x = 0; x < width; x++)
+        {
+            for (int y = 0; y < height; y++)
+            {
+                for (int z = 0; z < depth; z++)
+                {
+                    if (direction == 0)
+                    {
+                        voxels[x, y, z].Temperature -= 10;
+                    }
+                    else
+                    {
+                        voxels[x, y, z].Temperature += 10;
+                    }
+                    //if(voxels[x, y, z].changeState())
+                    //{
+                    //    Destroy(voxelMesh[x, y, z]);
+                    //    createVoxelRepresentationAt(x, y, z);
+                    //}
+                }
+            }
         }
     }
 
@@ -50,11 +78,12 @@ public class Chunk : MonoBehaviour {
             {
                 for (int z = 0; z < depth; z++)
                 {
-
                     chunk.voxels[x, y, z] = new Voxel(terrainData[x + xOffset, y + yOffset, z + zOffset]);
                 }
             }
         }
+
+        chunk.voxels[0, height - 1, 0] = new Voxel(Substance.steam);
 
         return chunk;
     }
@@ -62,10 +91,8 @@ public class Chunk : MonoBehaviour {
 
     private void GenerateVoxelMesh()
     {
-
-        int xOffset = xIndex * width;
-        int yOffset = yIndex * height;
-        int zOffset = zIndex * depth;
+        Dictionary<int, List<Vector3>> verticesData = new Dictionary<int, List<Vector3>>();
+        Dictionary<int, List<int>> trianglesData = new Dictionary<int, List<int>>();
 
         for (int x = 0; x < width; x++)
         {
@@ -73,118 +100,106 @@ public class Chunk : MonoBehaviour {
             {
                 for (int z = 0; z < depth; z++)
                 {
-                    bool occluded = true;
-                    if (y == 0 || voxels[x, y - 1, z].substance.name == "air") occluded = false;
-                    if (y == (height - 1) || voxels[x, y + 1, z].substance.name == "air") occluded = false;
-
-                    if (x == 0 || voxels[x - 1, y, z].substance.name == "air") occluded = false;
-                    if (x == (width - 1) || voxels[x + 1, y, z].substance.name == "air") occluded = false;
-
-                    if (z == 0 || voxels[x, y, z - 1].substance.name == "air") occluded = false;
-                    if (z == (depth - 1) || voxels[x, y, z + 1].substance.name == "air") occluded = false;
-
-                    if (voxels[x, y, z].substance.name != "air" && !occluded)
-                    {
-                        string mat = "Materials/" + voxels[x, y, z].substance.name;
-                        GameObject voxelRepresentation = CreateCube(voxels[x, y, z].substance, Resources.Load<Material>(mat));
-                        Vector3 pos = new Vector3(x + xOffset, y + yOffset, z + zOffset);
-                        voxelRepresentation.transform.position = pos;
-                        voxelMesh[x, y, z] = voxelRepresentation;
-                    }
+                    createVoxelRepresentationAt(verticesData, trianglesData, x, y, z);
                 }
             }
+        }
+
+
+        foreach (KeyValuePair<int, List<Vector3>> entry in verticesData)
+        {
+            Mesh mesh = new Mesh();
+
+            mesh.vertices = entry.Value.ToArray();
+            mesh.triangles = trianglesData[entry.Key].ToArray();
+            mesh.RecalculateNormals();
+
+            int xOffset = xIndex * width;
+            int yOffset = yIndex * height;
+            int zOffset = zIndex * depth;
+
+            GameObject chunkMesh = new GameObject("chunkMesh");
+            MeshFilter meshFilter = chunkMesh.AddComponent<MeshFilter>();
+            meshFilter.mesh = mesh;
+
+            string mat = "Materials/" + Substance.getById(entry.Key).name;
+            Material meshMat = Resources.Load<Material>(mat);
+
+            MeshCollider meshCollider = chunkMesh.AddComponent<MeshCollider>();
+            MeshRenderer meshRenderer = chunkMesh.AddComponent<MeshRenderer>();
+            meshRenderer.material = meshMat;
+            chunkMesh.transform.position = new Vector3(xOffset, yOffset, zOffset);
+            meshData.Add(entry.Key, chunkMesh);
         }
     }
 
-    void UpdateTemperatures(int direction)
+    private void createVoxelRepresentationAt(Dictionary<int, List<Vector3>> verticesData, Dictionary<int, List<int>> trianglesData, int x, int y, int z)
     {
-        if(direction == 0)
+        Substance substance = voxels[x, y, z].substance;
+
+        List<Vector3> vertices;
+        List<int> triangles;
+
+        if(verticesData.ContainsKey(substance.id))
         {
-            for (int x = 0; x < width; x++)
-            {
-                for (int y = 0; y < height; y++)
-                {
-                    for (int z = 0; z < depth; z++)
-                    {
-                        voxels[x, y, z].Temperature -= 10;
-                        Debug.Log(voxels[x, y, z].Temperature);
-                    }
-                }
-            }
+            vertices = verticesData[substance.id];
+            triangles = trianglesData[substance.id];
+        }
+        else
+        {
+            vertices = new List<Vector3>();
+            verticesData.Add(substance.id, vertices);
+            triangles = new List<int>();
+            trianglesData.Add(substance.id, triangles);
         }
 
-        if (direction == 1)
+        if (substance.id != Substance.air.id && !isOccluded(x, y, z))
         {
-            for (int x = 0; x < width; x++)
-            {
-                for (int y = 0; y < height; y++)
-                {
-                    for (int z = 0; z < depth; z++)
-                    {
-                        voxels[x, y, z].Temperature += 10;
-                        Debug.Log(voxels[x, y, z].Temperature);
-                    }
-                }
-            }
+            vertices.Add(new Vector3(x + 0, y + 0, z + 0));
+            vertices.Add(new Vector3(x + 1, y + 0, z + 0));
+            vertices.Add(new Vector3(x + 1, y + 1, z + 0));
+            vertices.Add(new Vector3(x + 0, y + 1, z + 0));
+            vertices.Add(new Vector3(x + 0, y + 1, z + 1));
+            vertices.Add(new Vector3(x + 1, y + 1, z + 1));
+            vertices.Add(new Vector3(x + 1, y + 0, z + 1));
+            vertices.Add(new Vector3(x + 0, y + 0, z + 1));
+
+            int count = vertices.Count - 1;
+
+            triangles.Add(count - 1); triangles.Add(count - 2); triangles.Add(count - 0);//face front
+            triangles.Add(count - 2); triangles.Add(count - 3); triangles.Add(count - 0);
+
+            triangles.Add(count - 4); triangles.Add(count - 3); triangles.Add(count - 2);//face top
+            triangles.Add(count - 5); triangles.Add(count - 4); triangles.Add(count - 2);
+
+            triangles.Add(count - 5); triangles.Add(count - 2); triangles.Add(count - 1);//face right
+            triangles.Add(count - 6); triangles.Add(count - 5); triangles.Add(count - 1);
+
+            triangles.Add(count - 4); triangles.Add(count - 7); triangles.Add(count - 0); //face left
+            triangles.Add(count - 3); triangles.Add(count - 4); triangles.Add(count - 0);
+
+            triangles.Add(count - 7); triangles.Add(count - 4); triangles.Add(count - 5);//face back
+            triangles.Add(count - 6); triangles.Add(count - 7); triangles.Add(count - 5);
+
+            triangles.Add(count - 7); triangles.Add(count - 6); triangles.Add(count - 0); //face bottom
+            triangles.Add(count - 6); triangles.Add(count - 1); triangles.Add(count - 0);
         }
     }
 
-
-    GameObject CreateCube(Substance substance, Material cubeMaterial)
+    private bool isOccluded(int x, int y, int z)
     {
-        // Create a new GameObject
-        GameObject cube = new GameObject("Cube");
+        bool occluded = true;
 
-        // Add a MeshFilter component to the GameObject. This component holds the mesh data.
-        MeshFilter meshFilter = cube.AddComponent<MeshFilter>();
+        if (y == 0 || voxels[x, y - 1, z].substance.name == "air") occluded = false;
+        if (y == (height - 1) || voxels[x, y + 1, z].substance.name == "air") occluded = false;
 
-        // Create a cube mesh
-        Mesh mesh = new Mesh();
+        if (x == 0 || voxels[x - 1, y, z].substance.name == "air") occluded = false;
+        if (x == (width - 1) || voxels[x + 1, y, z].substance.name == "air") occluded = false;
 
-        // Set vertices
-        mesh.vertices = new Vector3[] {
-            new Vector3(0, 0, 0),
-            new Vector3(1, 0, 0),
-            new Vector3(1, 1, 0),
-            new Vector3(0, 1, 0),
-            new Vector3(0, 1, 1),
-            new Vector3(1, 1, 1),
-            new Vector3(1, 0, 1),
-            new Vector3(0, 0, 1),
-        };
+        if (z == 0 || voxels[x, y, z - 1].substance.name == "air") occluded = false;
+        if (z == (depth - 1) || voxels[x, y, z + 1].substance.name == "air") occluded = false;
 
-        // Set triangles
-        mesh.triangles = new int[] {
-            0, 2, 1, //face front
-            0, 3, 2,
-            2, 3, 4, //face top
-            2, 4, 5,
-            1, 2, 5, //face right
-            1, 5, 6,
-            0, 7, 4, //face left
-            0, 4, 3,
-            5, 4, 7, //face back
-            5, 7, 6,
-            0, 6, 7, //face bottom
-            0, 1, 6
-        };
-
-        // Calculate normals to make Unity lighting work properly
-        mesh.RecalculateNormals();
-
-        // Assign the mesh to the MeshFilter component
-        meshFilter.mesh = mesh;
-
-        // Add a MeshRenderer component to the GameObject. This component uses the mesh data from the MeshFilter and applies a material to it.
-        MeshRenderer meshRenderer = cube.AddComponent<MeshRenderer>();
-
-        // Set the material on the MeshRenderer
-        meshRenderer.material = cubeMaterial;
-
-        if (substance.state == State.SOLID) cube.AddComponent<BoxCollider>();
-
-
-        return cube;
+        return occluded;
     }
 
 
@@ -197,7 +212,7 @@ public class Chunk : MonoBehaviour {
             {
                 for (int z = 0; z < depth; z++)
                 {
-                    DrawVoxel(x, y, z);
+                    //DrawVoxel(x, y, z);
                 }
             }
         }

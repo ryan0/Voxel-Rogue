@@ -4,9 +4,9 @@ using UnityEngine;
 
 public class World : MonoBehaviour
 {
-    public const int chunksX = 2;
+    public const int chunksX = 4;
     public const int chunksY = 2;
-    public const int chunksZ = 2;
+    public const int chunksZ = 4;
 
     private Chunk[,,] chunks = new Chunk[chunksX, chunksY, chunksZ];
 
@@ -53,9 +53,9 @@ public class World : MonoBehaviour
         Substance[,,] terrain = new Substance[width, height, depth];
 
         float scale = 0.1f;  // Adjust this value to change the 'roughness' of your terrain
-        float heightScale = 10.0f;  // Adjust this value to change the maximum height of the terrain
-        float waterScale = 0.02f;  // Adjust this value to change the 'roughness' of your water distribution (smaller for larger bodies)
-        float waterThreshold = 0.4f;  // Lower this value to make water more common
+        float heightScale = 15.0f;  // Adjust this value to change the maximum height of the terrain
+        float waterScale = 0.01f;  // Adjust this value to change the 'roughness' of your water distribution (smaller for larger bodies)
+        float waterThreshold = 0.5f;  // Lower this value to make water more common
 
         int waterLevel = 3; // Increase this Y coordinate to make the land more often under water
 
