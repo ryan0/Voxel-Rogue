@@ -6,7 +6,8 @@ public class Chunk : MonoBehaviour {
     public const int width =  64;
     public const int height = 64;
     public const int depth =  64;
-
+    
+    private float s = Voxel.size;
     private int xIndex = 0;
     private int yIndex = 0;
     private int zIndex = 0;
@@ -109,9 +110,9 @@ public class Chunk : MonoBehaviour {
             mesh.triangles = trianglesData[entry.Key].ToArray();
             mesh.RecalculateNormals();
 
-            int xOffset = xIndex * width;
-            int yOffset = yIndex * height;
-            int zOffset = zIndex * depth;
+            float xOffset = xIndex * width * s;
+            float yOffset = yIndex * height * s;
+            float zOffset = zIndex * depth * s;
 
             GameObject chunkMesh = new GameObject("chunkMesh");
             MeshFilter meshFilter = chunkMesh.AddComponent<MeshFilter>();
@@ -120,7 +121,10 @@ public class Chunk : MonoBehaviour {
             string mat = "Materials/" + Substance.getById(entry.Key).name;
             Material meshMat = Resources.Load<Material>(mat);
 
-            MeshCollider meshCollider = chunkMesh.AddComponent<MeshCollider>();
+            if(Substance.getById(entry.Key).state == State.SOLID)
+            {
+                MeshCollider meshCollider = chunkMesh.AddComponent<MeshCollider>();
+            }
             MeshRenderer meshRenderer = chunkMesh.AddComponent<MeshRenderer>();
             meshRenderer.material = meshMat;
             chunkMesh.transform.position = new Vector3(xOffset, yOffset, zOffset);
@@ -150,14 +154,18 @@ public class Chunk : MonoBehaviour {
 
         if (substance.id != Substance.air.id && !isOccluded(x, y, z))
         {
-            vertices.Add(new Vector3(x + 0, y + 0, z + 0));
-            vertices.Add(new Vector3(x + 1, y + 0, z + 0));
-            vertices.Add(new Vector3(x + 1, y + 1, z + 0));
-            vertices.Add(new Vector3(x + 0, y + 1, z + 0));
-            vertices.Add(new Vector3(x + 0, y + 1, z + 1));
-            vertices.Add(new Vector3(x + 1, y + 1, z + 1));
-            vertices.Add(new Vector3(x + 1, y + 0, z + 1));
-            vertices.Add(new Vector3(x + 0, y + 0, z + 1));
+            float xS = x * s;
+            float yS = y * s;
+            float zS = z * s;
+
+            vertices.Add(new Vector3(xS + 0, yS + 0, zS + 0));
+            vertices.Add(new Vector3(xS + s, yS + 0, zS + 0));
+            vertices.Add(new Vector3(xS + s, yS + s, zS + 0));
+            vertices.Add(new Vector3(xS + 0, yS + s, zS + 0));
+            vertices.Add(new Vector3(xS + 0, yS + s, zS + s));
+            vertices.Add(new Vector3(xS + s, yS + s, zS + s));
+            vertices.Add(new Vector3(xS + s, yS + 0, zS + s));
+            vertices.Add(new Vector3(xS + 0, yS + 0, zS + s));
 
             int count = vertices.Count - 1;
 

@@ -12,6 +12,8 @@ public class PlayerController : MonoBehaviour
 
     private CharacterController characterController;
     private Transform cameraTransform;
+    private float rayDistance = 100f;
+
 
     private void Start()
     {
@@ -24,6 +26,10 @@ public class PlayerController : MonoBehaviour
     {
         Look();
         Move();
+        if (Input.GetMouseButton(0)) {
+            rayCast();
+
+        }
     }
 
     private void Move()
@@ -53,4 +59,23 @@ public class PlayerController : MonoBehaviour
         cameraTransform.localRotation = Quaternion.Euler(-verticalLookRotation, 0f, 0f);
         transform.Rotate(Vector3.up * mouseX);
     }
+
+    private void rayCast()
+    {
+        Camera camera = Camera.main;
+
+        Ray ray = new Ray(camera.transform.position, camera.transform.forward);
+        RaycastHit hit;
+
+        if (Physics.Raycast(ray, out hit, rayDistance))
+        {
+            Debug.Log("Raycast hit at position: " + hit.point);
+            Debug.DrawLine(ray.origin, hit.point, Color.red); // Draw a red line to the point of collision
+        }
+        else
+        {
+            Debug.DrawLine(ray.origin, ray.origin + ray.direction * rayDistance, Color.green); // Draw a green line to the maximum distance of the ray
+        }
+    }
+
 }

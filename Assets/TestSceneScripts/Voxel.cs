@@ -6,6 +6,7 @@ public class Voxel
 {
     public Substance substance = Substance.air;
     public int Temperature = 60;
+    public const float size = .5f;
     
 
     public Voxel(Substance substance_)

@@ -52,7 +52,7 @@ public class World : MonoBehaviour
         int depth = chunksZ * Chunk.depth;
         Substance[,,] terrain = new Substance[width, height, depth];
 
-        float scale = 0.1f;  // Adjust this value to change the 'roughness' of your terrain
+        float scale = 0.1f * Voxel.size;  // Adjust this value to change the 'resolution' of your terrain
         float heightScale = 15.0f;  // Adjust this value to change the maximum height of the terrain
         float waterScale = 0.01f;  // Adjust this value to change the 'roughness' of your water distribution (smaller for larger bodies)
         float waterThreshold = 0.5f;  // Lower this value to make water more common
