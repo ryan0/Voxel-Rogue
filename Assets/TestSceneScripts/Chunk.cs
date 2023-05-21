@@ -12,9 +12,34 @@ public class Chunk : MonoBehaviour {
     private int zIndex = 0;
 
     private Voxel[,,] voxels = new Voxel[width, height, depth];
-    private GameObject[,,] voxelMesh = new GameObject[width, height, depth];
-
     private Dictionary<int, GameObject> meshData = new Dictionary<int, GameObject>();
+
+    public static Chunk CreateChunk(int xIndex, int yIndex, int zIndex, Substance[,,] terrainData)
+    {
+        GameObject obj = new GameObject("Chunk");
+        Chunk chunk = obj.AddComponent<Chunk>();
+
+        chunk.xIndex = xIndex;
+        chunk.yIndex = yIndex;
+        chunk.zIndex = zIndex;
+
+        int xOffset = xIndex * width;
+        int yOffset = yIndex * height;
+        int zOffset = zIndex * depth;
+
+        for (int x = 0; x < width; x++)
+        {
+            for (int y = 0; y < height; y++)
+            {
+                for (int z = 0; z < depth; z++)
+                {
+                    chunk.voxels[x, y, z] = new Voxel(terrainData[x + xOffset, y + yOffset, z + zOffset]);
+                }
+            }
+        }
+
+        return chunk;
+    }
 
     private void Start()
     {
@@ -58,36 +83,6 @@ public class Chunk : MonoBehaviour {
             }
         }
     }
-
-    public static Chunk CreateChunk(int xIndex, int yIndex, int zIndex, Substance[,,] terrainData)
-    {
-        GameObject obj = new GameObject("Chunk");
-        Chunk chunk = obj.AddComponent<Chunk>();
-
-        chunk.xIndex = xIndex;
-        chunk.yIndex = yIndex;
-        chunk.zIndex = zIndex;
-
-        int xOffset = xIndex * width;
-        int yOffset = yIndex * height;
-        int zOffset = zIndex * depth;
-
-        for (int x = 0; x < width; x++)
-        {
-            for (int y = 0; y < height; y++)
-            {
-                for (int z = 0; z < depth; z++)
-                {
-                    chunk.voxels[x, y, z] = new Voxel(terrainData[x + xOffset, y + yOffset, z + zOffset]);
-                }
-            }
-        }
-
-        chunk.voxels[0, height - 1, 0] = new Voxel(Substance.steam);
-
-        return chunk;
-    }
-
 
     private void GenerateVoxelMesh()
     {
