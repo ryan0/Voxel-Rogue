@@ -21,7 +21,7 @@ public class World : MonoBehaviour
             {
                 for (int z = 0; z < chunksZ; z++)
                 {
-                    Chunk.CreateChunk(x, y, z, terrainData);
+                    chunks[x, y, z] = Chunk.CreateChunk(x, y, z, terrainData);
                 }
             }
         }
@@ -31,6 +31,22 @@ public class World : MonoBehaviour
     void Update()
     {
         
+    }
+
+    public void destroyVoxelAt(int x, int y, int z)
+    {
+        int chunkX = x / Chunk.width;
+        int chunkY = y / Chunk.height;
+        int chunkZ = z / Chunk.depth;
+
+        int voxelX = x - (chunkX * Chunk.width);
+        int voxelY = y - (chunkY * Chunk.height);
+        int voxelZ = z - (chunkZ * Chunk.depth);
+
+        Debug.Log("hit Voxel: " + voxelX + ", " + voxelY + ", " + voxelZ);
+        Debug.Log("in Chunk: " + chunkX + ", " + chunkY + ", " + chunkZ);
+
+        chunks[chunkX, chunkY, chunkZ].destroyVoxelAt(voxelX, voxelY, voxelZ);
     }
 
     private static float PerlinNoise3D(float x, float y, float z)
