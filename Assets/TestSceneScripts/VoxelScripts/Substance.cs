@@ -39,6 +39,8 @@ public class Substance
     public static readonly Substance stone = new Substance("stone", State.SOLID, 0);
     public static readonly Substance wood = new Substance("wood", State.SOLID, 20);
     public static readonly Substance ice = new Substance("ice", State.SOLID, 0);
+    public static readonly Substance leaf = new Substance("leaf", State.SOLID, 0);
+
 
 
     //Liquids
