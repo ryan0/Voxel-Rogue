@@ -59,6 +59,17 @@ public class Chunk : MonoBehaviour {
         }
     }
 
+    public void destroyVoxelAt(int x, int y, int z)
+    {
+        voxels[x, y, z].substance = Substance.air;
+        foreach(KeyValuePair<int, GameObject> entry in meshData)
+        {
+            Destroy(entry.Value);
+        }
+        meshData = new Dictionary<int, GameObject>();
+        GenerateVoxelMesh();
+    }
+
     void UpdateTemperatures(int direction)
     {
         for (int x = 0; x < width; x++)
