@@ -75,6 +75,12 @@ public class World : MonoBehaviour
 
         int waterLevel = 3; // Increase this Y coordinate to make the land more often under water
 
+        // Variables related to tree generation
+        float treeProbability = 0.00005f;  // Probability of tree being generated at any eligible location
+        //int minTreeSpacing = 3;  // Minimum distance between trees
+        int[,] terrainHeights = new int[width, depth];  // Store terrain height for each (x, z)
+        System.Random random = new System.Random();  // Seed this for deterministic tree placement
+
         for (int x = 0; x < width; x++)
         {
             for (int z = 0; z < depth; z++)
@@ -112,12 +118,50 @@ public class World : MonoBehaviour
                             terrain[x, y, z] = Substance.air;
                         }
                     }
+                    if (random.NextDouble() < treeProbability && y > waterLevel)
+                    {
+                        Vector3Int treePos = new Vector3Int(x, terrainHeight, z);
+                        GenerateTree(terrain, treePos, 4, 3);
+                    }
                 }
             }
         }
 
         return terrain;
     }
+
+    private static void GenerateTree(Substance[,,] voxels, Vector3Int position, int trunkHeight, int crownRadius)
+    {
+        int width = voxels.GetLength(0);
+        int height = voxels.GetLength(1);
+        int depth = voxels.GetLength(2);
+
+        // Generate trunk
+        for (int y = position.y; y < position.y + trunkHeight; y++)
+        {
+            if (y < height)
+            { // Check bounds
+                voxels[position.x, y, position.z] = Substance.wood;
+            }
+        }
+
+        // Generate crown
+        for (int x = position.x - crownRadius; x <= position.x + crownRadius; x++)
+        {
+            for (int y = position.y + trunkHeight; y <= position.y + trunkHeight + crownRadius; y++)
+            {
+                for (int z = position.z - crownRadius; z <= position.z + crownRadius; z++)
+                {
+                    if (x >= 0 && x < width && y >= 0 && y < height && z >= 0 && z < depth)
+                    { // Check bounds
+                        voxels[x, y, z] = Substance.leaf;
+                    }
+                }
+            }
+        }
+    }
+
+
 
 
 }
