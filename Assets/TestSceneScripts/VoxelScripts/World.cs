@@ -146,13 +146,18 @@ public class World : MonoBehaviour
         }
 
         // Generate crown
-        for (int x = position.x - crownRadius; x <= position.x + crownRadius; x++)
+        Vector3Int crownCenter = position + new Vector3Int(0, trunkHeight, 0);
+
+        for (int x = crownCenter.x - crownRadius; x <= crownCenter.x + crownRadius; x++)
         {
-            for (int y = position.y + trunkHeight; y <= position.y + trunkHeight + crownRadius; y++)
+            for (int y = crownCenter.y; y <= crownCenter.y + crownRadius; y++)
             {
-                for (int z = position.z - crownRadius; z <= position.z + crownRadius; z++)
+                for (int z = crownCenter.z - crownRadius; z <= crownCenter.z + crownRadius; z++)
                 {
-                    if (x >= 0 && x < width && y >= 0 && y < height && z >= 0 && z < depth)
+                    Vector3Int voxelPosition = new Vector3Int(x, y, z);
+                    // Check if this voxel position is within the sphere (crown)
+                    if (Vector3Int.Distance(voxelPosition, crownCenter) <= crownRadius
+                        && x >= 0 && x < width && y >= 0 && y < height && z >= 0 && z < depth)
                     { // Check bounds
                         voxels[x, y, z] = Substance.leaf;
                     }
