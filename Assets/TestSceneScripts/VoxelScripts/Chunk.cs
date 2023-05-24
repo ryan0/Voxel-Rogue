@@ -163,40 +163,95 @@ public class Chunk : MonoBehaviour {
             trianglesData.Add(substance.id, triangles);
         }
 
-        if (substance.id != Substance.air.id && !isOccluded(x, y, z))
+        if (substance.id != Substance.air.id)
         {
             float xS = x * s;
             float yS = y * s;
             float zS = z * s;
 
-            vertices.Add(new Vector3(xS + 0, yS + 0, zS + 0));
-            vertices.Add(new Vector3(xS + s, yS + 0, zS + 0));
-            vertices.Add(new Vector3(xS + s, yS + s, zS + 0));
-            vertices.Add(new Vector3(xS + 0, yS + s, zS + 0));
-            vertices.Add(new Vector3(xS + 0, yS + s, zS + s));
-            vertices.Add(new Vector3(xS + s, yS + s, zS + s));
-            vertices.Add(new Vector3(xS + s, yS + 0, zS + s));
-            vertices.Add(new Vector3(xS + 0, yS + 0, zS + s));
+            if (y == 0 || voxels[x, y - 1, z].substance.state == State.GAS) //Bottom
+            {
 
-            int count = vertices.Count - 1;
+                vertices.Add(new Vector3(xS + 0, yS + 0, zS + 0));
+                vertices.Add(new Vector3(xS + 0, yS + 0, zS + s));
+                vertices.Add(new Vector3(xS + s, yS + 0, zS + s));
+                vertices.Add(new Vector3(xS + s, yS + 0, zS + 0));
 
-            triangles.Add(count - 1); triangles.Add(count - 2); triangles.Add(count - 0);//face front
-            triangles.Add(count - 2); triangles.Add(count - 3); triangles.Add(count - 0);
+                int count = vertices.Count - 4;
 
-            triangles.Add(count - 4); triangles.Add(count - 3); triangles.Add(count - 2);//face top
-            triangles.Add(count - 5); triangles.Add(count - 4); triangles.Add(count - 2);
+                triangles.Add(0 + count); triangles.Add(2 + count); triangles.Add(1 + count);
+                triangles.Add(0 + count); triangles.Add(3 + count); triangles.Add(2 + count);
+            }
 
-            triangles.Add(count - 5); triangles.Add(count - 2); triangles.Add(count - 1);//face right
-            triangles.Add(count - 6); triangles.Add(count - 5); triangles.Add(count - 1);
+            if ( y == (height - 1) || voxels[x, y + 1, z].substance.state == State.GAS) //Top
+            {
 
-            triangles.Add(count - 4); triangles.Add(count - 7); triangles.Add(count - 0); //face left
-            triangles.Add(count - 3); triangles.Add(count - 4); triangles.Add(count - 0);
+                vertices.Add(new Vector3(xS + 0, yS + s, zS + 0));
+                vertices.Add(new Vector3(xS + 0, yS + s, zS + s));
+                vertices.Add(new Vector3(xS + s, yS + s, zS + s));
+                vertices.Add(new Vector3(xS + s, yS + s, zS + 0));
 
-            triangles.Add(count - 7); triangles.Add(count - 4); triangles.Add(count - 5);//face back
-            triangles.Add(count - 6); triangles.Add(count - 7); triangles.Add(count - 5);
+                int count = vertices.Count - 4;
 
-            triangles.Add(count - 7); triangles.Add(count - 6); triangles.Add(count - 0); //face bottom
-            triangles.Add(count - 6); triangles.Add(count - 1); triangles.Add(count - 0);
+                triangles.Add(0 + count); triangles.Add(1 + count); triangles.Add(2 + count);
+                triangles.Add(0 + count); triangles.Add(2 + count); triangles.Add(3 + count);
+            }
+
+            if (z == 0 || voxels[x, y, z - 1].substance.state == State.GAS) // Front
+            {
+                vertices.Add(new Vector3(xS + 0, yS + 0, zS + 0));
+                vertices.Add(new Vector3(xS + 0, yS + s, zS + 0));
+                vertices.Add(new Vector3(xS + s, yS + s, zS + 0));
+                vertices.Add(new Vector3(xS + s, yS + 0, zS + 0));
+
+
+                int count = vertices.Count - 4;
+
+                triangles.Add(0 + count); triangles.Add(1 + count); triangles.Add(2 + count);
+                triangles.Add(0 + count); triangles.Add(2 + count); triangles.Add(3 + count);
+            }
+
+            if (z == (depth - 1) || voxels[x, y, z + 1].substance.state == State.GAS) // Back
+            {
+                vertices.Add(new Vector3(xS + 0, yS + 0, zS + s));
+                vertices.Add(new Vector3(xS + 0, yS + s, zS + s));
+                vertices.Add(new Vector3(xS + s, yS + s, zS + s));
+                vertices.Add(new Vector3(xS + s, yS + 0, zS + s));
+
+
+                int count = vertices.Count - 4;
+
+                triangles.Add(0 + count); triangles.Add(2 + count); triangles.Add(1 + count);
+                triangles.Add(0 + count); triangles.Add(3 + count); triangles.Add(2 + count);
+            }
+
+            if (x == 0 || voxels[x - 1, y, z].substance.state == State.GAS) // Left
+            {
+                vertices.Add(new Vector3(xS + 0, yS + 0, zS + 0));
+                vertices.Add(new Vector3(xS + 0, yS + s, zS + 0));
+                vertices.Add(new Vector3(xS + 0, yS + s, zS + s));
+                vertices.Add(new Vector3(xS + 0, yS + 0, zS + s));
+
+
+                int count = vertices.Count - 4;
+
+                triangles.Add(0 + count); triangles.Add(2 + count); triangles.Add(1 + count);
+                triangles.Add(0 + count); triangles.Add(3 + count); triangles.Add(2 + count);
+            }
+
+            if (x == (width - 1) || voxels[x + 1, y, z].substance.state == State.GAS)
+            {
+                vertices.Add(new Vector3(xS + s, yS + 0, zS + 0));
+                vertices.Add(new Vector3(xS + s, yS + s, zS + 0));
+                vertices.Add(new Vector3(xS + s, yS + s, zS + s));
+                vertices.Add(new Vector3(xS + s, yS + 0, zS + s));
+
+
+                int count = vertices.Count - 4;
+
+                triangles.Add(0 + count); triangles.Add(1 + count); triangles.Add(2 + count);
+                triangles.Add(0 + count); triangles.Add(2 + count); triangles.Add(3 + count);
+            }
         }
     }
 
