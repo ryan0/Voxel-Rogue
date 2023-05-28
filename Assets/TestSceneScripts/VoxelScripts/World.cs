@@ -76,7 +76,7 @@ public class World : MonoBehaviour
         int waterLevel = 3; // Increase this Y coordinate to make the land more often under water
 
         // Variables related to tree generation
-        float treeProbability = 0.00005f;  // Probability of tree being generated at any eligible location
+        float treeProbability = 0.005f;  // Probability of tree being generated at any eligible location
         //int minTreeSpacing = 3;  // Minimum distance between trees
         int[,] terrainHeights = new int[width, depth];  // Store terrain height for each (x, z)
         System.Random random = new System.Random();  // Seed this for deterministic tree placement
@@ -118,11 +118,21 @@ public class World : MonoBehaviour
                             terrain[x, y, z] = Substance.air;
                         }
                     }
-                    if (random.NextDouble() < treeProbability && y > waterLevel)
-                    {
-                        Vector3Int treePos = new Vector3Int(x, terrainHeight, z);
-                        GenerateTree(terrain, treePos, 4, 3);
-                    }
+                }
+            }
+        }
+
+        for (int x = 0; x < width; x++)
+        {
+            for (int z = 0; z < depth; z++)
+            {
+                int terrainHeight = Mathf.FloorToInt(Mathf.PerlinNoise(x * scale, z * scale) * heightScale);
+
+
+                if (random.NextDouble() < treeProbability && terrainHeight > waterLevel)
+                {
+                    Vector3Int treePos = new Vector3Int(x, terrainHeight, z);
+                    GenerateTree(terrain, treePos, 8, 3);
                 }
             }
         }
@@ -150,7 +160,7 @@ public class World : MonoBehaviour
 
         for (int x = crownCenter.x - crownRadius; x <= crownCenter.x + crownRadius; x++)
         {
-            for (int y = crownCenter.y; y <= crownCenter.y + crownRadius; y++)
+            for (int y = crownCenter.y - crownRadius; y <= crownCenter.y + crownRadius; y++)
             {
                 for (int z = crownCenter.z - crownRadius; z <= crownCenter.z + crownRadius; z++)
                 {
@@ -159,7 +169,11 @@ public class World : MonoBehaviour
                     if (Vector3Int.Distance(voxelPosition, crownCenter) <= crownRadius
                         && x >= 0 && x < width && y >= 0 && y < height && z >= 0 && z < depth)
                     { // Check bounds
-                        voxels[x, y, z] = Substance.leaf;
+
+                        if (voxels[x, y, z] != Substance.wood)
+                        {
+                            voxels[x, y, z] = Substance.leaf;
+                        }
                     }
                 }
             }
