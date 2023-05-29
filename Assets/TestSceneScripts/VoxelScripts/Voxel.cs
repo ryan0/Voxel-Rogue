@@ -4,10 +4,11 @@ using UnityEngine;
 
 public class Voxel
 {
-    public Substance substance = Substance.air;
-    public int Temperature = 60;
     public const float size = .5f;
-    
+
+    public Substance substance = Substance.air;
+    public int mass = 10;
+    public int Temperature = 60;
 
     public Voxel(Substance substance_)
     {
