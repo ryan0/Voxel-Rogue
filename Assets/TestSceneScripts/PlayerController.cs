@@ -30,8 +30,7 @@ public class PlayerController : MonoBehaviour
         Look();
         Move();
         if (Input.GetMouseButtonDown(0)) {
-            rayCast();
-
+            BreakVoxel();
         }
     }
 
@@ -63,31 +62,44 @@ public class PlayerController : MonoBehaviour
         transform.Rotate(Vector3.up * mouseX);
     }
 
-    private void rayCast()
+    private void BreakVoxel()
+    {
+        if (RayCastToVoxel(out Vector3Int hitCoord))
+        {
+            world.destroyVoxelAt(hitCoord);
+        }
+    }
+
+    private bool RayCastToVoxel(out Vector3Int hitCoordinatesRef)
     {
         Camera camera = Camera.main;
+        hitCoordinatesRef = new Vector3Int();
 
-        Ray ray = new Ray(camera.transform.position, camera.transform.forward);
-        RaycastHit hit;
+        Ray ray = new(camera.transform.position, camera.transform.forward);
 
-        if (Physics.Raycast(ray, out hit, rayDistance))
+        if (Physics.Raycast(ray, out RaycastHit hit, rayDistance))
         {
             Vector3 point = hit.point * (1 / Voxel.size);
+            Vector3 normal = hit.normal;
 
-            int x = (int)point.x;
-            int y = (int)point.y;
-            int z = (int)point.z;
+            Debug.Log("Raycast hit: " + point.x + ", " + point.y + ", " + point.z);
+            Debug.Log("Raycast Normal: " + normal.x + ", " + normal.y + ", " + normal.z);
 
-            //Debug.Log("hit voxel: " + x + ", " + y + ", " + z);
+            hitCoordinatesRef.x = (int)point.x;
+            hitCoordinatesRef.y = (int)point.y;
+            hitCoordinatesRef.z = (int)point.z;
 
-            world.destroyVoxelAt(x, y, z);
-
+            if (normal.x == 1) hitCoordinatesRef.x -= 1;
+            if (normal.y == 1) hitCoordinatesRef.y -= 1;
+            if (normal.z == 1) hitCoordinatesRef.z -= 1;
 
             Debug.DrawLine(ray.origin, hit.point, Color.red); // Draw a red line to the point of collision
+            return true;
         }
         else
         {
             Debug.DrawLine(ray.origin, ray.origin + ray.direction * rayDistance, Color.green); // Draw a green line to the maximum distance of the ray
+            return false;
         }
     }
 

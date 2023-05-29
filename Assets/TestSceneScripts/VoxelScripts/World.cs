@@ -33,15 +33,15 @@ public class World : MonoBehaviour
         
     }
 
-    public void destroyVoxelAt(int x, int y, int z)
+    public void destroyVoxelAt(Vector3Int coord)
     {
-        int chunkX = x / Chunk.width;
-        int chunkY = y / Chunk.height;
-        int chunkZ = z / Chunk.depth;
+        int chunkX = coord.x / Chunk.width;
+        int chunkY = coord.y / Chunk.height;
+        int chunkZ = coord.z / Chunk.depth;
 
-        int voxelX = x - (chunkX * Chunk.width);
-        int voxelY = y - (chunkY * Chunk.height);
-        int voxelZ = z - (chunkZ * Chunk.depth);
+        int voxelX = coord.x - (chunkX * Chunk.width);
+        int voxelY = coord.y - (chunkY * Chunk.height);
+        int voxelZ = coord.z - (chunkZ * Chunk.depth);
 
         Debug.Log("hit Voxel: " + voxelX + ", " + voxelY + ", " + voxelZ);
         Debug.Log("in Chunk: " + chunkX + ", " + chunkY + ", " + chunkZ);
