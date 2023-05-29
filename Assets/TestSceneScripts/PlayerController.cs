@@ -29,7 +29,7 @@ public class PlayerController : MonoBehaviour
     {
         Look();
         Move();
-        if (Input.GetMouseButton(0)) {
+        if (Input.GetMouseButtonDown(0)) {
             rayCast();
 
         }
