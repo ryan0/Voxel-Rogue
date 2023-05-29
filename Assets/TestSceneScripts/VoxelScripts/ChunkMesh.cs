@@ -14,6 +14,7 @@ public class ChunkMesh
         {
             Object.Destroy(entry.Value);
         }
+        meshData = new Dictionary<int, GameObject>();
     }
 
     public void GenerateMesh(Voxel[,,] voxels, int chunkIndexX, int chunkIndexY, int chunkIndexZ)
