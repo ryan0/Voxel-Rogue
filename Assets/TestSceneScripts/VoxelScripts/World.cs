@@ -5,7 +5,7 @@ using UnityEngine;
 public class World : MonoBehaviour
 {
     public const int chunksX = 4;
-    public const int chunksY = 2;
+    public const int chunksY = 4;
     public const int chunksZ = 4;
 
     private Chunk[,,] chunks = new Chunk[chunksX, chunksY, chunksZ];
@@ -80,6 +80,10 @@ public class World : MonoBehaviour
         //int minTreeSpacing = 3;  // Minimum distance between trees
         int[,] terrainHeights = new int[width, depth];  // Store terrain height for each (x, z)
         System.Random random = new System.Random();  // Seed this for deterministic tree placement
+        
+        // Cave generation parameters
+        float caveScale = 0.05f;  // Adjust this value to change the 'resolution' of your caves
+        float caveThreshold = 0.8f;  // Lower this value to make caves more common
 
         for (int x = 0; x < width; x++)
         {
@@ -93,6 +97,17 @@ public class World : MonoBehaviour
 
                 for (int y = 0; y < height; y++)
                 {
+                    // Add the cave generation check inside your existing loop
+                    // Calculate the cave noise at this point
+                    float caveNoise = PerlinNoise3D(x * caveScale, y * caveScale, z * caveScale);
+
+                    if (caveNoise > caveThreshold && terrain[x, y, z] == Substance.stone)
+                    {
+                        // This voxel is inside a cave, replace it with air
+                        terrain[x, y, z] = Substance.air;
+                    }
+                    // ... rest of your code inside the loop ...
+
                     if (y < terrainHeight)
                     {
                         // Below the terrain height, we fill with Voxel types
