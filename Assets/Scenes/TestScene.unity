@@ -220,6 +220,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: de950f8f3c6bb3841aa88ad1b35930ec, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  player: {fileID: 1156799597}
 --- !u!4 &274436407
 Transform:
   m_ObjectHideFlags: 0
@@ -810,6 +811,7 @@ GameObject:
   - component: {fileID: 810906337}
   - component: {fileID: 810906336}
   - component: {fileID: 810906339}
+  - component: {fileID: 810906340}
   m_Layer: 2
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -896,6 +898,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   pixelArtMaterial: {fileID: 2100000, guid: 8b7fb61a840c2cc45b79973f44b5297a, type: 2}
+--- !u!45 &810906340
+Skybox:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 810906335}
+  m_Enabled: 1
+  m_CustomSkybox: {fileID: 2100000, guid: 118843f07441aed4796a5ae97e144487, type: 2}
 --- !u!1 &969812037
 GameObject:
   m_ObjectHideFlags: 0
