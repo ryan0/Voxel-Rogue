@@ -16,7 +16,7 @@ public class Substance
     public readonly string name;
     public readonly State state;
     public readonly int flammablity;
-    
+
     private static int nextId = 0;
     private static readonly Dictionary<int, Substance> substanceLookUp = new Dictionary<int, Substance>();
     private Substance(string name, State state, int flammablity)
@@ -34,13 +34,18 @@ public class Substance
         return substanceLookUp[id];
     }
 
+    public static int NumberSubstances()
+    {
+        return nextId;
+    }
+
     //Solids
     public static readonly Substance dirt = new Substance("dirt", State.SOLID, 0);
+    public static readonly Substance mud = new Substance("Mud", State.SOLID, 0);
     public static readonly Substance stone = new Substance("stone", State.SOLID, 0);
     public static readonly Substance wood = new Substance("wood", State.SOLID, 20);
     public static readonly Substance ice = new Substance("ice", State.SOLID, 0);
     public static readonly Substance leaf = new Substance("leaf", State.SOLID, 0);
-
 
 
     //Liquids
@@ -53,5 +58,4 @@ public class Substance
     public static readonly Substance air = new Substance("air", State.GAS, 0);
     public static readonly Substance steam = new Substance("steam", State.GAS, 0);
     public static readonly Substance smoke = new Substance("smoke", State.GAS, 0);
-
 }

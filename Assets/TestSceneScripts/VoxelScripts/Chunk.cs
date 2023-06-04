@@ -3,22 +3,27 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public class Chunk : MonoBehaviour {
-    public const int width =  64;
-    public const int height = 64;
-    public const int depth =  64;
+    public const int width =  16;
+    public const int height = 16;
+    public const int depth =  16;
     
     private int xIndex = 0;
     private int yIndex = 0;
     private int zIndex = 0;
 
+    private float biomeTemperature;
+
+    private bool signalToRegenMesh = false;
+
     private Voxel[,,] voxels = new Voxel[width, height, depth];
     private ChunkMesh mesh = new();
 
-    public static Chunk CreateChunk(int xIndex, int yIndex, int zIndex, Substance[,,] terrainData)
+    public static Chunk CreateChunk(int xIndex, int yIndex, int zIndex, Substance[,,] terrainData, float biomeTemprature)
     {
         GameObject obj = new GameObject("Chunk");
         Chunk chunk = obj.AddComponent<Chunk>();
 
+        chunk.biomeTemperature = biomeTemprature;
         chunk.xIndex = xIndex;
         chunk.yIndex = yIndex;
         chunk.zIndex = zIndex;
@@ -33,7 +38,8 @@ public class Chunk : MonoBehaviour {
             {
                 for (int z = 0; z < depth; z++)
                 {
-                    chunk.voxels[x, y, z] = new Voxel(terrainData[x + xOffset, y + yOffset, z + zOffset]);
+                    Substance substance = terrainData[x + xOffset, y + yOffset, z + zOffset];
+                    chunk.voxels[x, y, z] = new Voxel(substance, biomeTemprature);
                 }
             }
         }
@@ -46,16 +52,39 @@ public class Chunk : MonoBehaviour {
         mesh.GenerateMesh(voxels, xIndex, yIndex, zIndex);
     }
 
+    public void SignalMeshRegen()
+    {
+        this.signalToRegenMesh = true;
+    }
+
     private void Update()
     {
-        if (Input.GetKeyDown("["))
+        if(signalToRegenMesh)
         {
-            UpdateTemperatures(0);
+            signalToRegenMesh = false;
+            mesh.DestroyMesh();
+            mesh.GenerateMesh(voxels, xIndex, yIndex, zIndex);
         }
-        if (Input.GetKeyDown("]"))
-        {
-            UpdateTemperatures(1);
-        }
+    }
+
+    public Voxel[,,] getVoxels()
+    {
+        return voxels;
+    }
+
+    public List<Voxel> GetVoxelsAdjacentTo(int x, int y, int z)
+    {
+        List<Voxel> adjacentVoxels = new();
+
+        if (x < width - 1) adjacentVoxels.Add(voxels[x + 1, y, z]);
+        if (y < height - 1) adjacentVoxels.Add(voxels[x, y + 1, z]);
+        if (z < depth - 1) adjacentVoxels.Add(voxels[x, y, z + 1]);
+
+        if (x > 0) adjacentVoxels.Add(voxels[x - 1, y, z]);
+        if (y > 0) adjacentVoxels.Add(voxels[x, y - 1, z]);
+        if (z > 0) adjacentVoxels.Add(voxels[x, y, z - 1]);
+
+        return adjacentVoxels;
     }
 
     public void destroyVoxelAt(int x, int y, int z)
@@ -76,11 +105,11 @@ public class Chunk : MonoBehaviour {
                 {
                     if (direction == 0)
                     {
-                        voxels[x, y, z].Temperature -= 10;
+                        voxels[x, y, z].temperature -= 10;
                     }
                     else
                     {
-                        voxels[x, y, z].Temperature += 10;
+                        voxels[x, y, z].temperature += 10;
                     }
                     //if(voxels[x, y, z].changeState())
                     //{
