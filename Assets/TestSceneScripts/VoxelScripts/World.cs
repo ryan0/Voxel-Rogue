@@ -129,6 +129,46 @@ public class World : MonoBehaviour
         Debug.Log("hit Voxel: " + voxelX + ", " + voxelY + ", " + voxelZ);
         Debug.Log("in Chunk: " + chunkX + ", " + chunkY + ", " + chunkZ);
 
+        Voxel[,,] voxels = chunks[chunkX, chunkY, chunkZ].getVoxels();///debug debug debug
+        Substance substance = voxels[voxelX, voxelY, voxelZ].substance;///Debug debug dbeug
         chunks[chunkX, chunkY, chunkZ].destroyVoxelAt(voxelX, voxelY, voxelZ);
+        spawnDebrisAt(substance,coord, 3);//DEBUG DEBUG DEBUG*/
+
     }
+
+    public void spawnDebrisAt(Substance substance, Vector3Int coord, int nChunks)
+    {
+        string prefabName = substance.name + "_debris";
+        // Load the debris prefab
+        GameObject debrisPrefab = Resources.Load<GameObject>(prefabName);
+
+        if (debrisPrefab == null)
+        {
+            Debug.LogError("Debris prefab not found in Resources folder "+prefabName);
+            return;
+        }
+
+        // Convert the voxel coordinates to world coordinates
+        Vector3 worldCoord = new Vector3(coord.x * Voxel.size, coord.y * Voxel.size, coord.z * Voxel.size);
+
+        for (int i = 0; i < nChunks; i++)
+        {
+            // Instantiate the debris prefab
+            GameObject debris = Instantiate(debrisPrefab, worldCoord, Quaternion.identity);
+
+            // Assuming the debris has a Rigidbody component, you can add some force to make the debris scatter
+            Rigidbody rb = debris.GetComponent<Rigidbody>();
+            if (rb != null)
+            {
+                Vector3 randomForce = new Vector3(
+                    Random.Range(-1f, 1f),
+                    Random.Range(-1f, 1f),
+                    Random.Range(-1f, 1f)
+                ).normalized * 5; // You may need to adjust the force value
+
+                rb.AddForce(randomForce, ForceMode.Impulse);
+            }
+        }
+    }
+
 }
