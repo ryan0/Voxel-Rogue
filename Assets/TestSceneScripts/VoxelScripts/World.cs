@@ -156,18 +156,7 @@ public class World : MonoBehaviour
             // Instantiate the debris prefab
             GameObject debris = Instantiate(debrisPrefab, worldCoord, Quaternion.identity);
 
-            // Assuming the debris has a Rigidbody component, you can add some force to make the debris scatter
-            Rigidbody rb = debris.GetComponent<Rigidbody>();
-            if (rb != null)
-            {
-                Vector3 randomForce = new Vector3(
-                    Random.Range(-1f, 1f),
-                    Random.Range(-1f, 1f),
-                    Random.Range(-1f, 1f)
-                ).normalized * 5; // You may need to adjust the force value
-
-                rb.AddForce(randomForce, ForceMode.Impulse);
-            }
+           
         }
     }
 
