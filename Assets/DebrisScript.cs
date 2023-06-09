@@ -4,8 +4,10 @@ using UnityEngine;
 
 public class DebrisScript : MonoBehaviour
 {
+    public float initialForce = 1f;
     public float windStrength = 1f;
     public float noiseScale = 0.1f;
+    public bool isLeaf = false;
     //public bool isLeaf = false;
 
     private Rigidbody rb;
@@ -13,7 +15,7 @@ public class DebrisScript : MonoBehaviour
     private void Awake()
     {
         rb = GetComponent<Rigidbody>();
-        if (gameObject.name == "leaf_debris")
+        if (isLeaf)
         {
 
         }
@@ -26,7 +28,7 @@ public class DebrisScript : MonoBehaviour
                     Random.Range(-1f, 1f),
                     Random.Range(-1f, 1f),
                     Random.Range(-1f, 1f)
-                ).normalized * .5f; // You may need to adjust the force value
+                ).normalized * initialForce; // You may need to adjust the force value
 
                 rb.AddForce(randomForce, ForceMode.Impulse);
             }
@@ -37,10 +39,10 @@ public class DebrisScript : MonoBehaviour
 
     private void FixedUpdate()
     {
-        if (gameObject.name == "leaf_debris")
+        if (isLeaf)
         {
             float noise = Mathf.PerlinNoise(Time.time * noiseScale, 0f);
-            Vector3 windDirection = new Vector3(noise - 0.5f, 0f, noise - 0.5f);
+            Vector3 windDirection = new Vector3(noise - 0.5f, noise - 0.5f, noise - 0.5f); // 0.5f added to Y component to counteract gravity
             rb.AddForce(windDirection * windStrength);
         }
 

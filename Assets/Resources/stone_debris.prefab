@@ -141,5 +141,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: afca73cf8823e4214ae357c2d9e00d84, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  initialForce: 0.03
   windStrength: 1
   noiseScale: 0.1
