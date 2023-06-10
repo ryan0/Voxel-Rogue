@@ -68,13 +68,13 @@ public class InventoryUI : MonoBehaviour
             Item item = inventory.items[i];
             GameObject itemUIObject = Instantiate(itemUIPrefab, itemUIContainer.transform);
             Text textComponent = itemUIObject.GetComponent<Text>();
-            textComponent.text = item.name;
+            textComponent.text = $"{item.name} ({item.amount}x)";
 
             // If this is the selected item, highlight it
             if (i == selectedItemIndex)
             {
                 textComponent.color = Color.yellow; // Set the color to yellow
-                descriptionText.text = item.description; // Display the description of the selected item.
+                descriptionText.text = $"{item.description}\nSubstance: {item.substance}\nAmount: {item.amount}"; // Display the description of the selected item.
             }
             else
             {
@@ -90,6 +90,7 @@ public class InventoryUI : MonoBehaviour
             itemUIObject.GetComponent<EventTrigger>().triggers.Add(entry);
         }
     }
+
 
     private void OnItemClick(Item item)
     {

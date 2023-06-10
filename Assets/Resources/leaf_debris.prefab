@@ -14,6 +14,7 @@ GameObject:
   - component: {fileID: 1719810726514367026}
   - component: {fileID: 5057808313704828944}
   - component: {fileID: 1452226906557680435}
+  - component: {fileID: 4411644271457572725}
   m_Layer: 0
   m_Name: leaf_debris
   m_TagString: Untagged
@@ -145,3 +146,18 @@ MonoBehaviour:
   windStrength: 4
   noiseScale: 0.4
   isLeaf: 1
+--- !u!114 &4411644271457572725
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1719810726514367020}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7dbc82465759741e3933d7053f5d733e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  itemName: ' Leaf Debris'
+  itemDescription: Leaf
+  amount: 1
