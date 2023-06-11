@@ -93,6 +93,7 @@ public class Chunk : MonoBehaviour {
 
         mesh.DestroyMesh();
         mesh.GenerateMesh(voxels, xIndex, yIndex, zIndex);
+
     }
 
     void UpdateTemperatures(int direction)

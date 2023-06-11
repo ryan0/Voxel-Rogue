@@ -16,6 +16,8 @@ public class PlayerController : MonoBehaviour
 
     [SerializeField]
     private World world;
+    [SerializeField]
+    private InventoryUI inventoryUI;
 
 
     private void Start()
@@ -31,6 +33,10 @@ public class PlayerController : MonoBehaviour
         Move();
         if (Input.GetMouseButtonDown(0)) {
             BreakVoxel();
+        }
+        if (Input.GetKeyDown(KeyCode.E))
+        {
+            PickUpDebris();
         }
     }
 
@@ -69,6 +75,31 @@ public class PlayerController : MonoBehaviour
             world.destroyVoxelAt(hitCoord);
         }
     }
+
+    private void PickUpDebris()
+    {
+        Camera camera = Camera.main;
+        Ray ray = new (camera.transform.position, camera.transform.forward);
+
+        if (Physics.Raycast(ray, out RaycastHit hit, rayDistance))
+        {
+            PickupAble debris = hit.transform.GetComponent<PickupAble>();
+            if (debris != null)
+            {
+                Item existingItem = inventoryUI.inventory.items.Find(item => item.substance == debris.substance);
+                if (existingItem != null)
+                {
+                    existingItem.amount += debris.amount;
+                }
+                else
+                {
+                    inventoryUI.inventory.items.Add(new Item(debris.itemName, debris.itemDescription, debris.substance, debris.amount));
+                }
+                Destroy(debris.gameObject);
+            }
+        }
+    }
+
 
     private bool RayCastToVoxel(out Vector3Int hitCoordinatesRef)
     {

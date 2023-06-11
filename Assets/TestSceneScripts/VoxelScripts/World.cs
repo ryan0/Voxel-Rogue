@@ -129,6 +129,42 @@ public class World : MonoBehaviour
         Debug.Log("hit Voxel: " + voxelX + ", " + voxelY + ", " + voxelZ);
         Debug.Log("in Chunk: " + chunkX + ", " + chunkY + ", " + chunkZ);
 
+
+        //Spawn debris logic
+        Voxel[,,] voxels = chunks[chunkX, chunkY, chunkZ].getVoxels();///debug debug debug
+        Substance substance = voxels[voxelX, voxelY, voxelZ].substance;///Debug debug dbeug
         chunks[chunkX, chunkY, chunkZ].destroyVoxelAt(voxelX, voxelY, voxelZ);
+        spawnDebrisAt(substance,coord, 3);//DEBUG DEBUG DEBUG*/
+        //end of spawn debris chunk
     }
+
+    public void spawnDebrisAt(Substance substance, Vector3Int coord, int nChunks)
+    {
+        string prefabName = substance.name + "_debris";
+        // Load the debris prefab
+        GameObject debrisPrefab = Resources.Load<GameObject>(prefabName);
+
+        if (debrisPrefab == null)
+        {
+            Debug.LogError("Debris prefab not found in Resources folder "+prefabName);
+            return;
+        }
+
+        // Convert the voxel coordinates to world coordinates
+        Vector3 worldCoord = new Vector3(coord.x * Voxel.size, coord.y * Voxel.size, coord.z * Voxel.size);
+
+        for (int i = 0; i < nChunks; i++)
+        {
+            // Instantiate the debris prefab
+            GameObject debris = Instantiate(debrisPrefab, worldCoord, Quaternion.identity);
+            //initialize PickupAble fields if available
+            PickupAble itemData;
+            if(itemData = debris.GetComponent<PickupAble>())
+            {
+                itemData.substance = substance;
+            }
+
+        }
+    }
+
 }
