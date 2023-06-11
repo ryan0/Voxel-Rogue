@@ -5,7 +5,7 @@ using UnityEngine;
 public class World : MonoBehaviour
 {
     public const int chunksX = 16;
-    public const int chunksY = 4;
+    public const int chunksY = 16;
     public const int chunksZ = 16;
 
     [SerializeField]

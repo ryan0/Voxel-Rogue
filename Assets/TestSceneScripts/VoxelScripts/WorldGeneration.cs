@@ -25,9 +25,10 @@ public class WorldGeneration
         float heightScale = 15.0f;  // Adjust this value to change the maximum height of the terrain
         float waterScale = 0.01f;  // Adjust this value to change the 'roughness' of your water distribution (smaller for larger bodies)
         float waterThreshold = 0.5f;  // Lower this value to make water more common
+        int floorValue = 64;
 
         int waterLevel = 3; // Increase this Y coordinate to make the land more often under water
-
+        waterLevel += floorValue;
         // Variables related to tree generation
         float treeProbability = 0.005f;  // Probability of tree being generated at any eligible location
         //int minTreeSpacing = 3;  // Minimum distance between trees
@@ -40,7 +41,7 @@ public class WorldGeneration
             {
                 // Calculate the height of the terrain at this point
                 int terrainHeight = Mathf.FloorToInt(Mathf.PerlinNoise(x * scale, z * scale) * heightScale);
-
+                terrainHeight += floorValue;
                 // Calculate the water noise at this point
                 float waterNoise = Mathf.PerlinNoise(x * waterScale, z * waterScale);
 
@@ -75,12 +76,14 @@ public class WorldGeneration
             }
         }
 
+
+
         for (int x = 0; x < width; x++)
         {
             for (int z = 0; z < depth; z++)
             {
                 int terrainHeight = Mathf.FloorToInt(Mathf.PerlinNoise(x * scale, z * scale) * heightScale);
-
+                terrainHeight += floorValue;
 
                 if (random.NextDouble() < treeProbability && terrainHeight > waterLevel)
                 {
@@ -90,8 +93,90 @@ public class WorldGeneration
             }
         }
 
+        // Generate some worms
+        int numWorms = 5;  // Start with a reasonable number of worms
+        for (int i = 0; i < numWorms; i++)
+        {
+            GenerateWorm(terrain);
+        }
+
         return terrain;
     }
+
+    private static void GenerateWorm(Substance[,,] terrain)
+    {
+        int width = terrain.GetLength(0);
+        int height = terrain.GetLength(1);
+        int depth = terrain.GetLength(2);
+
+        // Random starting position for the worm
+        Vector3Int wormPos = new Vector3Int(Random.Range(0, width), Random.Range(0, height), Random.Range(0, depth));
+
+        // Length of the worm
+        int wormLength = 400;  // Adjust as necessary
+
+        // Random direction for the worm to move in
+        Vector3 wormDirection = new Vector3(Random.Range(-1f, 1f), Random.Range(-1f, 1f), Random.Range(-1f, 1f));
+        wormDirection.Normalize(); // ensure the direction vector is normalized
+
+        // Noise scale
+        float noiseScale = 0.4f;
+
+        // Base size of the worm/cave
+        int baseWormSize = 8; // The larger the size, the larger the cave. Adjust as necessary.
+
+        for (int i = 0; i < wormLength; i++)
+        {
+            // Use Perlin noise to get a size multiplier ranging from 0.5 to 1.5
+            float sizeMultiplier = Mathf.PerlinNoise(i * noiseScale, i * noiseScale) + 0.5f;
+
+            // Determine the size of the worm at this point
+            int wormSize = Mathf.FloorToInt(baseWormSize * sizeMultiplier);
+
+            // Carve out a path for the worm
+            for (int dx = -wormSize; dx <= wormSize; dx++)
+            {
+                for (int dy = -wormSize; dy <= wormSize; dy++)
+                {
+                    for (int dz = -wormSize; dz <= wormSize; dz++)
+                    {
+                        // Determine if this point is within the sphere
+                        double distance = Mathf.Sqrt(dx * dx + dy * dy + dz * dz);
+
+                        if (distance <= wormSize)
+                        {
+                            int x = wormPos.x + dx;
+                            int y = wormPos.y + dy;
+                            int z = wormPos.z + dz;
+
+                            // Check that we're within the world boundaries
+                            if (x >= 0 && x < width && y >= 0 && y < height && z >= 0 && z < depth)
+                            {
+                                terrain[x, y, z] = Substance.air;
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Change the direction more frequently and with larger range
+            if (Random.value < 0.4f)  // 40% chance to change direction
+            {
+                // Randomly select a new direction for the worm to move in
+                wormDirection = new Vector3(Random.Range(-1f, 1f), Random.Range(-1f, 1f), Random.Range(-1f, 1f));
+                wormDirection.Normalize();
+            }
+
+            // Move the worm
+            wormPos += Vector3Int.FloorToInt(wormDirection * (Random.Range(1, 3)));
+
+            // Make sure the worm stays within the world boundaries
+            wormPos.x = Mathf.Clamp(wormPos.x, 1, width - 2);
+            wormPos.y = Mathf.Clamp(wormPos.y, 1, height - 2);
+            wormPos.z = Mathf.Clamp(wormPos.z, 1, depth - 2);
+        }
+    }
+
 
     private static void GenerateTree(Substance[,,] voxels, Vector3Int position)
     {
