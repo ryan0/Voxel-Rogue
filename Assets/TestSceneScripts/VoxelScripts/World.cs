@@ -4,9 +4,9 @@ using UnityEngine;
 
 public class World : MonoBehaviour
 {
-    public const int chunksX = 32;
-    public const int chunksY = 16;
-    public const int chunksZ = 32;
+    public const int chunksX = 12;
+    public const int chunksY = 12;
+    public const int chunksZ = 12;
 
     [SerializeField]
     private GameObject player;
@@ -25,7 +25,7 @@ public class World : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        Substance[,,] terrainData = WorldGeneration.genTerrain();
+        Substance[,,] terrainData = WorldGeneration.GenerateTerrain();
 
         for (int x = 0; x < chunksX; x++)
         {

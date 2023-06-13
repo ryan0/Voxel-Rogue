@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System.Linq;
 
 public class WorldGeneration
 {
@@ -16,47 +17,58 @@ public class WorldGeneration
         return (xy + xz + yz + yx + zx + zy) / 6f;
     }
 
-
-    public static Substance[,,] genTerrain()
+    public static Substance[,,] GenerateTerrain()
     {
-
         int width = World.chunksX * Chunk.width;
         int height = World.chunksY * Chunk.height;
         int depth = World.chunksZ * Chunk.depth;
-        int[,] terrainHeights = new int[width, depth];  // Store terrain height for each (x, z)
+        int[,] terrainHeights = new int[width, depth];
         Substance[,,] terrain = new Substance[width, height, depth];
-
-        float scale = 0.1f * Voxel.size;  // Adjust this value to change the 'resolution' of your terrain
-        float heightScale = 30.0f;  // Adjust this value to change the maximum height of the terrain
-        float waterScale = 0.01f;  // Adjust this value to change the 'roughness' of your water distribution (smaller for larger bodies)
-        float waterThreshold = 0.5f;  // Lower this value to make water more common
+        float scale = 0.1f * Voxel.size;
+        float heightScale = 30.0f;
         int floorValue = 64;
+        float treeProbability = 0.005f;
+        System.Random random = new System.Random();
 
-        int waterLevel = 3; // Increase this Y coordinate to make the land more often under water
-        waterLevel += floorValue;
-        // Variables related to tree generation
-        float treeProbability = 0.005f;  // Probability of tree being generated at any eligible location
-        System.Random random = new System.Random();  // Seed this for deterministic tree placement
+        CalculateTerrainHeights(width, depth, scale, heightScale, floorValue, terrainHeights);
 
+        GenerateTerrainBlocks(width, height, depth, terrainHeights, terrain);
+
+        GenerateWorms(terrain, 5);
+
+        GenerateRivers(floorValue, terrain, terrainHeights, 5);
+
+        GenerateTrees(width, depth, scale, heightScale, floorValue, treeProbability, terrain, random);
+
+        return terrain;
+    }
+
+    private static void CalculateTerrainHeights(int width, int depth, float scale, float heightScale, int floorValue, int[,] terrainHeights)
+    {
         for (int x = 0; x < width; x++)
         {
             for (int z = 0; z < depth; z++)
             {
-                // Calculate the height of the terrain at this point
                 int terrainHeight = Mathf.FloorToInt(Mathf.PerlinNoise(x * scale, z * scale) * heightScale);
                 terrainHeight += floorValue;
                 terrainHeights[x, z] = terrainHeight;
+            }
+        }
+    }
 
-                // Calculate the water noise at this point
-                float waterNoise = Mathf.PerlinNoise(x * waterScale, z * waterScale);
+    private static void GenerateTerrainBlocks(int width, int height, int depth, int[,] terrainHeights, Substance[,,] terrain)
+    {
+        for (int x = 0; x < width; x++)
+        {
+            for (int z = 0; z < depth; z++)
+            {
+                int terrainHeight = terrainHeights[x, z];
 
                 for (int y = 0; y < height; y++)
                 {
                     if (y < terrainHeight)
                     {
-                        // Below the terrain height, we fill with Voxel types
-                        // Here, we make a simple decision: if it's the top layer, place Dirt; otherwise, Stone
-                        if (y == terrainHeight - 1 && y >= waterLevel)
+                        if (y == terrainHeight - 1)
                         {
                             terrain[x, y, z] = Substance.dirt;
                         }
@@ -67,68 +79,107 @@ public class WorldGeneration
                     }
                     else
                     {
-                        // Above the terrain height, we fill with Air or Water based on the water noise
-                        if (waterNoise > waterThreshold && y <= waterLevel)
+                       
+                        terrain[x, y, z] = Substance.air;
+                    }
+                }
+            }
+        }
+    }
+
+    private static void GenerateWorms(Substance[,,] terrain, int numWorms)
+    {
+        for (int i = 0; i < numWorms; i++)
+        {
+            GenerateWorm(terrain);
+        }
+    }
+
+    private static void GenerateRivers(int floorValue, Substance[,,] terrain, int[,] terrainHeights, int numRivers)
+    {
+        for (int i = 0; i < numRivers; i++)
+        {
+            GenerateRiver(floorValue, terrainHeights, terrain);
+        }
+    }
+
+    private static void GenerateRiver(int floorValue, int[,] terrainHeights, Substance[,,] terrain)
+    {
+        int width = terrainHeights.GetLength(0);
+        int depth = terrainHeights.GetLength(1);
+
+        int riverLength = Random.Range(width / 4, width / 2);
+        int startX = Random.Range(0, width);
+        int startZ = Random.Range(0, depth);
+
+        int directionX = Random.Range(-1, 2);
+        int directionZ = Random.Range(-1, 2);
+
+        int currentX = startX;
+        int currentZ = startZ;
+
+        for (int j = 0; j < riverLength; j++)
+        {
+            currentX += directionX;
+            currentZ += directionZ;
+
+            if (currentX < 0 || currentX >= width || currentZ < 0 || currentZ >= depth)
+                break;
+
+            int riverWidth = Random.Range(1, 4);
+            int riverHeight = Random.Range(floorValue + 1, terrainHeights[currentX, currentZ] - 1);
+
+            for (int y = floorValue; y <= riverHeight; y++)
+            {
+                for (int k = -riverWidth; k <= riverWidth; k++)
+                {
+                    for (int l = -riverWidth; l <= riverWidth; l++)
+                    {
+                        int posX = currentX + k;
+                        int posZ = currentZ + l;
+
+                        if (posX >= 0 && posX < width && posZ >= 0 && posZ < depth)
                         {
-                            terrain[x, y, z] = Substance.water;
-                        }
-                        else
-                        {
-                            terrain[x, y, z] = Substance.air;
+                            terrain[posX, y, posZ] = Substance.water;
                         }
                     }
                 }
             }
         }
-
-        // Generate some worms
-        int numWorms = 5;  // Start with a reasonable number of worms
-        for (int i = 0; i < numWorms; i++)
-        {
-            GenerateWorm(terrain);
-        }
-
-        int numRivers = 2;  // Start with a reasonable number of rivers
-        int riverAirThreshold = 10;  // Number of air tiles above for a river to be more likely. Adjust as necessary.
-        for (int i = 0; i < numRivers; i++)
-        {
-            //GenerateRiver(terrain, terrainHeights, .8f, 1000, 10);
-        }
-
-
-
+    }
+    private static void GenerateTrees(int width, int depth, float scale, float heightScale, int floorValue, float treeProbability, Substance[,,] terrain, System.Random random)
+    {
         for (int x = 0; x < width; x++)
         {
             for (int z = 0; z < depth; z++)
             {
-                // Calculate the height of the terrain at this point
                 int terrainHeight = Mathf.FloorToInt(Mathf.PerlinNoise(x * scale, z * scale) * heightScale);
                 terrainHeight += floorValue;
 
-                bool invalidTreeSpot =  false;
-                for (int y = terrainHeight - 1; y >= waterLevel; y--)
-                {
-                    // If water is detected in the column, mark waterDetected as true
-                    if (terrain[x, y, z] == Substance.water || terrain[x, y, z] == Substance.air)
-                    {
-                        invalidTreeSpot = true;
-                        break;
-                    }
-                }
+                bool invalidTreeSpot = CheckInvalidTreeSpot(x, z, terrain, terrainHeight, floorValue);
 
-                // Modify the tree spawn condition to exclude waterDetected locations
-                if (random.NextDouble() < treeProbability && terrainHeight > waterLevel && !invalidTreeSpot)
+                if (random.NextDouble() < treeProbability && !invalidTreeSpot)
                 {
                     Vector3Int treePos = new Vector3Int(x, terrainHeight, z);
                     GenerateTree(terrain, treePos);
                 }
             }
         }
-
-
-        return terrain;
     }
 
+    private static bool CheckInvalidTreeSpot(int x, int z, Substance[,,] terrain, int terrainHeight, int floor)
+    {
+        bool invalidTreeSpot = false;
+        for (int y = terrainHeight - 1; y >= floor; y--)
+        {
+            if (terrain[x, y, z] == Substance.water || terrain[x, y, z] == Substance.air)
+            {
+                invalidTreeSpot = true;
+                break;
+            }
+        }
+        return invalidTreeSpot;
+    }
 
     public static void GenerateTerraceFarms(Substance[,,] terrain, int[,] terrainHeights, float riverThreshold = 0.2f, int maxRiverLength = 100)
     {
@@ -514,8 +565,4 @@ public class WorldGeneration
 
 
 }
-
-
-
-
 
