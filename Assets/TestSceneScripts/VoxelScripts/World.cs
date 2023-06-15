@@ -12,6 +12,10 @@ public class World : MonoBehaviour
     private GameObject player;
 
     private Chunk[,,] chunks = new Chunk[chunksX, chunksY, chunksZ];
+    public Chunk[,,] getChunks()
+    {
+        return chunks;
+    }
 
     private const float substanceSystemInterval = 1.0f;
     private float substanceSystemTimer = 0.0f;
@@ -19,6 +23,10 @@ public class World : MonoBehaviour
     private const float temperatureSystemInterval = 5.0f;
     private float temperatureSystemTimer = 0.5f;
 
+    private const float fluidFlowSystemInterval = 1.0f;
+    private float fluidFlowSystemTimer = 0.0f;
+
+    FluidFlowSystem fluidFlowSystem = new ();
     SubstanceInteractionSystem substanceInteractionSystem = new();
     TemperatureSystem temperatureSystem = new();
 
@@ -59,7 +67,16 @@ public class World : MonoBehaviour
             temperatureSystemTimer -= temperatureSystemInterval;
             this.temperatureSystem.UpdateTemperatures(getActiveChunks());
         }
-        
+
+        fluidFlowSystemTimer += Time.deltaTime;
+        if (fluidFlowSystemTimer >= fluidFlowSystemInterval)
+        {
+            fluidFlowSystemTimer -= fluidFlowSystemInterval;
+            this.fluidFlowSystem.UpdateFluidFlow(getActiveChunks());
+        }
+
+
+
     }
     
     public Chunk getChunkAt(Vector3Int pos)

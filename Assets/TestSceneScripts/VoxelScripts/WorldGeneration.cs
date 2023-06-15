@@ -105,48 +105,68 @@ public class WorldGeneration
 
     private static void GenerateRiver(int floorValue, int[,] terrainHeights, Substance[,,] terrain)
     {
-        int width = terrainHeights.GetLength(0);
-        int depth = terrainHeights.GetLength(1);
+        int width = terrain.GetLength(0);
+        int height = terrain.GetLength(1);
+        int depth = terrain.GetLength(2);
+        int riverWidth = 3;
+        float scale = 0.1f;
 
-        int riverLength = Random.Range(width / 4, width / 2);
-        int startX = Random.Range(0, width);
-        int startZ = Random.Range(0, depth);
-
-        int directionX = Random.Range(-1, 2);
-        int directionZ = Random.Range(-1, 2);
-
-        int currentX = startX;
-        int currentZ = startZ;
-
-        for (int j = 0; j < riverLength; j++)
+        // Find the highest point on the map as the river source
+        int highestX = 0, highestZ = 0, highestHeight = int.MinValue;
+        for (int x = 0; x < width; x++)
         {
-            currentX += directionX;
-            currentZ += directionZ;
-
-            if (currentX < 0 || currentX >= width || currentZ < 0 || currentZ >= depth)
-                break;
-
-            int riverWidth = Random.Range(1, 4);
-            int riverHeight = Random.Range(floorValue + 1, terrainHeights[currentX, currentZ] - 1);
-
-            for (int y = floorValue; y <= riverHeight; y++)
+            for (int z = 0; z < depth; z++)
             {
-                for (int k = -riverWidth; k <= riverWidth; k++)
+                if (terrainHeights[x, z] > highestHeight)
                 {
-                    for (int l = -riverWidth; l <= riverWidth; l++)
-                    {
-                        int posX = currentX + k;
-                        int posZ = currentZ + l;
-
-                        if (posX >= 0 && posX < width && posZ >= 0 && posZ < depth)
-                        {
-                            terrain[posX, y, posZ] = Substance.water;
-                        }
-                    }
+                    highestX = x;
+                    highestZ = z;
+                    highestHeight = terrainHeights[x, z];
                 }
             }
         }
+
+        int currentX = highestX;
+        int currentZ = highestZ;
+
+        // Generate the river path
+        while (terrainHeights[currentX, currentZ] > floorValue)
+        {
+            int startX = Mathf.Max(0, currentX - riverWidth);
+            int endX = Mathf.Min(width - 1, currentX + riverWidth);
+            int startZ = Mathf.Max(0, currentZ - riverWidth);
+            int endZ = Mathf.Min(depth - 1, currentZ + riverWidth);
+
+            for (int x = startX; x <= endX; x++)
+            {
+                for (int z = startZ; z <= endZ; z++)
+                {
+                    for (int y = terrainHeights[x, z]; y >= floorValue; y--)
+                    {
+                        terrain[x, y, z] = Substance.water;
+                    }
+                    terrainHeights[x, z] = floorValue;
+                }
+            }
+
+            // Update currentX and currentZ towards the direction of the slope
+            float slopeX = PerlinNoise3D((currentX + 1) * scale, highestHeight * scale, currentZ * scale) -
+                           PerlinNoise3D((currentX - 1) * scale, highestHeight * scale, currentZ * scale);
+            float slopeZ = PerlinNoise3D(currentX * scale, highestHeight * scale, (currentZ + 1) * scale) -
+                           PerlinNoise3D(currentX * scale, highestHeight * scale, (currentZ - 1) * scale);
+
+            // Normalize the slope
+            float length = Mathf.Sqrt(slopeX * slopeX + slopeZ * slopeZ);
+            slopeX /= length;
+            slopeZ /= length;
+
+            // Update the current position along the slope
+            currentX = Mathf.Clamp(currentX + (int)Mathf.Round(slopeX), 0, width - 1);
+            currentZ = Mathf.Clamp(currentZ + (int)Mathf.Round(slopeZ), 0, depth - 1);
+        }
     }
+
+
     private static void GenerateTrees(int width, int depth, float scale, float heightScale, int floorValue, float treeProbability, Substance[,,] terrain, System.Random random)
     {
         for (int x = 0; x < width; x++)

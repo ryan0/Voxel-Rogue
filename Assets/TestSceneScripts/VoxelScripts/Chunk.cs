@@ -39,7 +39,7 @@ public class Chunk : MonoBehaviour {
                 for (int z = 0; z < depth; z++)
                 {
                     Substance substance = terrainData[x + xOffset, y + yOffset, z + zOffset];
-                    chunk.voxels[x, y, z] = new Voxel(substance, biomeTemprature);
+                    chunk.voxels[x, y, z] = new Voxel(x, y, z, chunk, substance, biomeTemprature);
                 }
             }
         }
