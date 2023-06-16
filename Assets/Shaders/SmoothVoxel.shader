@@ -35,10 +35,10 @@ Shader "Custom/SmoothVoxel" {
                 o.vertex = UnityObjectToClipPos(v.vertex);
 
                 // Sample the noise texture
-                float noise = tex2D(_NoiseTex, v.uv).r;
+                half4 noiseSample = tex2D(_NoiseTex, v.uv);
                 
                 // Apply displacement
-                v.vertex.xyz += normalize(v.vertex.xyz) * _Displacement * noise;
+                v.vertex.xyz += normalize(v.vertex.xyz) * _Displacement * noiseSample.r;
                 
                 o.uv = TRANSFORM_TEX(v.uv, _MainTex);
                 return o;

@@ -70,6 +70,7 @@ public class ChunkMesh
             }
             MeshRenderer meshRenderer = chunkMesh.AddComponent<MeshRenderer>();
             meshRenderer.material = meshMat;
+            //meshRenderer.material = Resources.Load<Material>("Shaders/SmoothVoxelMaterial");
             chunkMesh.transform.position = new Vector3(xOffset, yOffset, zOffset);
             meshData.Add(entry.Key, chunkMesh);
         }
