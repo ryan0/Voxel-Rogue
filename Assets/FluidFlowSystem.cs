@@ -66,33 +66,90 @@ public class FluidFlowSystem
                 int y = coord.y;
                 int z = coord.z;
 
-                // Check if voxel is water and has more than one mote
+                // Check if voxel is water
                 Voxel voxel = voxels[x, y, z];
-                if (voxel.substance.id == Substance.water.id && voxel.motes > 1)
+                if (voxel.substance.id == Substance.water.id)
                 {
                     List<Voxel> adjacentVoxels = chunk.GetVoxelsAdjacentTo(x, y, z);
                     adjacentVoxels = adjacentVoxels.FindAll(v => v.substance.id == Substance.water.id || v.substance.id == Substance.air.id);
-                    // Remove voxels that are above the current voxel
-                    adjacentVoxels.RemoveAll(v => v.y > y);
 
-                    if (adjacentVoxels.Count > 0)
+                    // Drain functionality for when there's only one mote of water left
+                    if (voxel.motes == 1)
                     {
-                        // Randomly select an adjacent voxel to receive the mote
-                        Voxel targetVoxel = adjacentVoxels[rng.Next(adjacentVoxels.Count)];
-                        voxel.motes--;
-                        targetVoxel.motes++;
-
-                        // If the target voxel was air, change it to water and set motes to 1
-                        if (targetVoxel.substance.id == Substance.air.id)
+                        List<Voxel> waterVoxelsAnySize = adjacentVoxels.FindAll(v => v.substance.id == Substance.water.id);
+                        if (waterVoxelsAnySize.Count == 0)//when there is NO water of any mote quantity
                         {
-                            targetVoxel.substance = Substance.water;
-                            targetVoxel.motes = 1;
+                            // If there is air directly below
+                            if (y > 0 && voxels[x, y - 1, z].substance.id == Substance.air.id)
+                            {
+                                voxels[x, y - 1, z].substance = Substance.water;
+                                voxels[x, y - 1, z].motes = 1;
+                                voxel.substance = Substance.air;
+                                voxel.motes = 0;
+                                signalMeshRegen = true;
+                            }
                         }
+                        else
+                        {
 
-                        signalMeshRegen = true;
+                            // Look for adjacent water voxels to draw from that have MORE than 1 mote
+                            List<Voxel> waterVoxels = adjacentVoxels.FindAll(v => v.substance.id == Substance.water.id && v.motes > 1);
+
+                            if (waterVoxels.Count > 0)
+                            {
+                                // Draw from a random water voxel
+                                Voxel waterVoxel = waterVoxels[rng.Next(waterVoxels.Count)];
+                                waterVoxel.motes--;
+                                voxel.motes++;
+                            }
+                            else
+                            {
+                                // If there are no water voxels to draw from, move into the empty space
+                                // Find adjacent air voxels that are not above the current voxel
+                                List<Voxel> airVoxels = adjacentVoxels.FindAll(v => v.substance.id == Substance.air.id && v.y <= y);
+
+                                if (airVoxels.Count > 0)
+                                {
+                                    // Choose a random air voxel and move into it
+                                    Voxel airVoxel = airVoxels[rng.Next(airVoxels.Count)];
+                                    airVoxel.substance = Substance.water;
+                                    airVoxel.motes = 1;
+
+                                    // Leave air behind
+                                    voxel.substance = Substance.air;
+                                    voxel.motes = 0;
+                                }
+
+                            }
+
+                            signalMeshRegen = true;
+                        }
+                    }
+                    else if (voxel.motes > 1) // Original fluid flow for water with more than one mote
+                    {
+                        // Remove voxels that are above the current voxel
+                        adjacentVoxels.RemoveAll(v => v.y > y);
+
+                        if (adjacentVoxels.Count > 0)
+                        {
+                            // Randomly select an adjacent voxel to receive the mote
+                            Voxel targetVoxel = adjacentVoxels[rng.Next(adjacentVoxels.Count)];
+                            voxel.motes--;
+                            targetVoxel.motes++;
+
+                            // If the target voxel was air, change it to water and set motes to 1
+                            if (targetVoxel.substance.id == Substance.air.id)
+                            {
+                                targetVoxel.substance = Substance.water;
+                                targetVoxel.motes = 1;
+                            }
+
+                            signalMeshRegen = true;
+                        }
                     }
                 }
             }
+
 
             if (signalMeshRegen)
             {
