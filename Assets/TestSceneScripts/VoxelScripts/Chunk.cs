@@ -15,7 +15,11 @@ public class Chunk : MonoBehaviour {
     public const int width =  16;
     public const int height = 16;
     public const int depth =  16;
-    
+
+    public int widthPub = 16;//publically accessible fields
+    public int heightPub = 16;
+    public int depthPub = 16;
+
     public int xIndex = 0;
     public int yIndex = 0;
     public int zIndex = 0;

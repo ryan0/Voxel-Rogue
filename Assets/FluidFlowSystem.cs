@@ -90,7 +90,7 @@ public class FluidFlowSystem
                             }
                             else
                             {
-                                voxelBelow = adjacentVoxels.Find(v => v.chunk.yIndex < chunk.yIndex); // Neighbor below has a lower y-coordinate
+                                voxelBelow = voxel.chunk.bottomNeighbour.getVoxels()[x, voxel.chunk.heightPub - 1, z];//adjacentVoxels.Find(v => v.chunk.yIndex < chunk.yIndex); // Neighbor below has a lower y-coordinate
                             }
                             // If there is air directly below
                             if (voxelBelow!= null && voxelBelow.substance.id == Substance.air.id)
@@ -155,7 +155,7 @@ public class FluidFlowSystem
                             }
                             else
                             {
-                                voxelBelow = adjacentVoxels.Find(v => v.chunk.yIndex < chunk.yIndex); // Neighbor below has a lower y-coordinate
+                                voxelBelow = voxel.chunk.bottomNeighbour.getVoxels()[x, voxel.chunk.heightPub - 1, z];//adjacentVoxels.Find(v => v.chunk.yIndex < chunk.yIndex); // Neighbor below has a lower y-coordinate
                             }
                             if (voxelBelow!=null && (voxelBelow.substance.id == Substance.air.id || (voxelBelow.substance.id == Substance.water.id)))// && voxelBelow.motes < voxel.motes))
                             {
