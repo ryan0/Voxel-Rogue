@@ -4,28 +4,36 @@ using UnityEngine;
 
 public class World : MonoBehaviour
 {
-    public const int chunksX = 16;
-    public const int chunksY = 4;
-    public const int chunksZ = 16;
+    public const int chunksX = 12;
+    public const int chunksY = 12;
+    public const int chunksZ = 12;
 
     [SerializeField]
     private GameObject player;
 
     private Chunk[,,] chunks = new Chunk[chunksX, chunksY, chunksZ];
+    public Chunk[,,] getChunks()
+    {
+        return chunks;
+    }
 
-    private const float substanceSystemInterval = 1.0f;
+    private const float substanceSystemInterval = 2.0f;
     private float substanceSystemTimer = 0.0f;
 
     private const float temperatureSystemInterval = 5.0f;
     private float temperatureSystemTimer = 0.5f;
 
+    private const float fluidFlowSystemInterval = 0.5f;
+    private float fluidFlowSystemTimer = 0.0f;
+
+    FluidFlowSystem fluidFlowSystem = new ();
     SubstanceInteractionSystem substanceInteractionSystem = new();
     TemperatureSystem temperatureSystem = new();
 
     // Start is called before the first frame update
     void Start()
     {
-        Substance[,,] terrainData = WorldGeneration.genTerrain();
+        Substance[,,] terrainData = WorldGeneration.GenerateTerrain();
 
         for (int x = 0; x < chunksX; x++)
         {
@@ -37,7 +45,18 @@ public class World : MonoBehaviour
 
                     if (x > 5 && z > 5) biomeTemp = 0.0f;
 
-                    chunks[x, y, z] = Chunk.CreateChunk(x, y, z, terrainData, biomeTemp);
+                    chunks[x, y, z] = Chunk.CreateChunk(x, y, z, terrainData, biomeTemp, this);
+                    Chunk chunk = chunks[x, y, z];
+
+                    // Set the neighbors
+                    chunk.northNeighbour = (z < chunksZ - 1) ? chunks[x, y, z + 1] : null;
+                    chunk.southNeighbour = (z > 0) ? chunks[x, y, z - 1] : null;
+                    chunk.eastNeighbour = (x < chunksX - 1) ? chunks[x + 1, y, z] : null;
+                    chunk.westNeighbour = (x > 0) ? chunks[x - 1, y, z] : null;
+                    if (y < chunksY - 1) chunk.topNeighbour = chunks[x, y + 1, z];
+                    if (y > 0) chunk.bottomNeighbour = chunks[x, y - 1, z];
+
+
                 }
             }
         }
@@ -59,7 +78,16 @@ public class World : MonoBehaviour
             temperatureSystemTimer -= temperatureSystemInterval;
             this.temperatureSystem.UpdateTemperatures(getActiveChunks());
         }
-        
+
+        fluidFlowSystemTimer += Time.deltaTime;
+        if (fluidFlowSystemTimer >= fluidFlowSystemInterval)
+        {
+            fluidFlowSystemTimer -= fluidFlowSystemInterval;
+            this.fluidFlowSystem.UpdateFluidFlow(getActiveChunks());
+        }
+
+
+
     }
     
     public Chunk getChunkAt(Vector3Int pos)
@@ -136,6 +164,22 @@ public class World : MonoBehaviour
         chunks[chunkX, chunkY, chunkZ].destroyVoxelAt(voxelX, voxelY, voxelZ);
         spawnDebrisAt(substance,coord, 3);//DEBUG DEBUG DEBUG*/
         //end of spawn debris chunk
+    }
+
+    public void spawnVoxelAt(Vector3Int coord, Substance substance, int mote)
+    {
+        int chunkX = coord.x / Chunk.width;
+        int chunkY = coord.y / Chunk.height;
+        int chunkZ = coord.z / Chunk.depth;
+
+        int voxelX = coord.x - (chunkX * Chunk.width);
+        int voxelY = coord.y - (chunkY * Chunk.height);
+        int voxelZ = coord.z - (chunkZ * Chunk.depth);
+
+        // Access the appropriate chunk
+        Chunk targetChunk = chunks[chunkX, chunkY, chunkZ];
+        // Use a method in the Chunk class to create a new voxel at the specified local position
+        targetChunk.createVoxelAt(voxelX, voxelY, voxelZ, substance, mote);
     }
 
     public void spawnDebrisAt(Substance substance, Vector3Int coord, int nChunks)

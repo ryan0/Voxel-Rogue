@@ -1160,8 +1160,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 61cffd1668e364a9590a8e510bce732f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  speed: 10
-  mouseSensitivity: 2
+  speed: 20
+  mouseSensitivity: 3
   world: {fileID: 274436406}
   inventoryUI: {fileID: 390676799}
 --- !u!136 &1156799599

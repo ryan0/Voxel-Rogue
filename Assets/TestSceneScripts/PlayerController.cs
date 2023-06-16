@@ -31,12 +31,25 @@ public class PlayerController : MonoBehaviour
     {
         Look();
         Move();
-        if (Input.GetMouseButtonDown(0)) {
+        if (Input.GetMouseButtonDown(0))
+        {
             BreakVoxel();
         }
         if (Input.GetKeyDown(KeyCode.E))
         {
             PickUpDebris();
+        }
+        if (Input.GetKeyDown(KeyCode.G))
+        {
+            SpawnWaterVoxel(Substance.water);///debug water method
+        }
+    }
+
+    private void SpawnWaterVoxel(Substance voxelType)
+    {
+        if (RayCastToVoxel(out Vector3Int hitCoord))
+        {
+            world.spawnVoxelAt(hitCoord, voxelType, 5);
         }
     }
 
