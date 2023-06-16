@@ -6,7 +6,12 @@ public class ChunkMesh
 {
     readonly float s = Voxel.size;
     private Dictionary<int, GameObject> meshData = new Dictionary<int, GameObject>();
-
+    Vector2[] faceUVs = new Vector2[4] {
+        new Vector2(0, 0),
+        new Vector2(0, 1),
+        new Vector2(1, 1),
+        new Vector2(1, 0)
+    };
 
     public void DestroyMesh()
     {
@@ -25,6 +30,7 @@ public class ChunkMesh
 
         Dictionary<int, List<Vector3>> verticesData = new Dictionary<int, List<Vector3>>();
         Dictionary<int, List<int>> trianglesData = new Dictionary<int, List<int>>();
+        Dictionary<int, List<Vector2>> uvData = new Dictionary<int, List<Vector2>>(); // Add this line
 
         for (int x = 0; x < width; x++)
         {
@@ -32,7 +38,7 @@ public class ChunkMesh
             {
                 for (int z = 0; z < depth; z++)
                 {
-                    createVoxelRepresentationAt(voxels, verticesData, trianglesData, x, y, z);
+                    createVoxelRepresentationAt(voxels, verticesData, trianglesData, uvData, x, y, z); // Pass uvData here                }
                 }
             }
         }
@@ -44,6 +50,7 @@ public class ChunkMesh
 
             mesh.vertices = entry.Value.ToArray();
             mesh.triangles = trianglesData[entry.Key].ToArray();
+            mesh.uv = uvData[entry.Key].ToArray(); // Add UV data to the mesh
             mesh.RecalculateNormals();
 
             float xOffset = chunkIndexX * width * s;
@@ -69,7 +76,8 @@ public class ChunkMesh
     }
 
 
-    private void createVoxelRepresentationAt(Voxel[,,] voxels, Dictionary<int, List<Vector3>> verticesData, Dictionary<int, List<int>> trianglesData, int x, int y, int z)
+
+    private void createVoxelRepresentationAt(Voxel[,,] voxels, Dictionary<int, List<Vector3>> verticesData, Dictionary<int, List<int>> trianglesData, Dictionary<int, List<Vector2>> uvData, int x, int y, int z)
     {
         int width = voxels.GetLength(0);
         int height = voxels.GetLength(1);
@@ -79,11 +87,13 @@ public class ChunkMesh
 
         List<Vector3> vertices;
         List<int> triangles;
+        List<Vector2> uvs; // Add this line
 
         if (verticesData.ContainsKey(substance.id))
         {
             vertices = verticesData[substance.id];
             triangles = trianglesData[substance.id];
+            uvs = uvData[substance.id]; // Add this line
         }
         else
         {
@@ -91,7 +101,20 @@ public class ChunkMesh
             verticesData.Add(substance.id, vertices);
             triangles = new List<int>();
             trianglesData.Add(substance.id, triangles);
+            uvs = new List<Vector2>(); // Add this line
+            uvData.Add(substance.id, uvs); // Add this line
         }
+
+        if (!uvData.ContainsKey(substance.id))
+        {
+            uvs = new List<Vector2>();
+            uvData.Add(substance.id, uvs);
+        }
+        else
+        {
+            uvs = uvData[substance.id];
+        }
+
 
         if (substance.id != Substance.air.id)
         {
@@ -111,6 +134,12 @@ public class ChunkMesh
 
                 triangles.Add(0 + count); triangles.Add(2 + count); triangles.Add(1 + count);
                 triangles.Add(0 + count); triangles.Add(3 + count); triangles.Add(2 + count);
+
+                // Add UVs
+                uvs.Add(faceUVs[0]);
+                uvs.Add(faceUVs[1]);
+                uvs.Add(faceUVs[2]);
+                uvs.Add(faceUVs[3]);
             }
 
             if (y == (height - 1) || voxels[x, y + 1, z].substance.state == State.GAS) //Top
@@ -125,6 +154,12 @@ public class ChunkMesh
 
                 triangles.Add(0 + count); triangles.Add(1 + count); triangles.Add(2 + count);
                 triangles.Add(0 + count); triangles.Add(2 + count); triangles.Add(3 + count);
+
+                // Add UVs
+                uvs.Add(faceUVs[0]);
+                uvs.Add(faceUVs[1]);
+                uvs.Add(faceUVs[2]);
+                uvs.Add(faceUVs[3]);
             }
 
             if (z == 0 || voxels[x, y, z - 1].substance.state == State.GAS) // Front
@@ -139,6 +174,12 @@ public class ChunkMesh
 
                 triangles.Add(0 + count); triangles.Add(1 + count); triangles.Add(2 + count);
                 triangles.Add(0 + count); triangles.Add(2 + count); triangles.Add(3 + count);
+
+                // Add UVs
+                uvs.Add(faceUVs[0]);
+                uvs.Add(faceUVs[1]);
+                uvs.Add(faceUVs[2]);
+                uvs.Add(faceUVs[3]);
             }
 
             if (z == (depth - 1) || voxels[x, y, z + 1].substance.state == State.GAS) // Back
@@ -153,6 +194,12 @@ public class ChunkMesh
 
                 triangles.Add(0 + count); triangles.Add(2 + count); triangles.Add(1 + count);
                 triangles.Add(0 + count); triangles.Add(3 + count); triangles.Add(2 + count);
+
+                // Add UVs
+                uvs.Add(faceUVs[0]);
+                uvs.Add(faceUVs[1]);
+                uvs.Add(faceUVs[2]);
+                uvs.Add(faceUVs[3]);
             }
 
             if (x == 0 || voxels[x - 1, y, z].substance.state == State.GAS) // Left
@@ -167,6 +214,12 @@ public class ChunkMesh
 
                 triangles.Add(0 + count); triangles.Add(2 + count); triangles.Add(1 + count);
                 triangles.Add(0 + count); triangles.Add(3 + count); triangles.Add(2 + count);
+
+                // Add UVs
+                uvs.Add(faceUVs[0]);
+                uvs.Add(faceUVs[1]);
+                uvs.Add(faceUVs[2]);
+                uvs.Add(faceUVs[3]);
             }
 
             if (x == (width - 1) || voxels[x + 1, y, z].substance.state == State.GAS)
@@ -181,6 +234,12 @@ public class ChunkMesh
 
                 triangles.Add(0 + count); triangles.Add(1 + count); triangles.Add(2 + count);
                 triangles.Add(0 + count); triangles.Add(2 + count); triangles.Add(3 + count);
+
+                // Add UVs
+                uvs.Add(faceUVs[0]);
+                uvs.Add(faceUVs[1]);
+                uvs.Add(faceUVs[2]);
+                uvs.Add(faceUVs[3]);
             }
         }
     }
