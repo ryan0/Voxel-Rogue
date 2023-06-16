@@ -29,6 +29,7 @@ public class WorldGeneration
         int floorValue = 64;
         float treeProbability = 0.005f;
         System.Random random = new System.Random();
+        //Voxel[,,] voxels = new Voxel[width, height, depth];
 
         CalculateTerrainHeights(width, depth, scale, heightScale, floorValue, terrainHeights);
 
@@ -81,6 +82,7 @@ public class WorldGeneration
                     {
                        
                         terrain[x, y, z] = Substance.air;
+
                     }
                 }
             }
@@ -108,7 +110,7 @@ public class WorldGeneration
     {
         int width = terrain.GetLength(0);
         int depth = terrain.GetLength(2);
-        floorValue += 10;
+        floorValue += 8;
 
         // Random starting position for the river
         Vector3Int riverPos = new Vector3Int(Random.Range(0, width), floorValue, Random.Range(0, depth));
@@ -129,7 +131,9 @@ public class WorldGeneration
         for (int i = 0; i < riverLength; i++)
         {
             // Use Perlin noise to get a size multiplier ranging from 0.5 to 1.5
-            float sizeMultiplier = Mathf.PerlinNoise(i * noiseScale, i * noiseScale) + 0.5f;
+            //float sizeMultiplier = Mathf.PerlinNoise(i * noiseScale, i * noiseScale) + .5f;
+            // Perlin noise now generates values between 0.75 and 1.25
+            float sizeMultiplier = (Mathf.PerlinNoise(i * noiseScale, i * noiseScale) / 2f) + 0.75f;
 
             // Determine the size of the river at this point
             int riverSize = Mathf.FloorToInt(baseRiverSize * sizeMultiplier);
@@ -139,9 +143,33 @@ public class WorldGeneration
             {
                 for (int dz = -riverSize; dz <= riverSize; dz++)
                 {
-                    // Determine if this point is within the circle (a slice of the sphere at y = floorValue)
-                    double distance = Mathf.Sqrt(dx * dx + dz * dz);
+                    for (int dy = -riverSize; dy <= riverSize; dy++)
+                    {
+                        // Determine if this point is within the sphere
+                        double distance = Mathf.Sqrt(dx * dx + dy * dy + dz * dz);
+                        if (distance <= riverSize)
+                        {
+                            int x = riverPos.x + dx;
+                            int y = riverPos.y + dy;
+                            int z = riverPos.z + dz;
 
+                            // Wrap around the world boundaries
+                            x = (x + width) % width;
+                            //y = (y + height) % height;
+                            z = (z + depth) % depth;
+
+                            terrain[x, y, z] = Substance.air;
+
+                            if (dy < riverSize / 2)
+                            {
+                                if (terrain[x, y, z] == Substance.air)
+                                {
+                                    terrain[x, y, z] = Substance.water;
+                                }
+                            }
+                        }
+                    }
+                    /*
                     if (distance <= riverSize)
                     {
                         int x = riverPos.x + dx;
@@ -150,7 +178,6 @@ public class WorldGeneration
                         // Wrap around the world boundaries
                         x = (x + width) % width;
                         z = (z + depth) % depth;
-
                         // Replace the ground with water up to the halfway point of the carved path
                         for (int y = floorValue; y > floorValue - riverSize / 2; y--)
                         {
@@ -159,7 +186,7 @@ public class WorldGeneration
                                 terrain[x, y, z] = Substance.water;
                             }
                         }
-                    }
+                    }*/
                 }
             }
 
@@ -179,6 +206,7 @@ public class WorldGeneration
             riverPos.z = (riverPos.z + depth) % depth;
         }
     }
+
 
 
 

@@ -17,7 +17,7 @@ public class Voxel
     public float temperature;
     public int motes { get; set; } // new property for motes
 
-    public Voxel(int x, int y, int z, Chunk chunk, Substance substance, float temperature, int motes = 5)
+    public Voxel(int x, int y, int z, Chunk chunk, Substance substance, float temperature, int motes = 10)
     {
         this.x = x;
         this.y = y;

@@ -17,13 +17,13 @@ public class World : MonoBehaviour
         return chunks;
     }
 
-    private const float substanceSystemInterval = 1.0f;
+    private const float substanceSystemInterval = 2.0f;
     private float substanceSystemTimer = 0.0f;
 
-    private const float temperatureSystemInterval = 2.0f;
+    private const float temperatureSystemInterval = 5.0f;
     private float temperatureSystemTimer = 0.5f;
 
-    private const float fluidFlowSystemInterval = 1.0f;
+    private const float fluidFlowSystemInterval = 0.5f;
     private float fluidFlowSystemTimer = 0.0f;
 
     FluidFlowSystem fluidFlowSystem = new ();
