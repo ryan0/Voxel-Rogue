@@ -27,6 +27,13 @@ public class SubstanceInteractionSystem
         transmuteInteractions[Substance.wood.id] = new();
         transmuteInteractions[Substance.wood.id].Add(new TransmuteInteraction(Substance.lava.id, Substance.smoke.id));
 
+        transmuteInteractions[Substance.lava.id] = new ();
+        transmuteInteractions[Substance.lava.id].Add(new TransmuteInteraction(Substance.water.id, Substance.stone.id));
+
+        transmuteInteractions[Substance.water.id] = new ();
+        transmuteInteractions[Substance.water.id].Add(new TransmuteInteraction(Substance.lava.id, Substance.steam.id));
+
+
     }
 
 

@@ -37,7 +37,9 @@ public class WorldGeneration
 
         GenerateWorms(terrain, 2);
 
-        GenerateRivers(floorValue, terrain, terrainHeights, 1);
+        GenerateRivers(floorValue, terrain, terrainHeights, 1, Substance.water);
+
+        GenerateRivers(floorValue, terrain, terrainHeights, 1, Substance.lava);
 
         GenerateTrees(width, depth, scale, heightScale, floorValue, treeProbability, terrain, random);
 
@@ -97,16 +99,16 @@ public class WorldGeneration
         }
     }
 
-    private static void GenerateRivers(int floorValue, Substance[,,] terrain, int[,] terrainHeights, int numRivers)
+    private static void GenerateRivers(int floorValue, Substance[,,] terrain, int[,] terrainHeights, int numRivers, Substance riverType)
     {
         for (int i = 0; i < numRivers; i++)
         {
-            GenerateRiver(floorValue, terrainHeights, terrain);
+            GenerateRiver(floorValue, terrainHeights, terrain, riverType);
         }
     }
 
 
-    private static void GenerateRiver(int floorValue, int[,] terrainHeights, Substance[,,] terrain)
+    private static void GenerateRiver(int floorValue, int[,] terrainHeights, Substance[,,] terrain, Substance riverType)
     {
         int width = terrain.GetLength(0);
         int depth = terrain.GetLength(2);
@@ -116,7 +118,7 @@ public class WorldGeneration
         Vector3Int riverPos = new Vector3Int(Random.Range(0, width), floorValue, Random.Range(0, depth));
 
         // Length of the river
-        int riverLength = 1000;  // Adjust as necessary
+        int riverLength = 800;  // Adjust as necessary
 
         // Random direction for the river to move in (only in x and z)
         Vector3 riverDirection = new Vector3(Random.Range(-1f, 1f), 0f, Random.Range(-1f, 1f));
@@ -126,7 +128,7 @@ public class WorldGeneration
         float noiseScale = 0.05f;
 
         // Base size of the river
-        int baseRiverSize = 6; // The larger the size, the larger the river. Adjust as necessary.
+        int baseRiverSize = 5; // The larger the size, the larger the river. Adjust as necessary.
 
         for (int i = 0; i < riverLength; i++)
         {
@@ -164,29 +166,11 @@ public class WorldGeneration
                             {
                                 if (terrain[x, y, z] == Substance.air)
                                 {
-                                    terrain[x, y, z] = Substance.water;
+                                    terrain[x, y, z] = riverType;
                                 }
                             }
                         }
-                    }
-                    /*
-                    if (distance <= riverSize)
-                    {
-                        int x = riverPos.x + dx;
-                        int z = riverPos.z + dz;
-
-                        // Wrap around the world boundaries
-                        x = (x + width) % width;
-                        z = (z + depth) % depth;
-                        // Replace the ground with water up to the halfway point of the carved path
-                        for (int y = floorValue; y > floorValue - riverSize / 2; y--)
-                        {
-                            if (terrain[x, y, z] == Substance.air)
-                            {
-                                terrain[x, y, z] = Substance.water;
-                            }
-                        }
-                    }*/
+                    }                   
                 }
             }
 
