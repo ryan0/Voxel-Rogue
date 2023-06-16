@@ -47,8 +47,9 @@ public class FluidFlowSystem
                 }
             }
 
-            // Shuffle the list
             System.Random rng = new System.Random();
+            // Shuffle the list
+            /*
             int n = voxelCoordinates.Count;
             while (n > 1)
             {
@@ -57,7 +58,20 @@ public class FluidFlowSystem
                 Vector3Int value = voxelCoordinates[k];
                 voxelCoordinates[k] = voxelCoordinates[n];
                 voxelCoordinates[n] = value;
+            }*/
+
+            // Instead of shuffling the voxelCoordinates list, create it in the desired order:
+            for (int y = 0; y < Chunk.height; y++) // Bottom to top
+            {
+                for (int z = Chunk.depth - 1; z >= 0; z--) // Back to front
+                {
+                    for (int x = 0; x < Chunk.width; x++) // Left to right
+                    {
+                        voxelCoordinates.Add(new Vector3Int(x, y, z));
+                    }
+                }
             }
+
 
             // Loop over the shuffled list
             foreach (Vector3Int coord in voxelCoordinates)
@@ -132,8 +146,19 @@ public class FluidFlowSystem
 
                         if (adjacentVoxels.Count > 0)
                         {
-                            // Randomly select an adjacent voxel to receive the mote
-                            Voxel targetVoxel = adjacentVoxels[rng.Next(adjacentVoxels.Count)];
+                            Voxel targetVoxel;
+
+                            // Check if the voxel below is eligible
+                            if (y > 0 && (voxels[x, y - 1, z].substance.id == Substance.air.id || (voxels[x, y - 1, z].substance.id == Substance.water.id && voxels[x, y - 1, z].motes < voxel.motes)))
+                            {
+                                targetVoxel = voxels[x, y - 1, z];
+                            }
+                            else
+                            {
+                                // If the voxel below is not eligible, randomly select an adjacent voxel to receive the mote
+                                targetVoxel = adjacentVoxels[rng.Next(adjacentVoxels.Count)];
+                            }
+
                             voxel.motes--;
                             targetVoxel.motes++;
 
@@ -145,6 +170,7 @@ public class FluidFlowSystem
                             }
 
                             signalMeshRegen = true;
+
                         }
                     }
                 }
@@ -157,6 +183,7 @@ public class FluidFlowSystem
             }
         }
     }
+
 
     //private Substance Hybridize(Substance a, Substance b)
     //{

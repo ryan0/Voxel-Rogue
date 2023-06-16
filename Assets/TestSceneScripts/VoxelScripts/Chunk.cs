@@ -113,12 +113,36 @@ public class Chunk : MonoBehaviour {
         if (z > 0) adjacentVoxels.Add(voxels[x, y, z - 1]);
 
         // Handling voxel adjacencies between chunks
-        if (x == 0 && westNeighbour != null) adjacentVoxels.Add(westNeighbour.getVoxels()[width - 1, y, z]);
-        if (x == width - 1 && eastNeighbour != null) adjacentVoxels.Add(eastNeighbour.getVoxels()[0, y, z]);
-        if (y == 0 && bottomNeighbour != null) adjacentVoxels.Add(bottomNeighbour.getVoxels()[x, height - 1, z]);
-        if (y == height - 1 && topNeighbour != null) adjacentVoxels.Add(topNeighbour.getVoxels()[x, 0, z]);
-        if (z == 0 && southNeighbour != null) adjacentVoxels.Add(southNeighbour.getVoxels()[x, y, depth - 1]);
-        if (z == depth - 1 && northNeighbour != null) adjacentVoxels.Add(northNeighbour.getVoxels()[x, y, 0]);
+        if (x == 0 && westNeighbour != null)
+        {
+            Debug.Log("Adding voxel from West neighbour.");
+            adjacentVoxels.Add(westNeighbour.getVoxels()[width - 1, y, z]);
+        }
+        if (x == width - 1 && eastNeighbour != null)
+        {
+            Debug.Log("Adding voxel from East neighbour.");
+            adjacentVoxels.Add(eastNeighbour.getVoxels()[0, y, z]);
+        }
+        if (y == 0 && bottomNeighbour != null)
+        {
+            Debug.Log("Adding voxel from Bottom neighbour.");
+            adjacentVoxels.Add(bottomNeighbour.getVoxels()[x, height - 1, z]);
+        }
+        if (y == height - 1 && topNeighbour != null)
+        {
+            Debug.Log("Adding voxel from Top neighbour.");
+            adjacentVoxels.Add(topNeighbour.getVoxels()[x, 0, z]);
+        }
+        if (z == 0 && southNeighbour != null)
+        {
+            Debug.Log("Adding voxel from South neighbour.");
+            adjacentVoxels.Add(southNeighbour.getVoxels()[x, y, depth - 1]);
+        }
+        if (z == depth - 1 && northNeighbour != null)
+        {
+            Debug.Log("Adding voxel from North neighbour.");
+            adjacentVoxels.Add(northNeighbour.getVoxels()[x, y, 0]);
+        }
 
         return adjacentVoxels;
     }

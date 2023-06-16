@@ -46,16 +46,26 @@ public class World : MonoBehaviour
                     if (x > 5 && z > 5) biomeTemp = 0.0f;
 
                     chunks[x, y, z] = Chunk.CreateChunk(x, y, z, terrainData, biomeTemp, this);
+                }
+            }
+        }
+
+        for (int x = 0; x < chunksX; x++)
+        {
+            for (int y = 0; y < chunksY; y++)
+            {
+                for (int z = 0; z < chunksZ; z++)
+                {
                     Chunk chunk = chunks[x, y, z];
 
                     // Set the neighbors
+                    Debug.Log("Setting neighbours for chunk at " + x + ", " + y + ", " + z);
                     chunk.northNeighbour = (z < chunksZ - 1) ? chunks[x, y, z + 1] : null;
                     chunk.southNeighbour = (z > 0) ? chunks[x, y, z - 1] : null;
                     chunk.eastNeighbour = (x < chunksX - 1) ? chunks[x + 1, y, z] : null;
                     chunk.westNeighbour = (x > 0) ? chunks[x - 1, y, z] : null;
-                    if (y < chunksY - 1) chunk.topNeighbour = chunks[x, y + 1, z];
-                    if (y > 0) chunk.bottomNeighbour = chunks[x, y - 1, z];
-
+                    chunk.topNeighbour = (y < chunksY - 1) ? chunks[x, y + 1, z] : null;
+                    chunk.bottomNeighbour = (y > 0) ? chunks[x, y - 1, z] : null;
 
                 }
             }
