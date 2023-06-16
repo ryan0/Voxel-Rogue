@@ -36,17 +36,7 @@ public class FluidFlowSystem
 
             // Create a list of all voxel coordinates
             List<Vector3Int> voxelCoordinates = new List<Vector3Int>();
-            for (int x = 0; x < Chunk.width; x++)
-            {
-                for (int y = 0; y < Chunk.height; y++)
-                {
-                    for (int z = 0; z < Chunk.depth; z++)
-                    {
-                        voxelCoordinates.Add(new Vector3Int(x, y, z));
-                    }
-                }
-            }
-
+           
             System.Random rng = new System.Random();
             // Shuffle the list
             /*
@@ -93,11 +83,20 @@ public class FluidFlowSystem
                         List<Voxel> waterVoxelsAnySize = adjacentVoxels.FindAll(v => v.substance.id == Substance.water.id);
                         if (waterVoxelsAnySize.Count == 0)//when there is NO water of any mote quantity
                         {
-                            // If there is air directly below
-                            if (y > 0 && voxels[x, y - 1, z].substance.id == Substance.air.id)
+                            Voxel voxelBelow;
+                            if (y > 0)
                             {
-                                voxels[x, y - 1, z].substance = Substance.water;
-                                voxels[x, y - 1, z].motes = 1;
+                                voxelBelow = voxels[x, y - 1, z];
+                            }
+                            else
+                            {
+                                voxelBelow = adjacentVoxels.Find(v => v.chunk.yIndex < chunk.yIndex); // Neighbor below has a lower y-coordinate
+                            }
+                            // If there is air directly below
+                            if (voxelBelow!= null && voxelBelow.substance.id == Substance.air.id)
+                            {
+                                voxelBelow.substance = Substance.water;
+                                voxelBelow.motes = 1;
                                 voxel.substance = Substance.air;
                                 voxel.motes = 0;
                                 signalMeshRegen = true;
@@ -149,9 +148,18 @@ public class FluidFlowSystem
                             Voxel targetVoxel;
 
                             // Check if the voxel below is eligible
-                            if (y > 0 && (voxels[x, y - 1, z].substance.id == Substance.air.id || (voxels[x, y - 1, z].substance.id == Substance.water.id && voxels[x, y - 1, z].motes < voxel.motes)))
+                            Voxel voxelBelow;
+                            if(y > 0)
                             {
-                                targetVoxel = voxels[x, y - 1, z];
+                                voxelBelow = voxels[x, y - 1, z];
+                            }
+                            else
+                            {
+                                voxelBelow = adjacentVoxels.Find(v => v.chunk.yIndex < chunk.yIndex); // Neighbor below has a lower y-coordinate
+                            }
+                            if (voxelBelow!=null && (voxelBelow.substance.id == Substance.air.id || (voxelBelow.substance.id == Substance.water.id)))// && voxelBelow.motes < voxel.motes))
+                            {
+                                targetVoxel = voxelBelow;
                             }
                             else
                             {

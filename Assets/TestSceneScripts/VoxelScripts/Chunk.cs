@@ -16,9 +16,9 @@ public class Chunk : MonoBehaviour {
     public const int height = 16;
     public const int depth =  16;
     
-    private int xIndex = 0;
-    private int yIndex = 0;
-    private int zIndex = 0;
+    public int xIndex = 0;
+    public int yIndex = 0;
+    public int zIndex = 0;
 
     private float biomeTemperature;
 
