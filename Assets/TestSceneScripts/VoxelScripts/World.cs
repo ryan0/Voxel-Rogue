@@ -20,7 +20,7 @@ public class World : MonoBehaviour
     private const float substanceSystemInterval = 1.0f;
     private float substanceSystemTimer = 0.0f;
 
-    private const float temperatureSystemInterval = 5.0f;
+    private const float temperatureSystemInterval = 2.0f;
     private float temperatureSystemTimer = 0.5f;
 
     private const float fluidFlowSystemInterval = 1.0f;
@@ -153,6 +153,22 @@ public class World : MonoBehaviour
         chunks[chunkX, chunkY, chunkZ].destroyVoxelAt(voxelX, voxelY, voxelZ);
         spawnDebrisAt(substance,coord, 3);//DEBUG DEBUG DEBUG*/
         //end of spawn debris chunk
+    }
+
+    public void spawnVoxelAt(Vector3Int coord, Substance substance, int mote)
+    {
+        int chunkX = coord.x / Chunk.width;
+        int chunkY = coord.y / Chunk.height;
+        int chunkZ = coord.z / Chunk.depth;
+
+        int voxelX = coord.x - (chunkX * Chunk.width);
+        int voxelY = coord.y - (chunkY * Chunk.height);
+        int voxelZ = coord.z - (chunkZ * Chunk.depth);
+
+        // Access the appropriate chunk
+        Chunk targetChunk = chunks[chunkX, chunkY, chunkZ];
+        // Use a method in the Chunk class to create a new voxel at the specified local position
+        targetChunk.createVoxelAt(voxelX, voxelY, voxelZ, substance, mote);
     }
 
     public void spawnDebrisAt(Substance substance, Vector3Int coord, int nChunks)

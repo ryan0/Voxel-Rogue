@@ -52,6 +52,15 @@ public class Chunk : MonoBehaviour {
         mesh.GenerateMesh(voxels, xIndex, yIndex, zIndex);
     }
 
+    public void createVoxelAt(int x, int y, int z, Substance substance, int mote)
+    {
+        // Create a new voxel at the specified position
+        voxels[x, y, z] = new Voxel(x, y, z, this, substance, biomeTemperature, mote);
+
+        // Signal that the mesh needs to be regenerated due to voxel changes
+        SignalMeshRegen();
+    }
+
     public void SignalMeshRegen()
     {
         this.signalToRegenMesh = true;
