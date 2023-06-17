@@ -35,7 +35,7 @@ public class WorldGeneration
 
         GenerateTerrainBlocks(width, height, depth, terrainHeights, terrain);
 
-        GenerateWorms(terrain, 2);
+        GenerateWorms(terrain, 3);
 
         GenerateRivers(floorValue, terrain, terrainHeights, 1, Substance.water);
 

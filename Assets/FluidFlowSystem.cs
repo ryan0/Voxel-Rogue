@@ -97,34 +97,6 @@ public class FluidFlowSystem
                 }
             }
 
-            /*
-            for (int y = 0; y < Chunk.height; y++)
-            {
-                for (int z = Chunk.depth - 1; z >= 0; z--)
-                {
-                    for (int x = 0; x < Chunk.width; x++)
-                    {
-                        Voxel voxel = voxels[x, y, z];
-                        // Check if voxel is static
-                        if (staticVoxels.Contains(voxel))
-                        {
-                            continue;
-                        }
-                        if (voxel.substance.id == Substance.water.id || voxel.substance.id == Substance.lava.id)
-                        {
-                            Voxel[] adjacentVoxels = chunk.GetVoxelsAdjacentTo(x, y, z);
-                            // Only flow if not surrounded by the same fluid
-                            if (HasNonFluidNeighbor(adjacentVoxels, voxel.substance.id))
-                            {
-                                Flow(voxel, chunk, voxels, x, y, z, voxel.substance);
-                                signalMeshRegen = true;
-                            }
-                        }
-                    }
-                }
-            }
-            */
-
             if (signalMeshRegen)
             {
                 chunk.SignalMeshRegen();
@@ -255,9 +227,27 @@ public class FluidFlowSystem
         else if (voxel.motes > 1) // Original fluid flow for water with more than one mote
         {
             // Remove voxels that are above the current voxel
-            filteredAdjacentVoxels.RemoveAll(v => v.y > y);
-
-            if (filteredAdjacentVoxels.Count > 0)
+            //filteredAdjacentVoxels.RemoveAll(v => v.y > y);
+            Voxel[] airVoxels;
+            int count = 0;
+            foreach (Voxel adjV in filteredAdjacentVoxels)
+            {
+                if (adjV.substance.id == Substance.air.id && adjV.globalY <= globalY)
+                {
+                    count++;
+                }
+            }
+            airVoxels = new Voxel[count];
+            count = 0;
+            foreach (Voxel adjV in filteredAdjacentVoxels)
+            {
+                if (adjV.substance.id == Substance.air.id && adjV.globalY <= globalY)
+                {
+                    airVoxels[count] = adjV;
+                    count++;
+                }
+            }
+            if (count > 0)//if there is any valid air voxel
             {
                 Voxel targetVoxel;
 
@@ -267,7 +257,7 @@ public class FluidFlowSystem
                 {
                     voxelBelow = voxels[x, y - 1, z];
                 }
-                else
+                else//bottom chunk neighbor
                 {
                     voxelBelow = adjacentVoxels[4];//voxel.chunk.bottomNeighbour.getVoxels()[x, voxel.chunk.heightPub - 1, z];//adjacentVoxels.Find(v => v.chunk.yIndex < chunk.yIndex); // Neighbor below has a lower y-coordinate
                 }
@@ -277,8 +267,8 @@ public class FluidFlowSystem
                 }
                 else
                 {
-                    // If the voxel below is not eligible, randomly select an adjacent voxel to receive the mote
-                    targetVoxel = adjacentVoxels[rng.Next(filteredAdjacentVoxels.Count)];
+                    // If the voxel below is not eligible,  select an adjacent voxel to receive the mote
+                    targetVoxel = airVoxels[rng.Next(count)];
                 }
 
                 voxel.motes--;
@@ -293,7 +283,7 @@ public class FluidFlowSystem
                         targetVoxel.substance = fluidType;
                         targetVoxel.motes = 1;
                     }
-                    else if(targetVoxel.substance.id == fluidType.id)
+                    else if (targetVoxel.substance.id == fluidType.id)
                     {
                         targetVoxel.motes++;
 
@@ -303,8 +293,6 @@ public class FluidFlowSystem
                     staticVoxels.Remove(voxel);
 
                 }
-
-
             }
         }
         return signalMeshRegen;
