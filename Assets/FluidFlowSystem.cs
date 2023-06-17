@@ -50,10 +50,26 @@ public class FluidFlowSystem
         return false;
     }
 
-    public void UpdateFluidFlow(List<Chunk> activeChunks)
+    public void UpdateFluidFlow(List<Chunk> activeChunks, int updateSize = Chunk.depth/8)
     {
-        foreach (Chunk chunk in activeChunks)
+        // Convert activeChunks to an array for efficient indexing
+        Chunk[] activeChunksArray = activeChunks.ToArray();
+
+        // If updateSize is greater than the number of active chunks, process all chunks
+        if (updateSize >= activeChunksArray.Length)
         {
+            updateSize = activeChunksArray.Length;
+        }
+
+        // Choose a random start index to ensure the update chunks are distributed randomly
+        int startIndex = new System.Random().Next(activeChunksArray.Length);
+
+        for (int i = 0; i < updateSize; i++)
+        {
+            // Use mod operator to wrap around to the start of the array if we exceed its length
+            int chunkIndex = (startIndex + i) % activeChunksArray.Length;
+
+            Chunk chunk = activeChunksArray[chunkIndex];
             Voxel[,,] voxels = chunk.getVoxels();
             bool signalMeshRegen = false;
 
