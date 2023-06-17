@@ -36,12 +36,12 @@ public class FluidFlowSystem
     }
 
     // Check if there is any non-fluid neighbor (e.g., air, different fluid)
-    private bool HasNonFluidNeighbor(Voxel[] adjacentVoxels, int fluidId)
+    private bool HasGasNeighbor(Voxel[] adjacentVoxels, int fluidId)
     {
         for (int i = 0; i < adjacentVoxels.Length; i++)
         {
             Voxel v = adjacentVoxels[i];
-            if (v != null && v.substance.id != fluidId && v.substance.state != State.SOLID)
+            if (v != null && v.substance.id == Substance.air.id)//!= fluidId && v.substance.state != State.SOLID)
             {
                 return true;
             }
@@ -89,7 +89,7 @@ public class FluidFlowSystem
                 {
                     Voxel[] adjacentVoxels = chunk.GetVoxelsAdjacentTo(x, y, z);
                     // Only flow if not surrounded by the same fluid
-                    if (HasNonFluidNeighbor(adjacentVoxels, voxel.substance.id))
+                    if (HasGasNeighbor(adjacentVoxels, voxel.substance.id))
                     {
                         Flow(voxel, chunk, voxels, x, y, z, voxel.substance);
                         signalMeshRegen = true;
@@ -145,6 +145,12 @@ public class FluidFlowSystem
 
         bool signalMeshRegen = false;
         Voxel[] adjacentVoxels = chunk.GetVoxelsAdjacentTo(x, y, z);
+        //get global Voxel coords
+        int globalX = voxels[x, y, z].globalX;
+        int globalY = voxels[x, y, z].globalY;
+        int globalZ = voxels[x, y, z].globalZ;
+
+
         // Manually filter adjacent voxels
         List<Voxel> filteredAdjacentVoxels = new List<Voxel>();
         for (int i = 0; i < adjacentVoxels.Length; i++)
@@ -163,7 +169,7 @@ public class FluidFlowSystem
         if (voxel.motes == 1)
         {
             List<Voxel> waterVoxelsAnySize = filteredAdjacentVoxels.FindAll(v => v.substance.id == fluidType.id);
-            if (waterVoxelsAnySize.Count == 0)//when there is NO water of any mote quantity
+            if (waterVoxelsAnySize.Count == 0)//when there is NO neighboring water of any mote quantity
             {
                 Voxel voxelBelow;
                 if (y > 0)
@@ -205,12 +211,30 @@ public class FluidFlowSystem
                 {
                     // If there are no water voxels to draw from, move into the empty space
                     // Find adjacent air voxels that are not above the current voxel
-                    List<Voxel> airVoxels = filteredAdjacentVoxels.FindAll(v => v.substance.id == Substance.air.id && v.y <= y);
-
-                    if (airVoxels.Count > 0)
+                    //List<Voxel> airVoxels = filteredAdjacentVoxels.FindAll(v => v.substance.id == Substance.air.id && v.y <= y);
+                    Voxel[] airVoxels;
+                    int count = 0;
+                    foreach (Voxel adjV in filteredAdjacentVoxels)
+                    {
+                        if (adjV.substance.id == Substance.air.id && adjV.globalY <= globalY)
+                        {
+                            count++;
+                        }
+                    }
+                    airVoxels = new Voxel[count];
+                    count = 0;
+                    foreach (Voxel adjV in filteredAdjacentVoxels)
+                    {
+                        if (adjV.substance.id == Substance.air.id && adjV.globalY <= globalY)
+                        {
+                            airVoxels[count] = adjV;
+                            count++;
+                        }
+                    }
+                    if (count > 0)
                     {
                         // Choose a random air voxel and move into it
-                        Voxel airVoxel = airVoxels[rng.Next(airVoxels.Count)];
+                        Voxel airVoxel = airVoxels[rng.Next(count)];
                         airVoxel.substance = fluidType;
                         airVoxel.motes = 1;
 

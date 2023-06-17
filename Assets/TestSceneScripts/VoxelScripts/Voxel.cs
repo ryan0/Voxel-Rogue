@@ -9,6 +9,9 @@ public class Voxel
     public int x { get; private set; }
     public int y { get; private set; }
     public int z { get; private set; }
+    public int globalX { get; private set; }
+    public int globalY { get; private set; }
+    public int globalZ { get; private set; }
 
     public Chunk chunk { get; private set; }
 
@@ -26,5 +29,10 @@ public class Voxel
         this.substance = substance;
         this.temperature = temperature;
         this.motes = motes;
+
+        // Calculate global position based on local position and chunk's world position
+        this.globalX = x + chunk.xIndex * Chunk.width;
+        this.globalY = y + chunk.yIndex * Chunk.height;
+        this.globalZ = z + chunk.zIndex * Chunk.depth;
     }
 }
