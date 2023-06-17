@@ -41,7 +41,7 @@ public class FluidFlowSystem
         for (int i = 0; i < adjacentVoxels.Length; i++)
         {
             Voxel v = adjacentVoxels[i];
-            if (v != null && v.substance.id == Substance.air.id)//!= fluidId && v.substance.state != State.SOLID)
+            if (v != null && v.substance.id == Substance.air.id && v!=adjacentVoxels[1])//NOT THE TOP NEIGHBOR
             {
                 return true;
             }

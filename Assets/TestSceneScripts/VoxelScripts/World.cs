@@ -26,9 +26,16 @@ public class World : MonoBehaviour
     private const float fluidFlowSystemInterval = .2f;
     private float fluidFlowSystemTimer = 0.0f;
 
+
+    private const float gasFlowSystemInterval = .2f;
+    private float gasFlowSystemTimer = 0.0f;
+
+
     FluidFlowSystem fluidFlowSystem = new ();
     SubstanceInteractionSystem substanceInteractionSystem = new();
     TemperatureSystem temperatureSystem = new();
+    GasFlowSystem gasSystem = new ();
+
 
 
     // Start is called before the first frame update
@@ -106,10 +113,17 @@ public class World : MonoBehaviour
             this.fluidFlowSystem.UpdateFluidFlow(getActiveChunks());
         }
 
+        gasFlowSystemTimer += Time.deltaTime;
+        if (gasFlowSystemTimer >= gasFlowSystemInterval)
+        {
+            gasFlowSystemTimer -= gasFlowSystemInterval;
+            //this.gasSystem.UpdateGasFlow(getActiveChunks());
+        }
+
 
 
     }
-    
+
     public Chunk getChunkAt(Vector3Int pos)
     {
         Debug.Log(pos.x + " " + pos.y + " " + pos.z);
