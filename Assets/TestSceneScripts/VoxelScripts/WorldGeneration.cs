@@ -39,7 +39,7 @@ public class WorldGeneration
 
         GenerateRivers(floorValue, terrain, terrainHeights, 1, Substance.water);
 
-        GenerateRivers(floorValue, terrain, terrainHeights, 1, Substance.lava);
+        GenerateRivers(floorValue, terrain, terrainHeights, 1, Substance.lava, 200);
 
         GenerateTrees(width, depth, scale, heightScale, floorValue, treeProbability, terrain, random);
 
@@ -99,16 +99,16 @@ public class WorldGeneration
         }
     }
 
-    private static void GenerateRivers(int floorValue, Substance[,,] terrain, int[,] terrainHeights, int numRivers, Substance riverType)
+    private static void GenerateRivers(int floorValue, Substance[,,] terrain, int[,] terrainHeights, int numRivers, Substance riverType, int riverLength = 800, int baseRiverSize = 5)
     {
         for (int i = 0; i < numRivers; i++)
         {
-            GenerateRiver(floorValue, terrainHeights, terrain, riverType);
+            GenerateRiver(floorValue, terrainHeights, terrain, riverType, riverLength, baseRiverSize);
         }
     }
 
 
-    private static void GenerateRiver(int floorValue, int[,] terrainHeights, Substance[,,] terrain, Substance riverType)
+    private static void GenerateRiver(int floorValue, int[,] terrainHeights, Substance[,,] terrain, Substance riverType, int riverLength = 800, int baseRiverSize = 5)
     {
         int width = terrain.GetLength(0);
         int depth = terrain.GetLength(2);
@@ -118,7 +118,7 @@ public class WorldGeneration
         Vector3Int riverPos = new Vector3Int(Random.Range(0, width), floorValue, Random.Range(0, depth));
 
         // Length of the river
-        int riverLength = 800;  // Adjust as necessary
+        //int riverLength = 800;  // Adjust as necessary
 
         // Random direction for the river to move in (only in x and z)
         Vector3 riverDirection = new Vector3(Random.Range(-1f, 1f), 0f, Random.Range(-1f, 1f));
@@ -128,7 +128,7 @@ public class WorldGeneration
         float noiseScale = 0.05f;
 
         // Base size of the river
-        int baseRiverSize = 5; // The larger the size, the larger the river. Adjust as necessary.
+        //int baseRiverSize = 5; // The larger the size, the larger the river. Adjust as necessary.
 
         for (int i = 0; i < riverLength; i++)
         {

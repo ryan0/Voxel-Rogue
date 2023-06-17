@@ -43,8 +43,21 @@ public class PlayerController : MonoBehaviour
         {
             SpawnWaterVoxel(Substance.water);///debug water method
         }
+        if (Input.GetKeyDown(KeyCode.K))
+        {
+            HighlightAdjacentVoxels();
+        }
     }
 
+    private void HighlightAdjacentVoxels()
+    {
+        if (RayCastToVoxel(out Vector3Int hitCoord))
+        {
+            world.HighlightAdjVoxel(hitCoord);
+        }
+    }
+
+   
     private void SpawnWaterVoxel(Substance voxelType)
     {
         if (RayCastToVoxel(out Vector3Int hitCoord))

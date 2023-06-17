@@ -4,9 +4,9 @@ using UnityEngine;
 
 public class World : MonoBehaviour
 {
-    public const int chunksX = 12;
-    public const int chunksY = 12;
-    public const int chunksZ = 12;
+    public const int chunksX = 6;
+    public const int chunksY = 6;
+    public const int chunksZ = 6;
 
     [SerializeField]
     private GameObject player;
@@ -23,12 +23,13 @@ public class World : MonoBehaviour
     private const float temperatureSystemInterval = 5.0f;
     private float temperatureSystemTimer = 0.5f;
 
-    private const float fluidFlowSystemInterval = 1f;
+    private const float fluidFlowSystemInterval = .25f;
     private float fluidFlowSystemTimer = 0.0f;
 
     FluidFlowSystem fluidFlowSystem = new ();
     SubstanceInteractionSystem substanceInteractionSystem = new();
     TemperatureSystem temperatureSystem = new();
+
 
     // Start is called before the first frame update
     void Start()
@@ -57,7 +58,7 @@ public class World : MonoBehaviour
                 for (int z = 0; z < chunksZ; z++)
                 {
                     Chunk chunk = chunks[x, y, z];
-
+                    chunk.neighbors = new Chunk[6];
                     // Set the neighbors
                     Debug.Log("Setting neighbours for chunk at " + x + ", " + y + ", " + z);
                     chunk.northNeighbour = (z < chunksZ - 1) ? chunks[x, y, z + 1] : null;
@@ -66,6 +67,15 @@ public class World : MonoBehaviour
                     chunk.westNeighbour = (x > 0) ? chunks[x - 1, y, z] : null;
                     chunk.topNeighbour = (y < chunksY - 1) ? chunks[x, y + 1, z] : null;
                     chunk.bottomNeighbour = (y > 0) ? chunks[x, y - 1, z] : null;
+                    for (int i = 0; i < 6; i++)
+                    {
+                        if (i == 0) chunk.neighbors[i] = chunk.northNeighbour;
+                        if (i == 1) chunk.neighbors[i] = chunk.southNeighbour;
+                        if (i == 2) chunk.neighbors[i] = chunk.eastNeighbour;
+                        if (i == 3) chunk.neighbors[i] = chunk.westNeighbour;
+                        if (i == 4) chunk.neighbors[i] = chunk.topNeighbour;
+                        if (i == 5) chunk.neighbors[i] = chunk.bottomNeighbour;
+                    }
 
                 }
             }
@@ -220,5 +230,30 @@ public class World : MonoBehaviour
 
         }
     }
+
+    public void HighlightAdjVoxel(Vector3Int coord)
+    {
+        //Material highlightMaterial = Resources.Load("Material/highlight.mat", typeof(Material)) as Material;
+        // Determine the chunk that the voxel is in
+        int chunkX = coord.x / Chunk.width;
+        int chunkY = coord.y / Chunk.height;
+        int chunkZ = coord.z / Chunk.depth;
+
+        // Determine the local position of the voxel within the chunk
+        int voxelX = coord.x - (chunkX * Chunk.width);
+        int voxelY = coord.y - (chunkY * Chunk.height);
+        int voxelZ = coord.z - (chunkZ * Chunk.depth);
+
+        //Spawn debris logic
+        //Voxel[,,] voxels = chunks[chunkX, chunkY, chunkZ].getVoxels();///debug debug debug
+        //Substance substance = voxels[voxelX, voxelY, voxelZ].substance;///Debug debug dbeug
+        //Voxel voxel = voxels[voxelX, voxelY, voxelZ];
+        // If the voxel is null or already highlighted, return
+        //if (voxel == null || voxel.substance == Substance.debug) return;
+        //Call chunk highlightAdjVoxels
+        chunks[chunkX, chunkY, chunkZ].highlightAdjVoxels(voxelX, voxelY, voxelZ);
+        //voxel.substance = Substance.debug;
+    }
+
 
 }

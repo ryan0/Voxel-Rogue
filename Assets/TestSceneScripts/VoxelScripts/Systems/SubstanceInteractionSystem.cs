@@ -63,16 +63,20 @@ public class SubstanceInteractionSystem
                         {
                             foreach(TransmuteInteraction i in interactionsList)
                             {
-                                List<Voxel> adjacentVoxels = chunk.GetVoxelsAdjacentTo(x, y, z);
+                                Voxel[] adjacentVoxels = chunk.GetVoxelsAdjacentTo(x, y, z);
 
                                 foreach(Voxel v in adjacentVoxels)
                                 {
-                                    if(v.substance.id == i.triggerSubstanceId)
+                                    if(v != null)
                                     {
-                                        voxels[x, y, z].substance = Substance.getById(i.transmuteToSubstanceId);
-                                        signalMeshRegen = true;
-                                        break;
+                                        if (v.substance.id == i.triggerSubstanceId)
+                                        {
+                                            voxels[x, y, z].substance = Substance.getById(i.transmuteToSubstanceId);
+                                            signalMeshRegen = true;
+                                            break;
+                                        }
                                     }
+           
                                 }
                             }
                         }
