@@ -41,7 +41,7 @@ public class FluidFlowSystem
         for (int i = 0; i < adjacentVoxels.Length; i++)
         {
             Voxel v = adjacentVoxels[i];
-            if (v != null && v.substance.id != fluidId)
+            if (v != null && v.substance.id != fluidId && v.substance.state != State.SOLID)
             {
                 return true;
             }

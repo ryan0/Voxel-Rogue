@@ -79,7 +79,7 @@ public class Chunk : MonoBehaviour {
         this.signalToRegenMesh = true;
     }
 
-    private const float meshBatchInterval = .5f;
+    private const float meshBatchInterval = .5f;//optimization
     private float meshBatchTimer = 0.0f;//batching regen meshes for performance
     private void FixedUpdate()
     {
