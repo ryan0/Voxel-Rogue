@@ -50,29 +50,54 @@ public class FluidFlowSystem
         return false;
     }
 
-    public void UpdateFluidFlow(List<Chunk> activeChunks, int updateSize = Chunk.depth/8)
+    public void UpdateFluidFlow(List<Chunk> activeChunks)
     {
+        int numVoxels = (int)(Mathf.Pow(Chunk.depth, 3));
+        int updateSize = numVoxels / 4;//update size is optimization
+
         // Convert activeChunks to an array for efficient indexing
         Chunk[] activeChunksArray = activeChunks.ToArray();
-
-        // If updateSize is greater than the number of active chunks, process all chunks
-        if (updateSize >= activeChunksArray.Length)
-        {
-            updateSize = activeChunksArray.Length;
-        }
 
         // Choose a random start index to ensure the update chunks are distributed randomly
         int startIndex = new System.Random().Next(activeChunksArray.Length);
 
-        for (int i = 0; i < updateSize; i++)
+        for (int i = 0; i < activeChunksArray.Length; i++)
         {
-            // Use mod operator to wrap around to the start of the array if we exceed its length
-            int chunkIndex = (startIndex + i) % activeChunksArray.Length;
-
-            Chunk chunk = activeChunksArray[chunkIndex];
+            Chunk chunk = activeChunksArray[i];
             Voxel[,,] voxels = chunk.getVoxels();
             bool signalMeshRegen = false;
 
+            // If updateSize is greater than the number of chunk voxels
+            if (updateSize >= voxels.Length)
+            {
+                updateSize = voxels.Length;
+            }
+
+            for (int u = 0; u < updateSize; u++)//update updateSize random voxels within chunk
+            {
+                // Select random voxel within the chunk
+                int x = Random.Range(0, Chunk.width);
+                int y = Random.Range(0, Chunk.height);
+                int z = Random.Range(0, Chunk.depth);
+                Voxel voxel = voxels[x, y, z];
+                // Check if voxel is static
+                if (staticVoxels.Contains(voxel))
+                {
+                    continue;
+                }
+                if (voxel.substance.id == Substance.water.id || voxel.substance.id == Substance.lava.id)
+                {
+                    Voxel[] adjacentVoxels = chunk.GetVoxelsAdjacentTo(x, y, z);
+                    // Only flow if not surrounded by the same fluid
+                    if (HasNonFluidNeighbor(adjacentVoxels, voxel.substance.id))
+                    {
+                        Flow(voxel, chunk, voxels, x, y, z, voxel.substance);
+                        signalMeshRegen = true;
+                    }
+                }
+            }
+
+            /*
             for (int y = 0; y < Chunk.height; y++)
             {
                 for (int z = Chunk.depth - 1; z >= 0; z--)
@@ -98,6 +123,7 @@ public class FluidFlowSystem
                     }
                 }
             }
+            */
 
             if (signalMeshRegen)
             {

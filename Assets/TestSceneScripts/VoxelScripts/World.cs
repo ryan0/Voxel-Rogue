@@ -4,9 +4,9 @@ using UnityEngine;
 
 public class World : MonoBehaviour
 {
-    public const int chunksX = 6;
-    public const int chunksY = 6;
-    public const int chunksZ = 6;
+    public const int chunksX = 12;
+    public const int chunksY = 12;
+    public const int chunksZ = 12;
 
     [SerializeField]
     private GameObject player;
@@ -23,7 +23,7 @@ public class World : MonoBehaviour
     private const float temperatureSystemInterval = 5.0f;
     private float temperatureSystemTimer = 0.5f;
 
-    private const float fluidFlowSystemInterval = .1f;
+    private const float fluidFlowSystemInterval = .2f;
     private float fluidFlowSystemTimer = 0.0f;
 
     FluidFlowSystem fluidFlowSystem = new ();
@@ -89,14 +89,14 @@ public class World : MonoBehaviour
         if(substanceSystemTimer >= substanceSystemInterval)
         {
             substanceSystemTimer -= substanceSystemInterval;
-            this.substanceInteractionSystem.UpdateSubstances(getActiveChunks());
+            //this.substanceInteractionSystem.UpdateSubstances(getActiveChunks());
         }
 
         temperatureSystemTimer += Time.deltaTime;
         if(temperatureSystemTimer >= temperatureSystemInterval)
         {
             temperatureSystemTimer -= temperatureSystemInterval;
-            this.temperatureSystem.UpdateTemperatures(getActiveChunks());
+            //this.temperatureSystem.UpdateTemperatures(getActiveChunks());
         }
 
         fluidFlowSystemTimer += Time.deltaTime;
@@ -130,7 +130,7 @@ public class World : MonoBehaviour
     public List<Chunk> getActiveChunks()
     {
         const int activeAreaRadiusX = 1;
-        const int activeAreaRadiusY = 2;
+        const int activeAreaRadiusY = 1;
         const int activeAreaRadiusZ = 1;
 
         Vector3 playerPosition = player.transform.position * (1 / Voxel.size);

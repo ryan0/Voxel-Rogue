@@ -41,7 +41,7 @@ public class PlayerController : MonoBehaviour
         }
         if (Input.GetKeyDown(KeyCode.G))
         {
-            SpawnWaterVoxel(Substance.water);///debug water method
+            SpawnWaterVoxel(Substance.smoke);///debug water method
         }
         if (Input.GetKeyDown(KeyCode.K))
         {
