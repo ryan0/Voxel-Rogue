@@ -5,7 +5,7 @@ using UnityEngine;
 public class Voxel
 {
     public const float size = .5f;
-
+    public int framesSinceLastChange = 0;
     public int x { get; private set; }
     public int y { get; private set; }
     public int z { get; private set; }

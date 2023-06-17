@@ -3,8 +3,12 @@ using UnityEngine;
 
 public class FluidFlowSystem
 {
+    private HashSet<Chunk> activeChunks;
+    private HashSet<Voxel> staticVoxels;
+
     private class FluidFlowInteraction
     {
+
         public readonly int triggerSubstanceId;
         public readonly int createdSubstanceId;
 
@@ -19,12 +23,31 @@ public class FluidFlowSystem
 
     public FluidFlowSystem()
     {
+        activeChunks = new HashSet<Chunk>();
+        staticVoxels = new HashSet<Voxel>();
+
+        //HYBRID LOGIC
         // Configure fluid flow interactions
         flowInteractions[Substance.water.id] = new List<FluidFlowInteraction>
         {
             new FluidFlowInteraction(Substance.air.id, Substance.water.id)
         };
         // Add more interactions if required
+    }
+
+    // Check if there is any non-fluid neighbor (e.g., air, different fluid)
+    private bool HasNonFluidNeighbor(Voxel[] adjacentVoxels, int fluidId)
+    {
+        for (int i = 0; i < adjacentVoxels.Length; i++)
+        {
+            Voxel v = adjacentVoxels[i];
+            if (v != null && v.substance.id != fluidId)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public void UpdateFluidFlow(List<Chunk> activeChunks)
@@ -34,29 +57,32 @@ public class FluidFlowSystem
             Voxel[,,] voxels = chunk.getVoxels();
             bool signalMeshRegen = false;
 
-            // Instead of shuffling the voxelCoordinates list, create it in the desired order:
-            for (int y = 0; y < Chunk.height; y++) // Bottom to top
+            for (int y = 0; y < Chunk.height; y++)
             {
-                for (int z = Chunk.depth - 1; z >= 0; z--) // Back to front
+                for (int z = Chunk.depth - 1; z >= 0; z--)
                 {
-                    for (int x = 0; x < Chunk.width; x++) // Left to right
+                    for (int x = 0; x < Chunk.width; x++)
                     {
-
-                        // Check if voxel is water
                         Voxel voxel = voxels[x, y, z];
-                        if (voxel.substance.id == Substance.water.id)
+                        // Check if voxel is static
+                        if (staticVoxels.Contains(voxel))
                         {
-                            //flow 
-                            Flow(voxel, chunk, voxels, x, y, z, Substance.water);
+                            continue;
                         }
-                        if (voxel.substance.id == Substance.lava.id)
+                        if (voxel.substance.id == Substance.water.id || voxel.substance.id == Substance.lava.id)
                         {
-                            Flow(voxel, chunk, voxels, x, y, z, Substance.lava);
-
+                            Voxel[] adjacentVoxels = chunk.GetVoxelsAdjacentTo(x, y, z);
+                            // Only flow if not surrounded by the same fluid
+                            if (HasNonFluidNeighbor(adjacentVoxels, voxel.substance.id))
+                            {
+                                Flow(voxel, chunk, voxels, x, y, z, voxel.substance);
+                                signalMeshRegen = true;
+                            }
                         }
                     }
                 }
             }
+
             if (signalMeshRegen)
             {
                 chunk.SignalMeshRegen();
@@ -64,9 +90,16 @@ public class FluidFlowSystem
         }
     }
 
+
     public bool Flow(Voxel voxel, Chunk chunk, Voxel[,,] voxels, int x, int y, int z, Substance fluidType)
     {
         System.Random rng = new System.Random(123);
+        voxel.framesSinceLastChange++;
+        if (voxel.framesSinceLastChange > 5)//SOME_THRESHOLD for optimization
+        {
+            staticVoxels.Add(voxel);
+            return false;
+        }
 
         bool signalMeshRegen = false;
         Voxel[] adjacentVoxels = chunk.GetVoxelsAdjacentTo(x, y, z);
@@ -107,6 +140,8 @@ public class FluidFlowSystem
                     voxel.substance = Substance.air;
                     voxel.motes = 0;
                     signalMeshRegen = true;
+                    voxel.framesSinceLastChange = 0;
+                    staticVoxels.Remove(voxel);
                 }
             }
             else
@@ -141,6 +176,8 @@ public class FluidFlowSystem
                         voxel.substance = Substance.air;
                         voxel.motes = 0;
                         signalMeshRegen = true;
+                        voxel.framesSinceLastChange = 0;
+                        staticVoxels.Remove(voxel);
 
                     }
 
@@ -196,6 +233,8 @@ public class FluidFlowSystem
 
                     }
                     signalMeshRegen = true;
+                    voxel.framesSinceLastChange = 0;
+                    staticVoxels.Remove(voxel);
 
                 }
 
