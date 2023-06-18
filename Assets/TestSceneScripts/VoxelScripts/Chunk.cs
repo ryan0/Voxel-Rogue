@@ -12,9 +12,9 @@ public class Chunk : MonoBehaviour {
     public Chunk[] neighbors;
     public World world;
 
-    public const int width =  16;
+    public const int width = 16;
     public const int height = 16;
-    public const int depth =  16;
+    public const int depth = 16;
 
     public int widthPub = 16;//publically accessible fields
     public int heightPub = 16;
@@ -29,7 +29,7 @@ public class Chunk : MonoBehaviour {
     private bool signalToRegenMesh = false;
 
     private Voxel[,,] voxels = new Voxel[width, height, depth];
-    private ChunkMesh mesh = new();
+    private ChunkMesh mesh = new ();
 
     public static Chunk CreateChunk(int xIndex, int yIndex, int zIndex, Substance[,,] terrainData, float biomeTemprature, World world)
     {
@@ -135,32 +135,32 @@ public class Chunk : MonoBehaviour {
         // Handling voxel adjacencies between chunks
         if (x == 0 && westNeighbour != null)
         {
-            Debug.Log("Adding voxel from West neighbour.");
+            //Debug.Log("Adding voxel from West neighbour.");
             adjacentVoxels[3] = westNeighbour.getVoxels()[width - 1, y, z];
         }
         if (x == width - 1 && eastNeighbour != null)
         {
-            Debug.Log("Adding voxel from East neighbour.");
+            //Debug.Log("Adding voxel from East neighbour.");
             adjacentVoxels[0] = eastNeighbour.getVoxels()[0, y, z];
         }
         if (y == 0 && bottomNeighbour != null)
         {
-            Debug.Log("Adding voxel from Bottom neighbour.");
+            //Debug.Log("Adding voxel from Bottom neighbour.");
             adjacentVoxels[4] = bottomNeighbour.getVoxels()[x, height - 1, z];
         }
         if (y == height - 1 && topNeighbour != null)
         {
-            Debug.Log("Adding voxel from Top neighbour.");
+            //Debug.Log("Adding voxel from Top neighbour.");
             adjacentVoxels[1] = topNeighbour.getVoxels()[x, 0, z];
         }
         if (z == 0 && southNeighbour != null)
         {
-            Debug.Log("Adding voxel from South neighbour.");
+            //Debug.Log("Adding voxel from South neighbour.");
             adjacentVoxels[5] = southNeighbour.getVoxels()[x, y, depth - 1];
         }
         if (z == depth - 1 && northNeighbour != null)
         {
-            Debug.Log("Adding voxel from North neighbour.");
+            //Debug.Log("Adding voxel from North neighbour.");
             adjacentVoxels[2] = northNeighbour.getVoxels()[x, y, 0];
         }
 
@@ -210,7 +210,33 @@ public class Chunk : MonoBehaviour {
         mesh.DestroyMesh();
         mesh.GenerateMesh(voxels, xIndex, yIndex, zIndex);
     }
+}
 
-
-
+public class ChunkComparer : IComparer<Chunk>
+{
+    public int Compare(Chunk x, Chunk y)
+    {
+        if (x == null)
+        {
+            if (y == null)
+            {
+                return 0;
+            }
+            else
+            {
+                return -1;
+            }
+        }
+        else
+        {
+            if (y == null)
+            {
+                return 1;
+            }
+            else
+            {
+                return x.yIndex.CompareTo(y.yIndex);
+            }
+        }
+    }
 }

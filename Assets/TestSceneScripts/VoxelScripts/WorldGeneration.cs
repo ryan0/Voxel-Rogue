@@ -41,7 +41,7 @@ public class WorldGeneration
 
         GenerateRivers(floorValue, terrain, terrainHeights, 1, Substance.lava, 200);
 
-        GenerateClouds(terrain, 20);
+        GenerateClouds(terrain, 50);
 
         GenerateTrees(width, depth, scale, heightScale, floorValue, treeProbability, terrain, random);
 
@@ -100,10 +100,10 @@ public class WorldGeneration
         int height = terrain.GetLength(1);
         int depth = terrain.GetLength(2);
 
-        int cloudHeight = 96; // The height at which clouds should generate
+        int cloudHeight = GasFlowSystem.MAX_GAS_HEIGHT; // The height at which clouds should generate
         float cloudSizeLarge = 0.02f; // The scale of the larger cloud structures
         float cloudSizeSmall = 0.1f; // The scale of the smaller cloud structures
-        float cloudDensity = 0.6f; // The threshold for cloud density, higher values result in fewer clouds
+        float cloudDensity = 0.4f; // The threshold for cloud density, higher values result in fewer clouds
 
         float largeCloudOblongScale = 3.0f; // The scale in the x direction for the larger cloud structures
         float smallCloudOblongScale = 0.5f; // The scale in the x direction for the smaller cloud structures

@@ -49,46 +49,104 @@ public class WaterCycleSystem
 
     private void EvaporateLiquid()
     {
-        foreach (Chunk chunk in activeChunks)
+        foreach (Chunk currentChunk in activeChunks)//current chunk
         {
-            Voxel[,,] voxels = chunk.getVoxels();
+            //get above chunks
+            Chunk[] aboveChunks;
+            int count = 0;
+            foreach (Chunk c in activeChunks)
+            {
+                if (c.yIndex >= currentChunk.yIndex && c.xIndex == currentChunk.xIndex && c.zIndex == currentChunk.zIndex)
+                {
+                    count++;
+                }
+            }
+            //Debug.Log(count);
+            aboveChunks = new Chunk[count];
+            count = 0;
+            foreach (Chunk c in activeChunks)
+            {
+                if (c.yIndex >= currentChunk.yIndex && c.xIndex == currentChunk.xIndex && c.zIndex == currentChunk.zIndex)
+                {
+                    aboveChunks[count] = c;
+                    count++;
+                }
+            }
+            System.Array.Sort(aboveChunks, new ChunkComparer());
+  
+            Voxel[,,] voxels = currentChunk.getVoxels();
             for (int x = 0; x < Chunk.width; x++)
             {
                 for (int z = 0; z < Chunk.depth; z++)
                 {
-                    for (int y = 0; y < Chunk.height; y++) // Start from the bottom and go up
+                    // Start from the top of the CURRENT chunk and go down
+                    for (int y = Chunk.height - 1; y >= 0; y--)
                     {
-                        Voxel voxel = voxels[x, y, z];
-                        if (voxel.substance.state == State.LIQUID)
+                        //Chunk currentChunk = currentChunk.world.getChunks()[chunk.xIndex, chunk.yIndex, chunk.zIndex];
+                        if (currentChunk != null)
                         {
-                            bool isClearPath = true;
-                            Voxel voxelAbove = null;
-                            for (int upperY = Chunk.height - 1; upperY > y; upperY--)
+                            Voxel voxel = currentChunk.GetVoxel(x, y, z);
+                            if (voxel.substance.state == State.LIQUID)
                             {
-                                voxelAbove = voxels[x, upperY, z];
-                                if (voxelAbove.substance != Substance.air)
+                                bool isClearPath = true;
+                                Voxel voxelAbove = null;
+
+                                // Check the voxels above in the chunks including current and above current for a clear path
+                                for(int chunkCounter = 0; chunkCounter<count; chunkCounter++)
                                 {
-                                    isClearPath = false;
-                                    break;
+                                    Chunk aboveChunk = aboveChunks[chunkCounter];
+                                    if (aboveChunk != null)
+                                    {
+                                        //Debug.Log("above chunk");
+                                        for (int upperY = 0; upperY < Chunk.height; upperY++)
+                                        {
+                                            voxelAbove = aboveChunk.GetVoxel(x, upperY, z);
+                                            int compareUpperY = upperY + (Chunk.height* aboveChunk.yIndex);
+                                            int compareCurrentY = y + (Chunk.height * currentChunk.yIndex);
+                                            if ((aboveChunk == currentChunk && compareUpperY <= compareCurrentY))
+                                            {
+                                                //do nothing, this is below in the current chunk
+                                            }
+                                            else if (!(voxelAbove.substance == Substance.air || voxelAbove.substance == voxel.substance.GetGasForm()))
+                                            {
+                                                //Debug.Log("Not clear path " +  voxelAbove.substance.name + " blocking " + voxel.substance.name);
+                                                isClearPath = false;
+                                                break;
+                                            }
+                                            else if(voxelAbove.substance == voxel.substance.GetGasForm() && compareUpperY <= GasFlowSystem.MAX_GAS_HEIGHT) //TO DO!! later check for both air and gasform
+                                            {
+                                                Debug.Log("break: voxelAbove.substance.GetLiquidForm " + voxelAbove.substance.GetLiquidForm().name + "voxel sub " + voxel.substance);
+                                                break;
+                                            }
+                                            //else if voxelAbove is air and AT EXACTLY CLOUD HEIGHT, e.g. 128 
+                                        }
+                                    }
+
                                 }
-                            }
+                                //Debug.Log("clearPath " + isClearPath);
+                                //Debug.Log("voxelAbove.substance.GetLiquidForm " + voxelAbove.substance.GetLiquidForm().name + "voxel sub "+ voxel.substance);
 
-                            Debug.Log("isClearPath");
-
-                            if (isClearPath && voxelAbove != null && voxel.substance.GetGasForm() == voxelAbove.substance)
-                            {
-                                // Transfer 1 mote to the gas above
-                                voxel.motes -= 1;
-                                voxelAbove.motes += 1;
-                                Debug.Log("transfering motes");
-
-                                // If the water voxel reaches 0, it should disappear
-                                if (voxel.motes == 0)
+                                if (isClearPath && voxelAbove != null && voxelAbove.substance.GetLiquidForm() == voxel.substance)
                                 {
-                                    voxel.substance = Substance.air;
-                                }
+                                    // Transfer 1 mote to the gas above
+                                    voxel.motes -= 3;
+                                    voxelAbove.motes += 3;
+                                    Debug.Log("transfer mote");
 
-                                chunk.SignalMeshRegen();
+
+                                    // If the water voxel reaches 0, it should disappear
+                                    if (voxel.motes == 0)
+                                    {
+                                        voxel.substance = Substance.air;
+                                        Debug.Log("evaporate");
+
+                                    }
+
+                                    currentChunk.SignalMeshRegen();
+                                }
+                                else Debug.Log("cant transfer mote");
+
+
                             }
                         }
                     }

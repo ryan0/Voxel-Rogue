@@ -30,7 +30,7 @@ public class World : MonoBehaviour
     private const float gasFlowSystemInterval = .2f;
     private float gasFlowSystemTimer = 0.0f;
 
-    private const float wCycleystemInterval = .5f;
+    private const float wCycleystemInterval = 2f;
     private float wCycleSystemTimer = 0.0f;
 
 
