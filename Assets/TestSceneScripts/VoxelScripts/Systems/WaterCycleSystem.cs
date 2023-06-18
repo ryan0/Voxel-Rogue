@@ -5,19 +5,28 @@ using UnityEngine;
 public class WaterCycleSystem
 {
     private HashSet<Chunk> activeChunks;
-    public int maxMotes = 10;
+    public static int PRECIPITATION_THRESHOLD = 10;// MAX STEAM BEFORE PRECIPITATION
+    public static int PRECIPITATION_AMOUNT = 2;// MAX STEAM BEFORE PRECIPITATION
+
 
     public WaterCycleSystem()
     {
         activeChunks = new HashSet<Chunk>();
     }
 
+    private int updateCounter = 0;
+
     public void UpdateWaterCycle(HashSet<Chunk> _activeChunks)
     {
         this.activeChunks = _activeChunks;
         CondenseGas();
-        EvaporateLiquid();
+        updateCounter++;
+        if (updateCounter % 3 == 0)//call Evaporate third as much as condense
+        {
+            EvaporateLiquid();
+        }
     }
+
 
     private void CondenseGas()
     {
@@ -31,13 +40,17 @@ public class WaterCycleSystem
                     for (int z = 0; z < Chunk.depth; z++)
                     {
                         Voxel voxel = voxels[x, y, z];
-                        if (voxel.substance.state == State.GAS && voxel.motes >= 10) // You need to implement isGas() method
+                        if (voxel.substance.state == State.GAS && voxel.motes >= PRECIPITATION_THRESHOLD) // You need to implement isGas() method
                         {
-                            Debug.Log("Gas has more than 10 motes");
+                            ///////Debug.Log("Gas has more than PRECIPITATION_THRESHOLD motes");
                             Substance liquidForm = voxel.substance.GetLiquidForm();
                             if (liquidForm != null)
                             {
-                                voxel.substance = liquidForm;
+                                //voxel.substance = liquidForm;
+                                Voxel belowV = chunk.GetVoxelsAdjacentTo(voxel.x, voxel.y, voxel.z)[4] ;//bottom voxel
+                                belowV.substance = liquidForm;
+                                belowV.motes = PRECIPITATION_AMOUNT;
+                                voxel.motes -= PRECIPITATION_AMOUNT;
                                 chunk.SignalMeshRegen();
                             }
                         }
@@ -113,12 +126,16 @@ public class WaterCycleSystem
                                                 isClearPath = false;
                                                 break;
                                             }
-                                            else if(voxelAbove.substance == voxel.substance.GetGasForm() && compareUpperY <= GasFlowSystem.MAX_GAS_HEIGHT) //TO DO!! later check for both air and gasform
+                                            else if (voxelAbove.substance == voxel.substance.GetGasForm() && compareUpperY <= GasFlowSystem.MAX_GAS_HEIGHT) //TO DO!! later check for both air and gasform
                                             {
-                                                Debug.Log("break: voxelAbove.substance.GetLiquidForm " + voxelAbove.substance.GetLiquidForm().name + "voxel sub " + voxel.substance);
+                                                //Debug.Log("break: voxelAbove.substance.GetLiquidForm " + voxelAbove.substance.GetLiquidForm().name + "voxel sub " + voxel.substance);
                                                 break;
                                             }
-                                            //else if voxelAbove is air and AT EXACTLY CLOUD HEIGHT, e.g. 128 
+                                            else if (voxelAbove.substance == Substance.air && compareUpperY == GasFlowSystem.MAX_GAS_HEIGHT){
+                                                //else if voxelAbove is air and AT EXACTLY CLOUD HEIGHT, e.g. 128 
+                                                voxelAbove.substance = Substance.steam;
+                                                voxelAbove.motes = 1;
+                                            }
                                         }
                                     }
 
@@ -129,22 +146,22 @@ public class WaterCycleSystem
                                 if (isClearPath && voxelAbove != null && voxelAbove.substance.GetLiquidForm() == voxel.substance)
                                 {
                                     // Transfer 1 mote to the gas above
-                                    voxel.motes -= 3;
-                                    voxelAbove.motes += 3;
-                                    Debug.Log("transfer mote");
+                                    voxel.motes -= 1;
+                                    voxelAbove.motes += 1;
+                                    ////////Debug.Log("transfer mote");
 
 
                                     // If the water voxel reaches 0, it should disappear
                                     if (voxel.motes == 0)
                                     {
                                         voxel.substance = Substance.air;
-                                        Debug.Log("evaporate");
+                                        //Debug.Log("evaporate");
 
                                     }
 
                                     currentChunk.SignalMeshRegen();
                                 }
-                                else Debug.Log("cant transfer mote");
+                                //else Debug.Log("cant transfer mote");
 
 
                             }
