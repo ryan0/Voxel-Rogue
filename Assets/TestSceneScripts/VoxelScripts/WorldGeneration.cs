@@ -41,7 +41,7 @@ public class WorldGeneration
 
         GenerateRivers(floorValue, terrain, terrainHeights, 1, Substance.lava, 200);
 
-        GenerateClouds(terrain, 10);
+        GenerateClouds(terrain, 20);
 
         GenerateTrees(width, depth, scale, heightScale, floorValue, treeProbability, terrain, random);
 
@@ -101,14 +101,22 @@ public class WorldGeneration
         int depth = terrain.GetLength(2);
 
         int cloudHeight = 128; // The height at which clouds should generate
-        float cloudSize = 0.05f; // The scale of the clouds, smaller values result in larger, smoother clouds
-        float cloudDensity = 0.5f; // The threshold for cloud density, higher values result in fewer clouds
+        float cloudSizeLarge = 0.02f; // The scale of the larger cloud structures
+        float cloudSizeSmall = 0.1f; // The scale of the smaller cloud structures
+        float cloudDensity = 0.6f; // The threshold for cloud density, higher values result in fewer clouds
+
+        float largeCloudOblongScale = 3.0f; // The scale in the x direction for the larger cloud structures
+        float smallCloudOblongScale = 0.5f; // The scale in the x direction for the smaller cloud structures
 
         for (int x = 0; x < width; x++)
         {
             for (int z = 0; z < depth; z++)
             {
-                float cloudValue = Mathf.PerlinNoise(x * cloudSize, z * cloudSize);
+                float cloudValueLarge = Mathf.PerlinNoise(x * cloudSizeLarge * largeCloudOblongScale, z * cloudSizeLarge);
+                float cloudValueSmall = Mathf.PerlinNoise(x * cloudSizeSmall * smallCloudOblongScale, z * cloudSizeSmall);
+
+                // Combine the large and small cloud values, weighting the large value more heavily
+                float cloudValue = 0.7f * cloudValueLarge + 0.3f * cloudValueSmall;
 
                 if (cloudValue > cloudDensity)
                 {
@@ -120,6 +128,7 @@ public class WorldGeneration
             }
         }
     }
+
 
 
     private static void GenerateWorms(Substance[,,] terrain, int numWorms)

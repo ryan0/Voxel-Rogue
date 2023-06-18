@@ -82,7 +82,7 @@ public class Substance
     {
         if (state != State.GAS)
         {
-            Debug.LogError("Only gas substances have a liquid form");
+           // Debug.LogError("Only gas substances have a liquid form");
         }
 
         return gasToLiquid.ContainsKey(this) ? gasToLiquid[this] : null;
@@ -92,7 +92,7 @@ public class Substance
     {
         if (state != State.LIQUID)
         {
-            Debug.LogError("Only liquid substances have a gas form");
+           // Debug.LogError("Only liquid substances have a gas form");
         }
 
         return liquidToGas.ContainsKey(this) ? liquidToGas[this] : null;
