@@ -41,7 +41,10 @@ public class WorldGeneration
 
         GenerateRivers(floorValue, terrain, terrainHeights, 1, Substance.lava, 200);
 
+        GenerateClouds(terrain, 10);
+
         GenerateTrees(width, depth, scale, heightScale, floorValue, treeProbability, terrain, random);
+
 
         return terrain;
     }
@@ -90,6 +93,34 @@ public class WorldGeneration
             }
         }
     }
+
+    public static void GenerateClouds(Substance[,,] terrain, int numClouds)
+    {
+        int width = terrain.GetLength(0);
+        int height = terrain.GetLength(1);
+        int depth = terrain.GetLength(2);
+
+        int cloudHeight = 128; // The height at which clouds should generate
+        float cloudSize = 0.05f; // The scale of the clouds, smaller values result in larger, smoother clouds
+        float cloudDensity = 0.5f; // The threshold for cloud density, higher values result in fewer clouds
+
+        for (int x = 0; x < width; x++)
+        {
+            for (int z = 0; z < depth; z++)
+            {
+                float cloudValue = Mathf.PerlinNoise(x * cloudSize, z * cloudSize);
+
+                if (cloudValue > cloudDensity)
+                {
+                    if (cloudHeight < height)
+                    {
+                        terrain[x, cloudHeight, z] = Substance.steam;
+                    }
+                }
+            }
+        }
+    }
+
 
     private static void GenerateWorms(Substance[,,] terrain, int numWorms)
     {
