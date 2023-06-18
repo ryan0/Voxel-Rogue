@@ -23,7 +23,7 @@ public class World : MonoBehaviour
     private const float temperatureSystemInterval = 5.0f;
     private float temperatureSystemTimer = 0.5f;
 
-    private const float fluidFlowSystemInterval = .2f;
+    private const float fluidFlowSystemInterval = .1f;
     private float fluidFlowSystemTimer = 0.0f;
 
 
@@ -117,7 +117,7 @@ public class World : MonoBehaviour
         if (gasFlowSystemTimer >= gasFlowSystemInterval)
         {
             gasFlowSystemTimer -= gasFlowSystemInterval;
-            //this.gasSystem.UpdateGasFlow(getActiveChunks());
+            this.gasSystem.UpdateGasFlow(getActiveChunks());
         }
 
 

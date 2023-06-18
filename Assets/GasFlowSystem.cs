@@ -5,7 +5,8 @@ public class GasFlowSystem
 {
     private HashSet<Chunk> activeChunks;
     private HashSet<Voxel> staticVoxels;
-    private const int MAX_GAS_HEIGHT = 80;
+
+    private const int MAX_GAS_HEIGHT = 128; // Set this to your desired maximum gas height
 
     public GasFlowSystem()
     {
@@ -13,130 +14,72 @@ public class GasFlowSystem
         staticVoxels = new HashSet<Voxel>();
     }
 
-    private bool HasGasNeighbor(Voxel[] adjacentVoxels, int fluidId)
+    public void UpdateGasFlow(List<Chunk> activeChunks)
     {
-        for (int i = 0; i < adjacentVoxels.Length; i++)
+        // Similar to fluid flow, update a subset of the voxels in each active chunk
+        foreach (Chunk chunk in activeChunks)
         {
-            Voxel v = adjacentVoxels[i];
-            if (v != null && v.substance.id == fluidId && v.substance.state == State.SOLID)
-            {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    public void UpdateGasFlow(List<Chunk> activeChunks, int updateSize = Chunk.depth / 8)
-    {
-        Chunk[] activeChunksArray = activeChunks.ToArray();
-        if (updateSize >= activeChunksArray.Length)
-        {
-            updateSize = activeChunksArray.Length;
-        }
-
-        int startIndex = new System.Random().Next(activeChunksArray.Length);
-
-        for (int i = 0; i < updateSize; i++)
-        {
-            int chunkIndex = (startIndex + i) % activeChunksArray.Length;
-            Chunk chunk = activeChunksArray[chunkIndex];
             Voxel[,,] voxels = chunk.getVoxels();
-            bool signalMeshRegen = false;
-
-            for (int y = Chunk.height - 1; y >= 0; y--)
+            for (int x = 0; x < Chunk.width; x++)
             {
                 for (int z = 0; z < Chunk.depth; z++)
                 {
-                    for (int x = 0; x < Chunk.width; x++)
+                    for (int y = Chunk.height - 1; y >= 0; y--) // Start from the top and go down
                     {
                         Voxel voxel = voxels[x, y, z];
-                        if (staticVoxels.Contains(voxel))
+                        if (voxel.substance.state == State.GAS && voxel.substance.id != Substance.air.id)
                         {
-                            continue;
-                        }
-
-                        if (voxel.substance.id == Substance.smoke.id || voxel.substance.id == Substance.steam.id)
-                        {
-                            Voxel[] adjacentVoxels = chunk.GetVoxelsAdjacentTo(x, y, z);
-                            if (HasGasNeighbor(adjacentVoxels, voxel.substance.id))
+                            if (Flow(voxel, chunk, voxels, x, y, z, voxel.substance))
                             {
-                                Flow(voxel, chunk, voxels, x, y, z, voxel.substance);
-                                signalMeshRegen = true;
+                                chunk.SignalMeshRegen();
                             }
                         }
                     }
                 }
-            }
-
-            if (signalMeshRegen)
-            {
-                chunk.SignalMeshRegen();
             }
         }
     }
 
     public bool Flow(Voxel voxel, Chunk chunk, Voxel[,,] voxels, int x, int y, int z, Substance gasType)
     {
-        System.Random rng = new System.Random(123);
-        voxel.framesSinceLastChange++;
-        if (voxel.framesSinceLastChange > 5)
+        // Gas will "fall up", but will not exceed MAX_GAS_HEIGHT
+        if (voxel.globalY < MAX_GAS_HEIGHT)
         {
-            staticVoxels.Add(voxel);
-            return false;
-        }
-
-        bool signalMeshRegen = false;
-        Voxel[] adjacentVoxels = chunk.GetVoxelsAdjacentTo(x, y, z);
-
-        if (voxel.motes > 1)
-        {
-            List<Voxel> gasVoxels = new List<Voxel>();
-            for (int i = 0; i < adjacentVoxels.Length; i++)
+            Voxel voxelAbove = chunk.GetVoxelsAdjacentTo(x,y,z)[1];//top neighbor
+            if (voxelAbove != null && voxelAbove.substance.id == Substance.air.id)
             {
-                Voxel v = adjacentVoxels[i];
-                if (v != null)
-                {
-                    if (v.substance.id == gasType.id && v.motes < voxel.motes)
-                    {
-                        gasVoxels.Add(v);
-                    }
-                }
+                // The gas moves into the voxel above
+                voxelAbove.substance = gasType;
+                voxelAbove.motes = voxel.motes;
+
+                // The voxel that the gas came from becomes air
+                voxel.substance = Substance.air;
+                voxel.motes = 0;
+                return true;
             }
-
-            if (gasVoxels.Count > 0)
+            else if (voxelAbove.substance.id == gasType.id)
             {
-                gasVoxels.Sort((v1, v2) => v1.motes.CompareTo(v2.motes));
-                int motesToDistribute = voxel.motes / 2;
-                voxel.motes -= motesToDistribute;
+                // The gas combines with the gas above
+                voxelAbove.motes += voxel.motes;
+                voxel.substance = Substance.air;
+                voxel.motes = 0;
+                return true;
+            }
+            else if (voxelAbove.substance.state == State.LIQUID)
+            {
+                // The gas moves up through the liquid, exchanging places
+                Substance tempSubstance = voxel.substance;
+                int tempMotes = voxel.motes;
 
-                foreach (Voxel v in gasVoxels)
-                {
-                    int transferMotes = Mathf.Min(motesToDistribute, MAX_GAS_HEIGHT - v.motes);
-                    v.motes += transferMotes;
-                    motesToDistribute -= transferMotes;
+                voxel.substance = voxelAbove.substance;
+                voxel.motes = voxelAbove.motes;
 
-                    if (motesToDistribute <= 0)
-                    {
-                        break;
-                    }
-                }
+                voxelAbove.substance = tempSubstance;
+                voxelAbove.motes = tempMotes;
 
-                if (motesToDistribute > 0)
-                {
-                    voxel.motes += motesToDistribute;
-                }
-
-                signalMeshRegen = true;
+                return true;
             }
         }
-
-        if (voxel.motes <= 0)
-        {
-            voxel.substance = Substance.air;
-            signalMeshRegen = true;
-        }
-
-        return signalMeshRegen;
+        return false;
     }
 }
