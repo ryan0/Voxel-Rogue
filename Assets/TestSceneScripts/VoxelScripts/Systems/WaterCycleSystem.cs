@@ -31,8 +31,9 @@ public class WaterCycleSystem
                     for (int z = 0; z < Chunk.depth; z++)
                     {
                         Voxel voxel = voxels[x, y, z];
-                        if (voxel.substance.state == State.GAS && voxel.motes >= maxMotes) // You need to implement isGas() method
+                        if (voxel.substance.state == State.GAS && voxel.motes >= 10) // You need to implement isGas() method
                         {
+                            Debug.Log("Gas has more than 10 motes");
                             Substance liquidForm = voxel.substance.GetLiquidForm();
                             if (liquidForm != null)
                             {
