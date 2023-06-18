@@ -100,7 +100,7 @@ public class WorldGeneration
         int height = terrain.GetLength(1);
         int depth = terrain.GetLength(2);
 
-        int cloudHeight = 128; // The height at which clouds should generate
+        int cloudHeight = 96; // The height at which clouds should generate
         float cloudSizeLarge = 0.02f; // The scale of the larger cloud structures
         float cloudSizeSmall = 0.1f; // The scale of the smaller cloud structures
         float cloudDensity = 0.6f; // The threshold for cloud density, higher values result in fewer clouds

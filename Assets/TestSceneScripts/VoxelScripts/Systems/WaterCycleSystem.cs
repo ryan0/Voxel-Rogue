@@ -56,17 +56,31 @@ public class WaterCycleSystem
             {
                 for (int z = 0; z < Chunk.depth; z++)
                 {
-                    for (int y = Chunk.height - 1; y >= 0; y--) // Start from the top and go down
+                    for (int y = 0; y < Chunk.height; y++) // Start from the bottom and go up
                     {
                         Voxel voxel = voxels[x, y, z];
                         if (voxel.substance.state == State.LIQUID)
                         {
-                            Voxel voxelAbove = y < Chunk.height - 1 ? voxels[x, y + 1, z] : null;
-                            if (voxelAbove != null && voxelAbove.substance.GetGasForm() == voxel.substance)
+                            bool isClearPath = true;
+                            Voxel voxelAbove = null;
+                            for (int upperY = Chunk.height - 1; upperY > y; upperY--)
+                            {
+                                voxelAbove = voxels[x, upperY, z];
+                                if (voxelAbove.substance != Substance.air)
+                                {
+                                    isClearPath = false;
+                                    break;
+                                }
+                            }
+
+                            Debug.Log("isClearPath");
+
+                            if (isClearPath && voxelAbove != null && voxel.substance.GetGasForm() == voxelAbove.substance)
                             {
                                 // Transfer 1 mote to the gas above
                                 voxel.motes -= 1;
                                 voxelAbove.motes += 1;
+                                Debug.Log("transfering motes");
 
                                 // If the water voxel reaches 0, it should disappear
                                 if (voxel.motes == 0)
@@ -82,4 +96,5 @@ public class WaterCycleSystem
             }
         }
     }
+
 }

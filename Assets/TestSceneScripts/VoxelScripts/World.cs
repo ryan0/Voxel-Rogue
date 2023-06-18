@@ -70,7 +70,7 @@ public class World : MonoBehaviour
                     Chunk chunk = chunks[x, y, z];
                     chunk.neighbors = new Chunk[6];
                     // Set the neighbors
-                    Debug.Log("Setting neighbours for chunk at " + x + ", " + y + ", " + z);
+                    //Debug.Log("Setting neighbours for chunk at " + x + ", " + y + ", " + z);
                     chunk.northNeighbour = (z < chunksZ - 1) ? chunks[x, y, z + 1] : null;
                     chunk.southNeighbour = (z > 0) ? chunks[x, y, z - 1] : null;
                     chunk.eastNeighbour = (x < chunksX - 1) ? chunks[x + 1, y, z] : null;
