@@ -14,7 +14,7 @@ public class GasFlowSystem
         staticVoxels = new HashSet<Voxel>();
     }
 
-    public void UpdateGasFlow(List<Chunk> activeChunks)
+    public void UpdateGasFlow(HashSet<Chunk> activeChunks)
     {
         // Similar to fluid flow, update a subset of the voxels in each active chunk
         foreach (Chunk chunk in activeChunks)

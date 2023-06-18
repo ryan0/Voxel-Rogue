@@ -3,7 +3,7 @@ using UnityEngine;
 
 public class FluidFlowSystem
 {
-    private HashSet<Chunk> activeChunks;
+    //private HashSet<Chunk> activeChunksH;
     private HashSet<Voxel> staticVoxels;
 
     private class FluidFlowInteraction
@@ -23,7 +23,7 @@ public class FluidFlowSystem
 
     public FluidFlowSystem()
     {
-        activeChunks = new HashSet<Chunk>();
+        //activeChunksH = new HashSet<Chunk>();
         staticVoxels = new HashSet<Voxel>();
 
         //HYBRID LOGIC
@@ -50,13 +50,14 @@ public class FluidFlowSystem
         return false;
     }
 
-    public void UpdateFluidFlow(List<Chunk> activeChunks)
+    public void UpdateFluidFlow(HashSet<Chunk> activeChunksH)
     {
         int numVoxels = (int)(Mathf.Pow(Chunk.depth, 3));
         int updateSize = numVoxels / 4;//update size is optimization
 
         // Convert activeChunks to an array for efficient indexing
-        Chunk[] activeChunksArray = activeChunks.ToArray();
+        Chunk[] activeChunksArray = new Chunk[activeChunksH.Count];
+        activeChunksH.CopyTo(activeChunksArray);
 
         // Choose a random start index to ensure the update chunks are distributed randomly
         int startIndex = new System.Random().Next(activeChunksArray.Length);

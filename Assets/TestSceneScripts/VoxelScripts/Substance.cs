@@ -60,4 +60,41 @@ public class Substance
     public static readonly Substance air = new Substance("air", State.GAS, 0);
     public static readonly Substance steam = new Substance("steam", State.GAS, 0);
     public static readonly Substance smoke = new Substance("smoke", State.GAS, 0);
+
+
+
+    /// <summary>
+    /// Liquid form dictionary logic
+    /// </summary>
+    private static readonly Dictionary<Substance, Substance> gasToLiquid = new Dictionary<Substance, Substance>
+    {
+        { steam, water },
+        // add other gas-liquid pairs here
+    };
+
+    private static readonly Dictionary<Substance, Substance> liquidToGas = new Dictionary<Substance, Substance>
+    {
+        { water, steam },
+        // add other liquid-gas pairs here
+    };
+
+    public Substance GetLiquidForm()
+    {
+        if (state != State.GAS)
+        {
+            Debug.LogError("Only gas substances have a liquid form");
+        }
+
+        return gasToLiquid.ContainsKey(this) ? gasToLiquid[this] : null;
+    }
+
+    public Substance GetGasForm()
+    {
+        if (state != State.LIQUID)
+        {
+            Debug.LogError("Only liquid substances have a gas form");
+        }
+
+        return liquidToGas.ContainsKey(this) ? liquidToGas[this] : null;
+    }
 }

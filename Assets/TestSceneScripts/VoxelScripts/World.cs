@@ -30,12 +30,15 @@ public class World : MonoBehaviour
     private const float gasFlowSystemInterval = .2f;
     private float gasFlowSystemTimer = 0.0f;
 
+    private const float wCycleystemInterval = .5f;
+    private float wCycleSystemTimer = 0.0f;
+
 
     FluidFlowSystem fluidFlowSystem = new ();
     SubstanceInteractionSystem substanceInteractionSystem = new();
     TemperatureSystem temperatureSystem = new();
     GasFlowSystem gasSystem = new ();
-
+    WaterCycleSystem waterCycleSystem = new ();
 
 
     // Start is called before the first frame update
@@ -120,6 +123,14 @@ public class World : MonoBehaviour
             this.gasSystem.UpdateGasFlow(getActiveChunks());
         }
 
+        wCycleSystemTimer += Time.deltaTime;
+        if(wCycleSystemTimer >= wCycleystemInterval)
+        {
+            wCycleSystemTimer -= wCycleystemInterval;
+            this.waterCycleSystem.UpdateWaterCycle(getActiveChunks());
+        }
+
+
 
 
     }
@@ -141,7 +152,7 @@ public class World : MonoBehaviour
         return getChunkAt(new Vector3Int(playerX, playerY, playerZ));
     }
 
-    public List<Chunk> getActiveChunks()
+    public HashSet<Chunk> getActiveChunks()
     {
         const int activeAreaRadiusX = 1;
         const int activeAreaRadiusY = 1;
@@ -152,7 +163,7 @@ public class World : MonoBehaviour
         int playerY = (int)(playerPosition.y / Chunk.height);
         int playerZ = (int)(playerPosition.z / Chunk.depth);
 
-        List<Chunk> activeChunks = new();
+        HashSet<Chunk> activeChunks = new();
 
         int xStart = playerX - activeAreaRadiusX > 0 ? playerX - activeAreaRadiusX : 0;
         int xMax = playerX + activeAreaRadiusX < chunksX - 1 ? playerX + activeAreaRadiusX : chunksX - 1;
