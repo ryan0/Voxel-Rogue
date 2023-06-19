@@ -36,14 +36,19 @@ public class WaterCycleSystem
         //Debug.Log("Condense");
         foreach (Chunk chunk in activeChunks)
         {
+            //////////////////////////////
+            /// ////////TO DO OPTIMIZATION CYLCING
+            /// 
+            ///
+            chunkUpdateIndices.TryGetValue(chunk, out int yIndex);
             Voxel[,,] voxels = chunk.getVoxels();
             for (int x = 0; x < Chunk.width; x++)
             {
-                for (int y = 0; y < Chunk.height; y++)
+                //for (int y = 0; y < Chunk.height; y++)
                 {
                     for (int z = 0; z < Chunk.depth; z++)
                     {
-                        Voxel voxel = voxels[x, y, z];
+                        Voxel voxel = voxels[x, yIndex, z];
                         if (voxel.substance.state == State.GAS && voxel.motes >= PRECIPITATION_THRESHOLD) // You need to implement isGas() method
                         {
                             ///////Debug.Log("Gas has more than PRECIPITATION_THRESHOLD motes");
@@ -69,6 +74,8 @@ public class WaterCycleSystem
                     }
                 }
             }
+            yIndex = (yIndex + 1) % Chunk.height;
+            chunkUpdateIndices[chunk] = yIndex;
         }
     }
 
@@ -77,6 +84,7 @@ public class WaterCycleSystem
         //Debug.Log("Evaporate");
         foreach (Chunk currentChunk in activeChunks)//current chunk
         {
+            chunkUpdateIndices.TryGetValue(currentChunk, out int yIndex);
             //get above chunks
             Chunk[] aboveChunks;
             int count = 0;
@@ -106,12 +114,12 @@ public class WaterCycleSystem
                 for (int z = 0; z < Chunk.depth; z++)
                 {
                     // Start from the top of the CURRENT chunk and go down
-                    for (int y = Chunk.height - 1; y >= 0; y--)
+                    //for (int y = Chunk.height - 1; y >= 0; y--)
                     {
                         //Chunk currentChunk = currentChunk.world.getChunks()[chunk.xIndex, chunk.yIndex, chunk.zIndex];
                         if (currentChunk != null)
                         {
-                            Voxel voxel = currentChunk.GetVoxel(x, y, z);
+                            Voxel voxel = currentChunk.GetVoxel(x, yIndex, z);
                             if (voxel.substance.state == State.LIQUID && voxel.getNeighbors()[4].substance.id != Substance.air.id && voxel.substance.GetGasForm()!=null)//don't evap falling blocks
                             {
                                 bool isClearPath = true;
@@ -128,7 +136,7 @@ public class WaterCycleSystem
                                         {
                                             voxelAbove = aboveChunk.GetVoxel(x, upperY, z);
                                             int compareUpperY = upperY + (Chunk.height* aboveChunk.yIndex);
-                                            int compareCurrentY = y + (Chunk.height * currentChunk.yIndex);
+                                            int compareCurrentY = yIndex + (Chunk.height * currentChunk.yIndex);
                                             if ((aboveChunk.yIndex <= currentChunk.yIndex && compareUpperY <= compareCurrentY))
                                             {
                                                 //do nothing, this is below in the current chunk
@@ -186,6 +194,8 @@ public class WaterCycleSystem
                     }
                 }
             }
+            yIndex = (yIndex + 1) % Chunk.height;
+            chunkUpdateIndices[currentChunk] = yIndex;
         }
     }
 
