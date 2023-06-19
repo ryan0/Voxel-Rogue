@@ -30,9 +30,12 @@ public class Fire
         for (int i=0; i< neighbors.Length; i++)
         {
             Voxel v = neighbors[i];
-            if(i!=4 && v.substance == Substance.air)//dont spawn smoke below fire
+            if (v != null)
             {
-                v.substance = Substance.smoke;
+                if (i != 4 && v.substance == Substance.air)//dont spawn smoke below fire
+                {
+                    v.substance = Substance.smoke;
+                }
             }
         }
     }

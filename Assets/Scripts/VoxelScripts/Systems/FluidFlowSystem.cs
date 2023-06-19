@@ -34,7 +34,7 @@ public class FluidFlowSystem
         staticVoxels = new HashSet<Voxel>();
         rng = new System.Random(123);
         numVoxels = (int)(Mathf.Pow(Chunk.depth, 3));
-        updateSize = numVoxels / 8;//update size is optimization
+        updateSize = numVoxels / 2;//update size is optimization.  Higher denominator is faster
 
         //HYBRID LOGIC
         // Configure fluid flow interactions
