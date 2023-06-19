@@ -6,7 +6,7 @@ public class GasFlowSystem
     private HashSet<Chunk> activeChunks;
     private HashSet<Voxel> staticVoxels;
 
-    public static int MAX_GAS_HEIGHT = 128; // Set this to your desired maximum gas height
+    public static int MAX_GAS_HEIGHT = 104; // Set this to your desired maximum gas height
 
     public GasFlowSystem()
     {

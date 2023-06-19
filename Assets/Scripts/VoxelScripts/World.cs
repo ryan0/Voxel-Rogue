@@ -30,7 +30,7 @@ public class World : MonoBehaviour
     private const float gasFlowSystemInterval = .2f;
     private float gasFlowSystemTimer = 0.0f;
 
-    private const float wCycleystemInterval = 20f;
+    private const float wCycleystemInterval = 1f;
     private float wCycleSystemTimer = 0.0f;
 
     private const float fireInterval = 2f;
@@ -110,7 +110,7 @@ public class World : MonoBehaviour
         if(temperatureSystemTimer >= temperatureSystemInterval)
         {
             temperatureSystemTimer -= temperatureSystemInterval;
-            this.temperatureSystem.UpdateTemperatures(getActiveChunks());
+            //this.temperatureSystem.UpdateTemperatures(getActiveChunks());
         }
 
         fluidFlowSystemTimer += Time.deltaTime;

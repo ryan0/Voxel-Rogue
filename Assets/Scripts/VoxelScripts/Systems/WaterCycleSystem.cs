@@ -19,12 +19,12 @@ public class WaterCycleSystem
     public void UpdateWaterCycle(HashSet<Chunk> _activeChunks)
     {
         this.activeChunks = _activeChunks;
-        CondenseGas();
-        updateCounter++;
-        if (updateCounter % 5 == 0)//call Evaporate fraction as much as condense
+        if (updateCounter % 5 == 0)//call Evaporate Xfraction as much as condense
         {
             EvaporateLiquid();
         }
+        else CondenseGas();
+        updateCounter++;
     }
 
 
@@ -52,6 +52,7 @@ public class WaterCycleSystem
                                 belowV.motes = PRECIPITATION_AMOUNT;
                                 voxel.motes -= PRECIPITATION_AMOUNT;
                                 chunk.SignalMeshRegen();
+                                Debug.Log("precipitating " + PRECIPITATION_AMOUNT);
                             }
                         }
                     }
@@ -62,6 +63,7 @@ public class WaterCycleSystem
 
     private void EvaporateLiquid()//only evaporate if not falling
     {
+        Debug.Log("Evaporate");
         foreach (Chunk currentChunk in activeChunks)//current chunk
         {
             //get above chunks
@@ -99,7 +101,7 @@ public class WaterCycleSystem
                         if (currentChunk != null)
                         {
                             Voxel voxel = currentChunk.GetVoxel(x, y, z);
-                            if (voxel.substance.state == State.LIQUID && currentChunk.GetVoxelsAdjacentTo(voxel.x,voxel.y, voxel.z)[4].substance.id != Substance.air.id)//don't evap falling blocks
+                            if (voxel.substance.state == State.LIQUID && voxel.getNeighbors()[4].substance.id != Substance.air.id && voxel.substance.GetGasForm()!=null)//don't evap falling blocks
                             {
                                 bool isClearPath = true;
                                 Voxel voxelAbove = null;
@@ -116,13 +118,13 @@ public class WaterCycleSystem
                                             voxelAbove = aboveChunk.GetVoxel(x, upperY, z);
                                             int compareUpperY = upperY + (Chunk.height* aboveChunk.yIndex);
                                             int compareCurrentY = y + (Chunk.height * currentChunk.yIndex);
-                                            if ((aboveChunk == currentChunk && compareUpperY <= compareCurrentY))
+                                            if ((aboveChunk.yIndex <= currentChunk.yIndex && compareUpperY <= compareCurrentY))
                                             {
                                                 //do nothing, this is below in the current chunk
                                             }
                                             else if (!(voxelAbove.substance == Substance.air || voxelAbove.substance == voxel.substance.GetGasForm()))
                                             {
-                                                //Debug.Log("Not clear path " +  voxelAbove.substance.name + " blocking " + voxel.substance.name);
+                                                Debug.Log("Not clear path " +  voxelAbove.substance.name + " blocking " + voxel.substance.name);
                                                 isClearPath = false;
                                                 break;
                                             }
@@ -131,10 +133,14 @@ public class WaterCycleSystem
                                                 //Debug.Log("break: voxelAbove.substance.GetLiquidForm " + voxelAbove.substance.GetLiquidForm().name + "voxel sub " + voxel.substance);
                                                 break;
                                             }
-                                            else if (voxelAbove.substance == Substance.air && compareUpperY == GasFlowSystem.MAX_GAS_HEIGHT){
+                                            else if (isClearPath && voxelAbove.substance == Substance.air && compareUpperY == GasFlowSystem.MAX_GAS_HEIGHT){
                                                 //else if voxelAbove is air and AT EXACTLY CLOUD HEIGHT, e.g. 128 
                                                 voxelAbove.substance = Substance.steam;
                                                 voxelAbove.motes = 1;
+                                                aboveChunk.SignalMeshRegen();
+                                                Debug.Log("Making cloud");
+                                                isClearPath = false;    
+                                                break;
                                             }
                                         }
                                     }
