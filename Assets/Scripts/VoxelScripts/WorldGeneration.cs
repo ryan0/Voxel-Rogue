@@ -45,7 +45,8 @@ public class WorldGeneration
 
         GenerateTrees(width, depth, scale, heightScale, floorValue, treeProbability, terrain, random);
 
-        GenerateCastle(terrain);
+        int maxTowerCount = 10; // Adjust the value as needed
+        GenerateTowers(terrain, floorValue, scale, heightScale, maxTowerCount);
 
         return terrain;
     }
@@ -95,9 +96,88 @@ public class WorldGeneration
         }
     }
 
-    public static void GenerateTowers(Substance [,,) terrain)
+    /// <summary>
+    /// Tower generation and tower fields
+    /// </summary>
+    static int towerWidth = 7, towerHeight = 36, towerDepth = 7;
+    static int doorHeight = 4, doorWidth = 2;
+
+    public static void GenerateTowers(Substance[,,] terrain, int floorValue, float scale, float heightScale, int maxTowerCount)
     {
-        //ScanTerrainForTowerLocations(terrain);
+        List<Vector3Int> towerLocs = ScanTerrainForTowerLocations(terrain, floorValue, scale, heightScale, maxTowerCount);
+       
+        foreach (Vector3Int loc in towerLocs)
+        {
+            int towerHeight = GenerateTowerAtLocation(terrain, loc);
+            floorValue += towerHeight; // Adjust floorValue to avoid overlapping towers
+        }
+
+        List<(Vector3Int, Vector3Int)> edges = GenerateMinimumSpanningTree(towerLocs);
+
+        foreach ((Vector3Int, Vector3Int) edge in edges)
+        {
+            BuildWallBetweenTowers(terrain, edge.Item1, edge.Item2, towerHeight, towerHeight);
+        }
+    }
+
+
+    public static List<Vector3Int> ScanTerrainForTowerLocations(Substance[,,] terrain, int floorValue, float scale, float heightScale, int maxTowerCount)
+    {
+        List<Vector3Int> towerLocations = new List<Vector3Int>();
+
+        int width = terrain.GetLength(0);
+        int height = terrain.GetLength(1);
+        int depth = terrain.GetLength(2);
+
+        int towerThreshold = (int)(0.9f * height);
+        int towerCount = 0;
+
+        for (int x = 0; x < width; x++)
+        {
+            for (int z = 0; z < depth; z++)
+            {
+                int terrainHeight = Mathf.FloorToInt(Mathf.PerlinNoise(x * scale, z * scale) * heightScale);
+                terrainHeight += floorValue;
+
+                bool isValidTowerSpot = true;
+
+                for (int y = towerThreshold; y < height; y++)
+                {
+                    if (terrain[x, y, z] != Substance.air)
+                    {
+                        isValidTowerSpot = false;
+                        break;
+                    }
+                }
+
+                if (isValidTowerSpot)
+                {
+                    towerLocations.Add(new Vector3Int(x, terrainHeight, z));
+                    towerCount++;
+
+                    if (towerCount >= maxTowerCount)
+                    {
+                        return towerLocations;
+                    }
+                }
+            }
+        }
+
+        return towerLocations;
+    }
+
+
+    public static int GenerateTowerAtLocation(Substance[,,] terrain, Vector3Int location)
+    {
+        //int towerWidth = 5, towerHeight = 36, towerDepth = 5;
+        //int doorHeight = 4, doorWidth = 2;
+        int posX = location.x, posY = location.y, posZ = location.z;
+
+        // Create the tower and its foundation
+        GenerateTower(terrain, posX, posY, posZ, towerWidth, towerHeight, towerDepth, doorHeight, doorWidth);
+        GenerateTowerFoundation(terrain, posX, posY, posZ, towerWidth, towerDepth);
+
+        return towerHeight;
     }
 
     // This code is a starting point and can be enhanced for more robust castle generation
@@ -140,19 +220,22 @@ public class WorldGeneration
     {
         int y = baseY - 1; // start just below the tower
 
-        while (y >= 0)
+        while (y >= 0 && baseX >= 0 && baseX + towerWidth < terrain.GetLength(0) && baseZ >= 0 && baseZ + towerDepth < terrain.GetLength(2))
         {
-            for (int x = baseX - 1; x < baseX + towerWidth + 1; x++)
+            for (int x = baseX - 1; x <= baseX + towerWidth; x++)
             {
-                for (int z = baseZ - 1; z < baseZ + towerDepth + 1; z++)
+                for (int z = baseZ - 1; z <= baseZ + towerDepth; z++)
                 {
-                    if (terrain[x, y, z] == Substance.air)
+                    if (x >= 0 && x < terrain.GetLength(0) && z >= 0 && z < terrain.GetLength(2))
                     {
-                        terrain[x, y, z] = Substance.stone;
-                    }
-                    else
-                    {
-                        return; // we've hit non-air substance, no need to go further down
+                        if (terrain[x, y, z] == Substance.air)
+                        {
+                            terrain[x, y, z] = Substance.stone;
+                        }
+                        else
+                        {
+                            return; // we've hit non-air substance, no need to go further down
+                        }
                     }
                 }
             }
@@ -166,47 +249,6 @@ public class WorldGeneration
         }
     }
 
-    public static List<Vector3Int> ScanTerrainForTowerLocations(Substance[,,] terrain)
-    {
-        List<Vector3Int> towerLocations = new List<Vector3Int>();
-
-        int width = terrain.GetLength(0);
-        int height = terrain.GetLength(1);
-        int depth = terrain.GetLength(2);
-
-        int towerThreshold = (int)(0.9f * height);
-
-        for (int x = 0; x < width; x++)
-        {
-            for (int z = 0; z < depth; z++)
-            {
-                for (int y = towerThreshold; y < height; y++)
-                {
-                    if (terrain[x, y, z] != Substance.air)
-                    {
-                        towerLocations.Add(new Vector3Int(x, y, z));
-                        break;
-                    }
-                }
-            }
-        }
-
-        return towerLocations;
-    }
-
-    public static int GenerateTowerAtLocation(Substance[,,] terrain, Vector3Int location)
-    {
-        int towerWidth = 5, towerHeight = 36, towerDepth = 5;
-        int doorHeight = 4, doorWidth = 2;
-
-        int posX = location.x, posY = location.y, posZ = location.z;
-
-        // Create the tower and its foundation
-        GenerateTower(terrain, posX, posY, posZ, towerWidth, towerHeight, towerDepth, doorHeight, doorWidth);
-        GenerateTowerFoundation(terrain, posX, posY, posZ, towerWidth, towerDepth);
-
-        return towerHeight;
-    }
 
     public static void BuildWallBetweenTowers(Substance[,,] terrain, Vector3Int tower1, Vector3Int tower2, int tower1Height, int tower2Height)
     {
@@ -275,6 +317,9 @@ public class WorldGeneration
         return mstEdges;
     }
 
+    /// <summary>
+    /// Cloud generation
+    /// </summary>
     public static void GenerateClouds(Substance[,,] terrain, int numClouds)
     {
         int width = terrain.GetLength(0);
@@ -310,6 +355,9 @@ public class WorldGeneration
         }
     }
 
+    /// <summary>
+    /// Perlin worm
+    /// </summary>
     private static void GenerateWorms(Substance[,,] terrain, int numWorms)
     {
         for (int i = 0; i < numWorms; i++)
@@ -318,6 +366,84 @@ public class WorldGeneration
         }
     }
 
+    private static void GenerateWorm(Substance[,,] terrain)
+    {
+        int width = terrain.GetLength(0);
+        int height = terrain.GetLength(1);
+        int depth = terrain.GetLength(2);
+
+        // Random starting position for the worm
+        Vector3Int wormPos = new Vector3Int(Random.Range(0, width), Random.Range(0, height), Random.Range(0, depth));
+
+        // Length of the worm
+        int wormLength = 500;  // Adjust as necessary
+
+        // Random direction for the worm to move in
+        Vector3 wormDirection = new Vector3(Random.Range(-1f, 1f), Random.Range(-1f, 1f), Random.Range(-1f, 1f));
+        wormDirection.Normalize(); // ensure the direction vector is normalized
+
+        // Noise scale
+        float noiseScale = 0.05f;
+
+        // Base size of the worm/cave
+        int baseWormSize = 8; // The larger the size, the larger the cave. Adjust as necessary.
+
+        for (int i = 0; i < wormLength; i++)
+        {
+            // Use Perlin noise to get a size multiplier ranging from 0.5 to 1.5
+            float sizeMultiplier = Mathf.PerlinNoise(i * noiseScale, i * noiseScale) + 0.5f;
+
+            // Determine the size of the worm at this point
+            int wormSize = Mathf.FloorToInt(baseWormSize * sizeMultiplier);
+
+            // Carve out a path for the worm
+            for (int dx = -wormSize; dx <= wormSize; dx++)
+            {
+                for (int dy = -wormSize; dy <= wormSize; dy++)
+                {
+                    for (int dz = -wormSize; dz <= wormSize; dz++)
+                    {
+                        // Determine if this point is within the sphere
+                        double distance = Mathf.Sqrt(dx * dx + dy * dy + dz * dz);
+
+                        if (distance <= wormSize)
+                        {
+                            int x = wormPos.x + dx;
+                            int y = wormPos.y + dy;
+                            int z = wormPos.z + dz;
+
+                            // Wrap around the world boundaries
+                            x = (x + width) % width;
+                            y = (y + height) % height;
+                            z = (z + depth) % depth;
+
+                            terrain[x, y, z] = Substance.air;
+                        }
+                    }
+                }
+            }
+
+            // Change the direction more frequently and with larger range
+            if (Random.value < 0.3f)  // 40% chance to change direction
+            {
+                // Randomly select a new direction for the worm to move in
+                wormDirection = new Vector3(Random.Range(-1f, 1f), Random.Range(-0.5f, .2f), Random.Range(-1f, 1f));
+                wormDirection.Normalize();
+            }
+
+
+            // Move the worm
+            wormPos += Vector3Int.FloorToInt(wormDirection * (Random.Range(1, 3)));
+
+            // Wrap around the world boundaries
+            wormPos.x = (wormPos.x + width) % width;
+            wormPos.y = (wormPos.y + height) % height;
+            wormPos.z = (wormPos.z + depth) % depth;
+        }
+    }
+    /// <summary>
+    /// River generation
+    /// </summary>
     private static void GenerateRivers(int floorValue, Substance[,,] terrain, int[,] terrainHeights, int numRivers, Substance riverType, int riverLength = 800, int baseRiverSize = 5)
     {
         for (int i = 0; i < numRivers; i++)
@@ -410,9 +536,9 @@ public class WorldGeneration
         }
     }
 
-
-
-
+    /// <summary>
+    /// Tree generation
+    /// </summary>
 
     private static void GenerateTrees(int width, int depth, float scale, float heightScale, int floorValue, float treeProbability, Substance[,,] terrain, System.Random random)
     {
@@ -434,12 +560,72 @@ public class WorldGeneration
         }
     }
 
+    private static void GenerateTree(Substance[,,] voxels, Vector3Int position)
+    {
+        System.Random random = new System.Random();  // Seed this for deterministic tree placement
+
+        int width = voxels.GetLength(0);
+        int height = voxels.GetLength(1);
+        int depth = voxels.GetLength(2);
+
+        // Introduce randomness in tree dimensions
+        int trunkHeight = random.Next(5, 10); // Trees will have height between 3 and 7
+        int trunkThickness = random.Next(1, 4); // Trunk will have thickness between 1 and 3
+        int crownRadius = random.Next(4, 7); // Crown will have radius between 2 and 4
+
+        // Generate trunk
+        for (int xt = position.x; xt < position.x + trunkThickness; xt++)
+        {
+            for (int zt = position.z; zt < position.z + trunkThickness; zt++)
+            {
+                for (int y = position.y; y < position.y + trunkHeight; y++)
+                {
+                    if (xt < width && zt < depth && y < height)
+                    { // Check bounds
+                        voxels[xt, y, zt] = Substance.wood;
+                    }
+                }
+            }
+        }
+
+        // Generate crown with a more varied shape
+        Vector3Int crownCenter = position + new Vector3Int(0, trunkHeight, 0);
+
+        for (int x = crownCenter.x - crownRadius; x <= crownCenter.x + crownRadius; x++)
+        {
+            for (int y = crownCenter.y; y <= crownCenter.y + crownRadius; y++)
+            {
+                for (int z = crownCenter.z - crownRadius; z <= crownCenter.z + crownRadius; z++)
+                {
+                    Vector3Int voxelPosition = new Vector3Int(x, y, z);
+                    // Generate some random roughness factors
+                    float roughnessX = 0.8f + 0.4f * (float)random.NextDouble();
+                    float roughnessY = 0.8f + 0.4f * (float)random.NextDouble();
+                    float roughnessZ = 0.8f + 0.4f * (float)random.NextDouble();
+
+                    // Check if this voxel position is within the "rough" ellipsoid (crown)
+                    if ((Mathf.Pow(voxelPosition.x - crownCenter.x, 2) / Mathf.Pow(crownRadius * roughnessX, 2)
+                        + Mathf.Pow(voxelPosition.y - crownCenter.y, 2) / Mathf.Pow(crownRadius * roughnessY, 2)
+                        + Mathf.Pow(voxelPosition.z - crownCenter.z, 2) / Mathf.Pow(crownRadius * roughnessZ, 2) <= 1
+                        // Special case for the top of the trunk
+                        || (voxelPosition.x >= position.x && voxelPosition.x < position.x + trunkThickness
+                            && voxelPosition.z >= position.z && voxelPosition.z < position.z + trunkThickness
+                            && voxelPosition.y <= position.y + trunkHeight))
+                        && x >= 0 && x < width && y >= 0 && y < height && z >= 0 && z < depth)
+                    { // Check bounds
+                        voxels[x, y, z] = Substance.leaf;
+                    }
+                }
+            }
+        }
+    }
+
     private static bool CheckInvalidTreeSpot(int x, int z, Substance[,,] terrain, int terrainHeight, int floor)
     {
         bool invalidTreeSpot = false;
         for (int y = terrainHeight - 1; y >= floor; y--)
         {
-            if (terrain[x, y, z] == Substance.water || terrain[x, y, z] == Substance.air || terrain[x, y, z] == Substance.stone)
+            if (terrain[x, y, z] == Substance.water || terrain[x, y, z] == Substance.air )//|| terrain[x, y, z] == Substance.stone)
             {
                 invalidTreeSpot = true;
                 break;
@@ -448,6 +634,9 @@ public class WorldGeneration
         return invalidTreeSpot;
     }
 
+    /// <summary>
+    /// misc experiments
+    /// </summary>
     public static void GenerateTerraceFarms(Substance[,,] terrain, int[,] terrainHeights, float riverThreshold = 0.2f, int maxRiverLength = 100)
     {
         int width = terrain.GetLength(0);
@@ -694,141 +883,6 @@ public class WorldGeneration
         }
     }
 
-    private static void GenerateWorm(Substance[,,] terrain)
-    {
-        int width = terrain.GetLength(0);
-        int height = terrain.GetLength(1);
-        int depth = terrain.GetLength(2);
-
-        // Random starting position for the worm
-        Vector3Int wormPos = new Vector3Int(Random.Range(0, width), Random.Range(0, height), Random.Range(0, depth));
-
-        // Length of the worm
-        int wormLength = 500;  // Adjust as necessary
-
-        // Random direction for the worm to move in
-        Vector3 wormDirection = new Vector3(Random.Range(-1f, 1f), Random.Range(-1f, 1f), Random.Range(-1f, 1f));
-        wormDirection.Normalize(); // ensure the direction vector is normalized
-
-        // Noise scale
-        float noiseScale = 0.05f;
-
-        // Base size of the worm/cave
-        int baseWormSize = 8; // The larger the size, the larger the cave. Adjust as necessary.
-
-        for (int i = 0; i < wormLength; i++)
-        {
-            // Use Perlin noise to get a size multiplier ranging from 0.5 to 1.5
-            float sizeMultiplier = Mathf.PerlinNoise(i * noiseScale, i * noiseScale) + 0.5f;
-
-            // Determine the size of the worm at this point
-            int wormSize = Mathf.FloorToInt(baseWormSize * sizeMultiplier);
-
-            // Carve out a path for the worm
-            for (int dx = -wormSize; dx <= wormSize; dx++)
-            {
-                for (int dy = -wormSize; dy <= wormSize; dy++)
-                {
-                    for (int dz = -wormSize; dz <= wormSize; dz++)
-                    {
-                        // Determine if this point is within the sphere
-                        double distance = Mathf.Sqrt(dx * dx + dy * dy + dz * dz);
-
-                        if (distance <= wormSize)
-                        {
-                            int x = wormPos.x + dx;
-                            int y = wormPos.y + dy;
-                            int z = wormPos.z + dz;
-
-                            // Wrap around the world boundaries
-                            x = (x + width) % width;
-                            y = (y + height) % height;
-                            z = (z + depth) % depth;
-
-                            terrain[x, y, z] = Substance.air;
-                        }
-                    }
-                }
-            }
-
-            // Change the direction more frequently and with larger range
-            if (Random.value < 0.3f)  // 40% chance to change direction
-            {
-                // Randomly select a new direction for the worm to move in
-                wormDirection = new Vector3(Random.Range(-1f, 1f), Random.Range(-0.5f, .2f), Random.Range(-1f, 1f));
-                wormDirection.Normalize();
-            }
-
-
-            // Move the worm
-            wormPos += Vector3Int.FloorToInt(wormDirection * (Random.Range(1, 3)));
-
-            // Wrap around the world boundaries
-            wormPos.x = (wormPos.x + width) % width;
-            wormPos.y = (wormPos.y + height) % height;
-            wormPos.z = (wormPos.z + depth) % depth;
-        }
-    }
-
-    private static void GenerateTree(Substance[,,] voxels, Vector3Int position)
-    {
-        System.Random random = new System.Random();  // Seed this for deterministic tree placement
-
-        int width = voxels.GetLength(0);
-        int height = voxels.GetLength(1);
-        int depth = voxels.GetLength(2);
-
-        // Introduce randomness in tree dimensions
-        int trunkHeight = random.Next(5, 10); // Trees will have height between 3 and 7
-        int trunkThickness = random.Next(1, 4); // Trunk will have thickness between 1 and 3
-        int crownRadius = random.Next(4, 7); // Crown will have radius between 2 and 4
-
-        // Generate trunk
-        for (int xt = position.x; xt < position.x + trunkThickness; xt++)
-        {
-            for (int zt = position.z; zt < position.z + trunkThickness; zt++)
-            {
-                for (int y = position.y; y < position.y + trunkHeight; y++)
-                {
-                    if (xt < width && zt < depth && y < height)
-                    { // Check bounds
-                        voxels[xt, y, zt] = Substance.wood;
-                    }
-                }
-            }
-        }
-
-        // Generate crown with a more varied shape
-        Vector3Int crownCenter = position + new Vector3Int(0, trunkHeight, 0);
-
-        for (int x = crownCenter.x - crownRadius; x <= crownCenter.x + crownRadius; x++)
-        {
-            for (int y = crownCenter.y; y <= crownCenter.y + crownRadius; y++)
-            {
-                for (int z = crownCenter.z - crownRadius; z <= crownCenter.z + crownRadius; z++)
-                {
-                    Vector3Int voxelPosition = new Vector3Int(x, y, z);
-                    // Generate some random roughness factors
-                    float roughnessX = 0.8f + 0.4f * (float)random.NextDouble();
-                    float roughnessY = 0.8f + 0.4f * (float)random.NextDouble();
-                    float roughnessZ = 0.8f + 0.4f * (float)random.NextDouble();
-
-                    // Check if this voxel position is within the "rough" ellipsoid (crown)
-                    if ((Mathf.Pow(voxelPosition.x - crownCenter.x, 2) / Mathf.Pow(crownRadius * roughnessX, 2)
-                        + Mathf.Pow(voxelPosition.y - crownCenter.y, 2) / Mathf.Pow(crownRadius * roughnessY, 2)
-                        + Mathf.Pow(voxelPosition.z - crownCenter.z, 2) / Mathf.Pow(crownRadius * roughnessZ, 2) <= 1
-                        // Special case for the top of the trunk
-                        || (voxelPosition.x >= position.x && voxelPosition.x < position.x + trunkThickness
-                            && voxelPosition.z >= position.z && voxelPosition.z < position.z + trunkThickness
-                            && voxelPosition.y <= position.y + trunkHeight))
-                        && x >= 0 && x < width && y >= 0 && y < height && z >= 0 && z < depth)
-                    { // Check bounds
-                        voxels[x, y, z] = Substance.leaf;
-                    }
-                }
-            }
-        }
-    }
 
 
 }

@@ -12,13 +12,13 @@ public class Chunk : MonoBehaviour {
     public Chunk[] neighbors;
     public World world;
 
-    public const int width = 12;
-    public const int height = 12;
-    public const int depth = 12;
+    public const int width = 16;
+    public const int height = 16;
+    public const int depth = 16;
 
-    public int widthPub = 12;//publically accessible fields
-    public int heightPub = 12;
-    public int depthPub = 12;
+    public int widthPub = 16;//publically accessible fields
+    public int heightPub = 16;
+    public int depthPub = 16;
 
     public int xIndex = 0;
     public int yIndex = 0;

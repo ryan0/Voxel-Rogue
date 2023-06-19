@@ -23,7 +23,7 @@ public class World : MonoBehaviour
     private const float temperatureSystemInterval = 5.0f;
     private float temperatureSystemTimer = 0.5f;
 
-    private const float fluidFlowSystemInterval = .3f;
+    private const float fluidFlowSystemInterval = .2f;
     private float fluidFlowSystemTimer = 0.0f;
 
 
@@ -33,7 +33,7 @@ public class World : MonoBehaviour
     private const float wCycleystemInterval = 10f;
     private float wCycleSystemTimer = 0.0f;
 
-    private const float fireInterval = 2f;
+    private const float fireInterval = 1f;
     private float fireTimer = 0.0f;
 
 

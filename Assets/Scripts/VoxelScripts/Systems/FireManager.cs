@@ -6,43 +6,52 @@ public class FireManager
 {
     HashSet<Chunk> activeChunks;
     List<Fire> fires = new List<Fire>();
-    
+    private Dictionary<Chunk, int> chunkUpdateIndices = new Dictionary<Chunk, int>();//cycling index update for optimization
+
     public void UpdateFires(HashSet<Chunk> _activeChunks)//use activeChunks to optimize
     {
         activeChunks = _activeChunks;
         foreach (Chunk chunk in activeChunks)
         {
+            chunkUpdateIndices.TryGetValue(chunk, out int yIndex);
+
             for (int i = fires.Count - 1; i >= 0; i--)
             {
                 Fire fire = fires[i];
-                if (fire.sourceVoxel.chunk == chunk)
+                if (fire.sourceVoxel.y == yIndex)
                 {
-                    fire.Burn();
-                    Debug.Log("burning");
-                    if (fire.sourceVoxel.motes <= 0)
+                    if (fire.sourceVoxel.chunk == chunk)
                     {
-                        fire.sourceVoxel.substance = Substance.air; // change the voxel to air when it is completely burned
-                        fire.sourceVoxel.fire = null;
-                        fires.RemoveAt(i); // remove the fire from the list when it's extinguished
-                    }
-                    else if (fire.burnTimeLeft <= 0)
-                    {
-                        fire.sourceVoxel.ExtinguishFire();
-                        fires.RemoveAt(i); // remove the fire from the list when it's extinguished
-                    }
-                    else
-                    {
-                        SpreadFire(fire);
-                        if (fire.burnTimeLeft <= fire.burnTime *.75f)
+                        fire.Burn();
+                        Debug.Log("burning");
+                        if (fire.sourceVoxel.motes <= 0)
                         {
-                            fire.GenerateSmoke();
+                            fire.sourceVoxel.substance = Substance.air; // change the voxel to air when it is completely burned
+                            fire.sourceVoxel.fire = null;
+                            fires.RemoveAt(i); // remove the fire from the list when it's extinguished
                         }
+                        else if (fire.burnTimeLeft <= 0)
+                        {
+                            fire.sourceVoxel.ExtinguishFire();
+                            fires.RemoveAt(i); // remove the fire from the list when it's extinguished
+                        }
+                        else
+                        {
+                            SpreadFire(fire);
+                            if (fire.burnTimeLeft <= fire.burnTime * .75f)
+                            {
+                                fire.GenerateSmoke();
+                            }
 
+                        }
                     }
+                    chunk.SignalMeshRegen();
                 }
-                chunk.SignalMeshRegen();
 
             }
+            // Increment the index for the next cycle, or reset it if we've reached the top
+            yIndex = (yIndex + 1) % Chunk.height;
+            chunkUpdateIndices[chunk] = yIndex;
         }
     }
 

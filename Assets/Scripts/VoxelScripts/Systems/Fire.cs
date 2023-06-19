@@ -35,6 +35,7 @@ public class Fire
                 if (i != 4 && v.substance == Substance.air)//dont spawn smoke below fire
                 {
                     v.substance = Substance.smoke;
+
                 }
             }
         }
