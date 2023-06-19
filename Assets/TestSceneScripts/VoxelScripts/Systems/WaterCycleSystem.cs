@@ -21,7 +21,7 @@ public class WaterCycleSystem
         this.activeChunks = _activeChunks;
         CondenseGas();
         updateCounter++;
-        if (updateCounter % 3 == 0)//call Evaporate third as much as condense
+        if (updateCounter % 5 == 0)//call Evaporate fraction as much as condense
         {
             EvaporateLiquid();
         }
@@ -60,7 +60,7 @@ public class WaterCycleSystem
         }
     }
 
-    private void EvaporateLiquid()
+    private void EvaporateLiquid()//only evaporate if not falling
     {
         foreach (Chunk currentChunk in activeChunks)//current chunk
         {
@@ -99,7 +99,7 @@ public class WaterCycleSystem
                         if (currentChunk != null)
                         {
                             Voxel voxel = currentChunk.GetVoxel(x, y, z);
-                            if (voxel.substance.state == State.LIQUID)
+                            if (voxel.substance.state == State.LIQUID && currentChunk.GetVoxelsAdjacentTo(voxel.x,voxel.y, voxel.z)[4].substance.id != Substance.air.id)//don't evap falling blocks
                             {
                                 bool isClearPath = true;
                                 Voxel voxelAbove = null;
