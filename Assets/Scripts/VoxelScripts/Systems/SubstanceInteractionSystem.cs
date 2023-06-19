@@ -39,7 +39,7 @@ public class SubstanceInteractionSystem
 
 
 
-    public void UpdateSubstances(List<Chunk> activeChunks)
+    public void UpdateSubstances(HashSet<Chunk> activeChunks)
     {
         foreach(Chunk chunk in activeChunks)
         {

@@ -43,7 +43,7 @@ public class TemperatureSystem
     }
 
 
-    public void UpdateTemperatures(List<Chunk> activeChunks)
+    public void UpdateTemperatures(HashSet<Chunk> activeChunks)
     {
         foreach (Chunk chunk in activeChunks)
         {

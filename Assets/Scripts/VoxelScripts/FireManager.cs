@@ -8,33 +8,40 @@ public class FireManager
     
     public void UpdateFires(HashSet<Chunk> activeChunks)//use activeChunks to optimize
     {
-        for (int i = fires.Count - 1; i >= 0; i--)
+        foreach (Chunk chunk in activeChunks)
         {
-            Fire fire = fires[i];
-            fire.Burn();
-            Debug.Log("burning");
-            if (fire.sourceVoxel.motes <= 0)
+            for (int i = fires.Count - 1; i >= 0; i--)
             {
-                fire.sourceVoxel.substance = Substance.air; // change the voxel to air when it is completely burned
-                fire.sourceVoxel.fire = null;
-                fires.RemoveAt(i); // remove the fire from the list when it's extinguished
-            }
-            else if (fire.burnTimeLeft <= 0)
-            {
-                fire.sourceVoxel.ExtinguishFire();
-                fires.RemoveAt(i); // remove the fire from the list when it's extinguished
-            }
-            else
-            {
-                SpreadFire(fire);
-                if (fire.burnTimeLeft <= fire.burnTimeLeft / 2) {
-                    fire.GenerateSmoke();
+                Fire fire = fires[i];
+                if (fire.sourceVoxel.chunk == chunk)
+                {
+                    fire.Burn();
+                    Debug.Log("burning");
+                    if (fire.sourceVoxel.motes <= 0)
+                    {
+                        fire.sourceVoxel.substance = Substance.air; // change the voxel to air when it is completely burned
+                        fire.sourceVoxel.fire = null;
+                        fires.RemoveAt(i); // remove the fire from the list when it's extinguished
+                    }
+                    else if (fire.burnTimeLeft <= 0)
+                    {
+                        fire.sourceVoxel.ExtinguishFire();
+                        fires.RemoveAt(i); // remove the fire from the list when it's extinguished
+                    }
+                    else
+                    {
+                        SpreadFire(fire);
+                        if (fire.burnTimeLeft <= fire.burnTimeLeft / 2)
+                        {
+                            fire.GenerateSmoke();
+                        }
+
+                    }
                 }
+                chunk.SignalMeshRegen();
 
             }
         }
-        chunk.SignalMeshRegen();
-
     }
 
     private void SpreadFire(Fire fire)
@@ -58,13 +65,7 @@ public class FireManager
         if (voxel.fire != null)
         {
             voxel.SetOnFire(null);
-            fires.Remove(voxel.fire);
-
-            // Convert water to steam when fire is extinguished
-            if (voxel.substance.id == Substance.water.id)
-            {
-                voxel.substance = Substance.steam;
-            }
+            fires.Remove(voxel.fire);         
         }
     }
 }

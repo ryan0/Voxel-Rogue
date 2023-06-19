@@ -33,7 +33,7 @@ public class World : MonoBehaviour
     private const float wCycleystemInterval = 20f;
     private float wCycleSystemTimer = 0.0f;
 
-    private const float fireInterval = 1f;
+    private const float fireInterval = 2f;
     private float fireTimer = 0.0f;
 
 
@@ -103,14 +103,14 @@ public class World : MonoBehaviour
         if(substanceSystemTimer >= substanceSystemInterval)
         {
             substanceSystemTimer -= substanceSystemInterval;
-            //this.substanceInteractionSystem.UpdateSubstances(getActiveChunks());
+            this.substanceInteractionSystem.UpdateSubstances(getActiveChunks());
         }
 
         temperatureSystemTimer += Time.deltaTime;
         if(temperatureSystemTimer >= temperatureSystemInterval)
         {
             temperatureSystemTimer -= temperatureSystemInterval;
-            //this.temperatureSystem.UpdateTemperatures(getActiveChunks());
+            this.temperatureSystem.UpdateTemperatures(getActiveChunks());
         }
 
         fluidFlowSystemTimer += Time.deltaTime;
