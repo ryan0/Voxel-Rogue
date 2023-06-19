@@ -42,6 +42,7 @@ public class World : MonoBehaviour
     TemperatureSystem temperatureSystem = new();
     GasFlowSystem gasSystem = new ();
     WaterCycleSystem waterCycleSystem = new ();
+    FireManager fireManager = new ();
 
 
     // Start is called before the first frame update
@@ -131,6 +132,13 @@ public class World : MonoBehaviour
         {
             wCycleSystemTimer -= wCycleystemInterval;
             this.waterCycleSystem.UpdateWaterCycle(getActiveChunks());
+        }
+
+        fireTimer += Time.deltaTime;
+        if (fireTimer >= fireInterval)
+        {
+            fireTimer -= fireInterval;
+            this.fireManager.UpdateFires(getActiveChunks());
         }
 
 
@@ -246,7 +254,8 @@ public class World : MonoBehaviour
 
         //Set fire
         Voxel[,,] voxels = chunks[chunkX, chunkY, chunkZ].getVoxels();///debug debug debug
-        voxels[voxelX, voxelY, voxelZ].SetOnFire(new Fire(voxels[voxelX, voxelY, voxelZ]));
+        Voxel voxel = voxels[voxelX, voxelY, voxelZ];//.SetOnFire(new Fire(voxels[voxelX, voxelY, voxelZ]));
+        fireManager.StartFire(voxel);
     }
 
     public void spawnDebrisAt(Substance substance, Vector3Int coord, int nChunks)

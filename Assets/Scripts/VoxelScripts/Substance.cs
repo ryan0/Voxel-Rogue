@@ -47,10 +47,11 @@ public class Substance
     public static readonly Substance dirt = new Substance("dirt", State.SOLID, 0);
     public static readonly Substance mud = new Substance("Mud", State.SOLID, 0);
     public static readonly Substance stone = new Substance("stone", State.SOLID, 0);
-    public static readonly Substance wood = new Substance("wood", State.SOLID, 20, true, 5); 
+    public static readonly Substance wood = new Substance("wood", State.SOLID, 20, true, 10); 
     public static readonly Substance ice = new Substance("ice", State.SOLID, 0);
-    public static readonly Substance leaf = new Substance("leaf", State.SOLID, 30, true, 2);
+    public static readonly Substance leaf = new Substance("leaf", State.SOLID, 30, true, 5);
     public static readonly Substance debug = new Substance("highlight", State.SOLID, 0);
+    public static readonly Substance fire = new Substance("fire", State.SOLID, 30, false);
 
 
 

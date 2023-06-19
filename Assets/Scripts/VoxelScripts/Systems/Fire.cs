@@ -6,32 +6,23 @@ public class Fire
 {
     public Voxel sourceVoxel;
     public int burnTimeLeft;
-    public bool hasGeneratedSmoke;
+    public Substance originalSubstance;
 
-    public Fire(Voxel sourceVoxel, int burnTime = 10)
+    public Fire(Voxel sourceVoxel)
     {
+        int burnTime = sourceVoxel.substance.burnTime;
         this.sourceVoxel = sourceVoxel;
         this.burnTimeLeft = burnTime;
-        this.hasGeneratedSmoke = false;
+        originalSubstance = sourceVoxel.substance;
     }
 
     public void Burn()
     {
         burnTimeLeft--;
         sourceVoxel.motes--;
-        if (burnTimeLeft <= 0)
-        {
-            sourceVoxel.ExtinguishFire();
-        }
-        else if (burnTimeLeft <= burnTimeLeft / 2)
-        {
-            GenerateSmoke();
-            hasGeneratedSmoke = true;
-        }
-
     }
 
-    private void GenerateSmoke()
+    public void GenerateSmoke()
     {
         // logic to generate a smoke voxel in a random air tile adjacent to the sourceVoxel
     }

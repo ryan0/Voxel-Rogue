@@ -41,10 +41,14 @@ public class Voxel
     public void SetOnFire(Fire fire)
     {
         this.fire = fire;
+        fire.sourceVoxel.substance = Substance.fire;
+
     }
 
     public void ExtinguishFire()
     {
+        fire.sourceVoxel.substance = fire.originalSubstance;
         this.fire = null;
+
     }
 }

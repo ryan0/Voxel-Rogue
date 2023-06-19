@@ -5,26 +5,36 @@ using UnityEngine;
 public class FireManager
 {
     List<Fire> fires = new List<Fire>();
-
-    public void UpdateFires()
+    
+    public void UpdateFires(HashSet<Chunk> activeChunks)//use activeChunks to optimize
     {
         for (int i = fires.Count - 1; i >= 0; i--)
         {
             Fire fire = fires[i];
             fire.Burn();
-            if (fire.burnTimeLeft <= 0)
+            Debug.Log("burning");
+            if (fire.sourceVoxel.motes <= 0)
             {
+                fire.sourceVoxel.substance = Substance.air; // change the voxel to air when it is completely burned
+                fire.sourceVoxel.fire = null;
+                fires.RemoveAt(i); // remove the fire from the list when it's extinguished
+            }
+            else if (fire.burnTimeLeft <= 0)
+            {
+                fire.sourceVoxel.ExtinguishFire();
                 fires.RemoveAt(i); // remove the fire from the list when it's extinguished
             }
             else
             {
                 SpreadFire(fire);
-                if (fire.sourceVoxel.motes <= 0)
-                {
-                    fire.sourceVoxel.substance = Substance.air; // change the voxel to air when it is completely burned
+                if (fire.burnTimeLeft <= fire.burnTimeLeft / 2) {
+                    fire.GenerateSmoke();
                 }
+
             }
         }
+        chunk.SignalMeshRegen();
+
     }
 
     private void SpreadFire(Fire fire)
@@ -37,7 +47,7 @@ public class FireManager
     {
         if (voxel.substance.burnable && voxel.fire == null)
         {
-            Fire newFire = new Fire(voxel, voxel.substance.burnTime);
+            Fire newFire = new Fire(voxel);
             voxel.SetOnFire(newFire);
             fires.Add(newFire);
         }
