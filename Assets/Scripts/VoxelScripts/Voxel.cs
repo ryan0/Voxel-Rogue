@@ -51,4 +51,9 @@ public class Voxel
         this.fire = null;
 
     }
+
+    public Voxel[] getNeighbors()
+    {
+        return chunk.GetVoxelsAdjacentTo(x, y, z);
+    }
 }

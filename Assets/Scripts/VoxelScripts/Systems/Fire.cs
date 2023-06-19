@@ -25,5 +25,6 @@ public class Fire
     public void GenerateSmoke()
     {
         // logic to generate a smoke voxel in a random air tile adjacent to the sourceVoxel
+        Voxel[] neighbors = sourceVoxel.getNeighbors();
     }
 }
