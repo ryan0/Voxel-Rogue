@@ -4,10 +4,12 @@ using UnityEngine;
 
 public class FireManager
 {
+    HashSet<Chunk> activeChunks;
     List<Fire> fires = new List<Fire>();
     
-    public void UpdateFires(HashSet<Chunk> activeChunks)//use activeChunks to optimize
+    public void UpdateFires(HashSet<Chunk> _activeChunks)//use activeChunks to optimize
     {
+        activeChunks = _activeChunks;
         foreach (Chunk chunk in activeChunks)
         {
             for (int i = fires.Count - 1; i >= 0; i--)
@@ -48,7 +50,20 @@ public class FireManager
     {
         // logic to spread fire to burnable voxels within range
         // you should add a check here to prevent the fire from spreading to a voxel that is already on fire
+        Voxel sourceVoxel = fire.sourceVoxel;
+        foreach (Voxel neighbor in sourceVoxel.chunk.GetVoxelsAdjacentTo(sourceVoxel.x, sourceVoxel.y, sourceVoxel.z))
+        {
+            if (neighbor != null)
+            {
+                if (neighbor.substance.burnable == true && neighbor.fire == null)
+                {
+                    // If the neighboring voxel is flammable and not already on fire, start a new fire.
+                    StartFire(neighbor);
+                }
+            }
+        }
     }
+
 
     public void StartFire(Voxel voxel)
     {
