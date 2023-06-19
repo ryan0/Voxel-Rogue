@@ -4,6 +4,9 @@ using UnityEngine;
 
 public class SubstanceInteractionSystem
 {
+
+    private Dictionary<Chunk, int> chunkUpdateIndices = new Dictionary<Chunk, int>();//cycling index update for optimization
+
     private class TransmuteInteraction
     {
         public readonly int triggerSubstanceId;
@@ -46,27 +49,28 @@ public class SubstanceInteractionSystem
     {
         foreach(Chunk chunk in activeChunks)
         {
+            chunkUpdateIndices.TryGetValue(chunk, out int yIndex);
             Voxel[,,] voxels = chunk.getVoxels();
             bool signalMeshRegen = false;
 
 
             for (int x = 0; x < Chunk.width; x++)
             {
-                for(int y = 0; y < Chunk.height; y++)
+                //for(int y = 0; y < Chunk.height; y++)
                 {
                     for(int z = 0; z < Chunk.depth; z++)
                     {
                         //For Each voxel in chunk
 
 
-                        Substance substance = voxels[x, y, z].substance;
+                        Substance substance = voxels[x, yIndex, z].substance;
 
                         List<TransmuteInteraction> interactionsList = transmuteInteractions[substance.id];
                         if(interactionsList != null)
                         {
                             foreach(TransmuteInteraction i in interactionsList)
                             {
-                                Voxel[] adjacentVoxels = chunk.GetVoxelsAdjacentTo(x, y, z);
+                                Voxel[] adjacentVoxels = chunk.GetVoxelsAdjacentTo(x, yIndex, z);
 
                                 foreach(Voxel v in adjacentVoxels)
                                 {
@@ -74,7 +78,7 @@ public class SubstanceInteractionSystem
                                     {
                                         if (v.substance.id == i.triggerSubstanceId)
                                         {
-                                            voxels[x, y, z].substance = Substance.getById(i.transmuteToSubstanceId);
+                                            voxels[x, yIndex, z].substance = Substance.getById(i.transmuteToSubstanceId);
                                             signalMeshRegen = true;
                                             break;
                                         }
@@ -86,6 +90,9 @@ public class SubstanceInteractionSystem
                     }
                 }
             }
+            // Increment the index for the next cycle, or reset it if we've reached the top
+            yIndex = (yIndex + 1) % Chunk.height;
+            chunkUpdateIndices[chunk] = yIndex;
 
 
             if (signalMeshRegen)

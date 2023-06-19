@@ -8,6 +8,7 @@ public class WaterCycleSystem
     public static int PRECIPITATION_THRESHOLD = 100;// MAX STEAM BEFORE PRECIPITATION
     public static int PRECIPITATION_AMOUNT = 100;//
     ChunkComparer chunkCompare;
+    private Dictionary<Chunk, int> chunkUpdateIndices = new Dictionary<Chunk, int>();//cycling index update for optimization
 
 
     public WaterCycleSystem()
