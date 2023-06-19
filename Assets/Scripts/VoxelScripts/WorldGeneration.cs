@@ -99,29 +99,32 @@ public class WorldGeneration
     /// <summary>
     /// Tower generation and tower fields
     /// </summary>
-    static int towerWidth = 7, towerHeight = 36, towerDepth = 7;
+    static int towerWidth = 5, towerHeight = 16, towerDepth = 5;
     static int doorHeight = 4, doorWidth = 2;
+    static int minimumDistance = 12;
 
     public static void GenerateTowers(Substance[,,] terrain, int floorValue, float scale, float heightScale, int maxTowerCount)
     {
-        List<Vector3Int> towerLocs = ScanTerrainForTowerLocations(terrain, floorValue, scale, heightScale, maxTowerCount);
+        List<Vector3Int> towerLocs = ScanTerrainForTowerLocations(terrain, floorValue, scale, heightScale, maxTowerCount, minimumDistance);
        
         foreach (Vector3Int loc in towerLocs)
         {
+            Debug.Log(loc);
             int towerHeight = GenerateTowerAtLocation(terrain, loc);
             floorValue += towerHeight; // Adjust floorValue to avoid overlapping towers
         }
 
         List<(Vector3Int, Vector3Int)> edges = GenerateMinimumSpanningTree(towerLocs);
-
+        
         foreach ((Vector3Int, Vector3Int) edge in edges)
         {
+            Debug.Log(edge.Item1 + " : " + edge.Item2);
             BuildWallBetweenTowers(terrain, edge.Item1, edge.Item2, towerHeight, towerHeight);
         }
     }
 
 
-    public static List<Vector3Int> ScanTerrainForTowerLocations(Substance[,,] terrain, int floorValue, float scale, float heightScale, int maxTowerCount)
+    public static List<Vector3Int> ScanTerrainForTowerLocations(Substance[,,] terrain, int floorValue, float scale, float heightScale, int maxTowerCount, float minDistance)
     {
         List<Vector3Int> towerLocations = new List<Vector3Int>();
 
@@ -132,39 +135,42 @@ public class WorldGeneration
         int towerThreshold = (int)(0.9f * height);
         int towerCount = 0;
 
-        for (int x = 0; x < width; x++)
+        System.Random random = new System.Random(); // Create a random number generator
+
+        while (towerCount < maxTowerCount)
         {
-            for (int z = 0; z < depth; z++)
+            int x = random.Next(width);
+            int z = random.Next(depth);
+
+            int terrainHeight = Mathf.FloorToInt(Mathf.PerlinNoise(x * scale, z * scale) * heightScale);
+            terrainHeight += floorValue;
+
+            bool isValidTowerSpot = true;
+
+            for (int i = 0; i < towerLocations.Count; i++)
             {
-                int terrainHeight = Mathf.FloorToInt(Mathf.PerlinNoise(x * scale, z * scale) * heightScale);
-                terrainHeight += floorValue;
+                Vector3Int existingTower = towerLocations[i];
 
-                bool isValidTowerSpot = true;
+                // Calculate the distance between the existing tower and the potential tower location
+                float distance = Mathf.Sqrt((x - existingTower.x) * (x - existingTower.x) + (z - existingTower.z) * (z - existingTower.z));
 
-                for (int y = towerThreshold; y < height; y++)
+                if (distance < minDistance)
                 {
-                    if (terrain[x, y, z] != Substance.air)
-                    {
-                        isValidTowerSpot = false;
-                        break;
-                    }
+                    isValidTowerSpot = false;
+                    break;
                 }
+            }
 
-                if (isValidTowerSpot)
-                {
-                    towerLocations.Add(new Vector3Int(x, terrainHeight, z));
-                    towerCount++;
-
-                    if (towerCount >= maxTowerCount)
-                    {
-                        return towerLocations;
-                    }
-                }
+            if (isValidTowerSpot)
+            {
+                towerLocations.Add(new Vector3Int(x, terrainHeight, z));
+                towerCount++;
             }
         }
 
         return towerLocations;
     }
+
 
 
     public static int GenerateTowerAtLocation(Substance[,,] terrain, Vector3Int location)
@@ -180,36 +186,29 @@ public class WorldGeneration
         return towerHeight;
     }
 
-    // This code is a starting point and can be enhanced for more robust castle generation
-    public static void GenerateTower(Substance[,,] terrain, int posX, int posY, int posZ, int towerWidth, int towerHeight, int towerDepth, int doorHeight,int doorWidth)
+    public static void GenerateTower(Substance[,,] terrain, int posX, int posY, int posZ, int towerWidth, int towerHeight, int towerDepth, int doorHeight, int doorWidth)
     {
-        //int towerWidth = 5, towerHeight = 36, towerDepth = 5;
-        //int doorHeight = 4, doorWidth = 2;
-
-        // Hardcoding the tower's bottom left corner's position
-        //int posX = 50, posY = 70, posZ = 50;
-
-        // Create the tower
         for (int x = posX; x < posX + towerWidth; x++)
         {
             for (int z = posZ; z < posZ + towerDepth; z++)
             {
                 for (int y = posY; y < posY + towerHeight; y++)
                 {
-                    // Make the tower hollow
-                    if (x == posX || x == posX + towerWidth - 1 || z == posZ || z == posZ + towerDepth - 1 || y == posY || y == posY + towerHeight - 1)
+                    if (x >= 0 && x < terrain.GetLength(0) && y >= 0 && y < terrain.GetLength(1) && z >= 0 && z < terrain.GetLength(2))
                     {
-                        terrain[x, y, z] = Substance.stone;
-                    }
-                    else
-                    {
-                        terrain[x, y, z] = Substance.air;
-                    }
+                        if (x == posX || x == posX + towerWidth - 1 || z == posZ || z == posZ + towerDepth - 1 || y == posY || y == posY + towerHeight - 1)
+                        {
+                            terrain[x, y, z] = Substance.stone;
+                        }
+                        else
+                        {
+                            terrain[x, y, z] = Substance.air;
+                        }
 
-                    // Add a door in the middle of one wall
-                    if (x >= posX + towerWidth / 2 - doorWidth / 2 && x < posX + towerWidth / 2 + doorWidth / 2 && z == posZ && y < posY + doorHeight && y >= posY)
-                    {
-                        terrain[x, y, z] = Substance.air;
+                        if (x >= posX + towerWidth / 2 - doorWidth / 2 && x < posX + towerWidth / 2 + doorWidth / 2 && z == posZ && y < posY + doorHeight && y >= posY)
+                        {
+                            terrain[x, y, z] = Substance.air;
+                        }
                     }
                 }
             }
@@ -248,8 +247,6 @@ public class WorldGeneration
             towerDepth += 2;
         }
     }
-
-
     public static void BuildWallBetweenTowers(Substance[,,] terrain, Vector3Int tower1, Vector3Int tower2, int tower1Height, int tower2Height)
     {
         Vector3Int diff = tower2 - tower1;
@@ -260,21 +257,26 @@ public class WorldGeneration
         int wallHeight = Mathf.Max(tower1Height, tower2Height);
         int posX = tower1.x, posY = tower1.y + tower1Height, posZ = tower1.z;
 
-        while (new Vector3Int(posX, posY - tower1Height, posZ) != tower2)
+        while (posX != tower2.x || posY != tower2.y + tower1Height || posZ != tower2.z)
         {
             for (int y = posY; y > posY - wallHeight; y--)
             {
-                if (y >= 0 && y < terrain.GetLength(1))
+                if (posX >= 0 && posX < terrain.GetLength(0) && y >= 0 && y < terrain.GetLength(1) && posZ >= 0 && posZ < terrain.GetLength(2))
                 {
                     terrain[posX, y, posZ] = Substance.stone;
                 }
             }
 
-            posX += step.x;
-            posY += step.y;
-            posZ += step.z;
+            if (posX != tower2.x)
+                posX += step.x;
+            if (posY != tower2.y + tower1Height)
+                posY += step.y;
+            if (posZ != tower2.z)
+                posZ += step.z;
         }
     }
+
+
 
 
     public static List<(Vector3Int, Vector3Int)> GenerateMinimumSpanningTree(List<Vector3Int> towerLocations)
