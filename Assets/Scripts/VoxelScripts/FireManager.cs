@@ -33,7 +33,7 @@ public class FireManager
                     else
                     {
                         SpreadFire(fire);
-                        if (fire.burnTimeLeft <= fire.burnTimeLeft / 2)
+                        if (fire.burnTimeLeft <= fire.burnTime *.75f)
                         {
                             fire.GenerateSmoke();
                         }
