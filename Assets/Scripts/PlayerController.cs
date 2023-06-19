@@ -41,11 +41,23 @@ public class PlayerController : MonoBehaviour
         }
         if (Input.GetKeyDown(KeyCode.G))
         {
-            SpawnWaterVoxel(Substance.steam);///debug water method
+            SpawnWaterVoxel(Substance.water);///debug water method
         }
         if (Input.GetKeyDown(KeyCode.K))
         {
             HighlightAdjacentVoxels();
+        }
+        if (Input.GetKeyDown(KeyCode.F))
+        {
+            SetOnFire();
+        }
+    }
+
+    private void SetOnFire()
+    {
+        if (RayCastToVoxel(out Vector3Int hitCoord))
+        {
+            world.setFireVoxel(hitCoord);
         }
     }
 

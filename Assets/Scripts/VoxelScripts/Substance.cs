@@ -15,15 +15,19 @@ public class Substance
     public readonly int id;
     public readonly string name;
     public readonly State state;
-    public readonly int flammablity;
+    //public readonly int flammablity;
+    public readonly bool burnable;
+    public readonly int burnTime;
 
     private static int nextId = 0;
     private static readonly Dictionary<int, Substance> substanceLookUp = new Dictionary<int, Substance>();
-    private Substance(string name, State state, int flammablity)
+    private Substance(string name, State state, int flammablity, bool burnable = false, int burnTime = 0)
     {
         this.name = name;
         this.state = state;
-        this.flammablity = flammablity;
+        //this.flammablity = flammablity;
+        this.burnable = burnable;
+        this.burnTime = burnTime;
 
         this.id = nextId++;
         substanceLookUp.Add(this.id, this);
@@ -43,16 +47,16 @@ public class Substance
     public static readonly Substance dirt = new Substance("dirt", State.SOLID, 0);
     public static readonly Substance mud = new Substance("Mud", State.SOLID, 0);
     public static readonly Substance stone = new Substance("stone", State.SOLID, 0);
-    public static readonly Substance wood = new Substance("wood", State.SOLID, 20);
+    public static readonly Substance wood = new Substance("wood", State.SOLID, 20, true, 5); 
     public static readonly Substance ice = new Substance("ice", State.SOLID, 0);
-    public static readonly Substance leaf = new Substance("leaf", State.SOLID, 0);
+    public static readonly Substance leaf = new Substance("leaf", State.SOLID, 30, true, 2);
     public static readonly Substance debug = new Substance("highlight", State.SOLID, 0);
 
 
 
     //Liquids
     public static readonly Substance water = new Substance("water", State.LIQUID, 0);
-    public static readonly Substance oil = new Substance("oil", State.LIQUID, 50);
+    public static readonly Substance oil = new Substance("oil", State.LIQUID, 50, true, 8);
     public static readonly Substance lava = new Substance("lava", State.LIQUID, 100);
 
 

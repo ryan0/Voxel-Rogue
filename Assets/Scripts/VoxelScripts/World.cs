@@ -33,6 +33,9 @@ public class World : MonoBehaviour
     private const float wCycleystemInterval = 20f;
     private float wCycleSystemTimer = 0.0f;
 
+    private const float fireInterval = 1f;
+    private float fireTimer = 0.0f;
+
 
     FluidFlowSystem fluidFlowSystem = new ();
     SubstanceInteractionSystem substanceInteractionSystem = new();
@@ -225,6 +228,25 @@ public class World : MonoBehaviour
         Chunk targetChunk = chunks[chunkX, chunkY, chunkZ];
         // Use a method in the Chunk class to create a new voxel at the specified local position
         targetChunk.createVoxelAt(voxelX, voxelY, voxelZ, substance, mote);
+    }
+
+    public void setFireVoxel(Vector3Int coord)
+    {
+        int chunkX = coord.x / Chunk.width;
+        int chunkY = coord.y / Chunk.height;
+        int chunkZ = coord.z / Chunk.depth;
+
+        int voxelX = coord.x - (chunkX * Chunk.width);
+        int voxelY = coord.y - (chunkY * Chunk.height);
+        int voxelZ = coord.z - (chunkZ * Chunk.depth);
+
+        Debug.Log("hit Voxel: " + voxelX + ", " + voxelY + ", " + voxelZ);
+        Debug.Log("in Chunk: " + chunkX + ", " + chunkY + ", " + chunkZ);
+
+
+        //Set fire
+        Voxel[,,] voxels = chunks[chunkX, chunkY, chunkZ].getVoxels();///debug debug debug
+        voxels[voxelX, voxelY, voxelZ].SetOnFire(new Fire(voxels[voxelX, voxelY, voxelZ]));
     }
 
     public void spawnDebrisAt(Substance substance, Vector3Int coord, int nChunks)

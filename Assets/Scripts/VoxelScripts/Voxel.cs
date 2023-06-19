@@ -19,6 +19,8 @@ public class Voxel
     public int mass = 10;
     public float temperature;
     public int motes { get; set; } // new property for motes
+    public Fire fire;
+
 
     public Voxel(int x, int y, int z, Chunk chunk, Substance substance, float temperature = 30f, int motes = 5)
     {
@@ -34,5 +36,15 @@ public class Voxel
         this.globalX = x + chunk.xIndex * Chunk.width;
         this.globalY = y + chunk.yIndex * Chunk.height;
         this.globalZ = z + chunk.zIndex * Chunk.depth;
+    }
+
+    public void SetOnFire(Fire fire)
+    {
+        this.fire = fire;
+    }
+
+    public void ExtinguishFire()
+    {
+        this.fire = null;
     }
 }
