@@ -5,7 +5,7 @@ public class GasFlowSystem
 {
     private HashSet<Chunk> activeChunks;
     private HashSet<Voxel> staticVoxels;
-
+    private Dictionary<Chunk, int> chunkUpdateIndices = new Dictionary<Chunk, int>();//cycling index update for optimization
     public static int MAX_GAS_HEIGHT = 104; // Set this to your desired maximum gas height
 
     public GasFlowSystem()
@@ -19,17 +19,20 @@ public class GasFlowSystem
         // Similar to fluid flow, update a subset of the voxels in each active chunk
         foreach (Chunk chunk in activeChunks)
         {
+            // Get the current update index for this chunk, default to 0 if not present
+            chunkUpdateIndices.TryGetValue(chunk, out int yIndex);
             Voxel[,,] voxels = chunk.getVoxels();
             for (int x = 0; x < Chunk.width; x++)
             {
                 for (int z = 0; z < Chunk.depth; z++)
                 {
-                    for (int y = Chunk.height - 1; y >= 0; y--) // Start from the top and go down
+                    //for (int y = Chunk.height - 1; y >= 0; y--) // Start from the top and go down
+                    Voxel voxel = voxels[x, yIndex, z];
                     {
-                        Voxel voxel = voxels[x, y, z];
+                        //Voxel voxel = voxels[x, y, z];
                         if (voxel.substance.state == State.GAS && voxel.substance.id != Substance.air.id)
                         {
-                            if (Flow(voxel, chunk, voxels, x, y, z, voxel.substance))
+                            if (Flow(voxel, chunk, voxels, x, yIndex, z, voxel.substance))
                             {
                                 chunk.SignalMeshRegen();
                             }
@@ -37,6 +40,9 @@ public class GasFlowSystem
                     }
                 }
             }
+            // Increment the index for the next cycle, or reset it if we've reached the top
+            yIndex = (yIndex + 1) % Chunk.height;
+            chunkUpdateIndices[chunk] = yIndex;
         }
     }
 
