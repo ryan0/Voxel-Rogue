@@ -17,7 +17,7 @@ public class World : MonoBehaviour
         return chunks;
     }
 
-    private const float substanceSystemInterval = 4.0f;
+    private const float substanceSystemInterval = .5f;
     private float substanceSystemTimer = 0.0f;
 
     private const float temperatureSystemInterval = 5.0f;
