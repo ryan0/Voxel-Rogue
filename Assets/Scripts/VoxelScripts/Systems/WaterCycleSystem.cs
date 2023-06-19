@@ -6,12 +6,14 @@ public class WaterCycleSystem
 {
     private HashSet<Chunk> activeChunks;
     public static int PRECIPITATION_THRESHOLD = 100;// MAX STEAM BEFORE PRECIPITATION
-    public static int PRECIPITATION_AMOUNT = 10;//
+    public static int PRECIPITATION_AMOUNT = 100;//
+    ChunkComparer chunkCompare;
 
 
     public WaterCycleSystem()
     {
         activeChunks = new HashSet<Chunk>();
+        chunkCompare = new ChunkComparer();
     }
 
     private int updateCounter = 0;
@@ -30,7 +32,7 @@ public class WaterCycleSystem
 
     private void CondenseGas()
     {
-        Debug.Log("Condense");
+        //Debug.Log("Condense");
         foreach (Chunk chunk in activeChunks)
         {
             Voxel[,,] voxels = chunk.getVoxels();
@@ -71,7 +73,7 @@ public class WaterCycleSystem
 
     private void EvaporateLiquid()//only evaporate if not falling
     {
-        Debug.Log("Evaporate");
+        //Debug.Log("Evaporate");
         foreach (Chunk currentChunk in activeChunks)//current chunk
         {
             //get above chunks
@@ -95,7 +97,7 @@ public class WaterCycleSystem
                     count++;
                 }
             }
-            System.Array.Sort(aboveChunks, new ChunkComparer());
+            System.Array.Sort(aboveChunks, chunkCompare);
   
             Voxel[,,] voxels = currentChunk.getVoxels();
             for (int x = 0; x < Chunk.width; x++)
@@ -132,7 +134,7 @@ public class WaterCycleSystem
                                             }
                                             else if (!(voxelAbove.substance == Substance.air || voxelAbove.substance == voxel.substance.GetGasForm()))
                                             {
-                                                Debug.Log("Not clear path " +  voxelAbove.substance.name + " blocking " + voxel.substance.name);
+                                                //Debug.Log("Not clear path " +  voxelAbove.substance.name + " blocking " + voxel.substance.name);
                                                 isClearPath = false;
                                                 break;
                                             }
@@ -146,7 +148,7 @@ public class WaterCycleSystem
                                                 voxelAbove.substance = Substance.steam;
                                                 voxelAbove.motes = 1;
                                                 aboveChunk.SignalMeshRegen();
-                                                Debug.Log("Making cloud");
+                                                //Debug.Log("Making cloud");
                                                 isClearPath = false;    
                                                 break;
                                             }

@@ -41,7 +41,7 @@ public class WorldGeneration
 
         GenerateRivers(floorValue, terrain, terrainHeights, 1, Substance.lava, 200);
 
-        //GenerateClouds(terrain, 50);
+        GenerateClouds(terrain, 30);
 
         GenerateTrees(width, depth, scale, heightScale, floorValue, treeProbability, terrain, random);
 

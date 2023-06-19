@@ -5,6 +5,11 @@ public class FluidFlowSystem
 {
     //private HashSet<Chunk> activeChunksH;
     private HashSet<Voxel> staticVoxels;
+    System.Random rng;
+    int numVoxels;
+    int updateSize;
+    List<Voxel> waterVoxels = new List<Voxel>();
+    List<Voxel> waterVoxelsAnySize = new List<Voxel>();
 
     private class FluidFlowInteraction
     {
@@ -25,6 +30,9 @@ public class FluidFlowSystem
     {
         //activeChunksH = new HashSet<Chunk>();
         staticVoxels = new HashSet<Voxel>();
+        rng = new System.Random(123);
+        numVoxels = (int)(Mathf.Pow(Chunk.depth, 3));
+        updateSize = numVoxels / 4;//update size is optimization
 
         //HYBRID LOGIC
         // Configure fluid flow interactions
@@ -52,15 +60,13 @@ public class FluidFlowSystem
 
     public void UpdateFluidFlow(HashSet<Chunk> activeChunksH)
     {
-        int numVoxels = (int)(Mathf.Pow(Chunk.depth, 3));
-        int updateSize = numVoxels / 4;//update size is optimization
 
         // Convert activeChunks to an array for efficient indexing
         Chunk[] activeChunksArray = new Chunk[activeChunksH.Count];
         activeChunksH.CopyTo(activeChunksArray);
 
         // Choose a random start index to ensure the update chunks are distributed randomly
-        int startIndex = new System.Random().Next(activeChunksArray.Length);
+        int startIndex = rng.Next(activeChunksArray.Length);
 
         for (int i = 0; i < activeChunksArray.Length; i++)
         {
@@ -77,9 +83,9 @@ public class FluidFlowSystem
             for (int u = 0; u < updateSize; u++)//update updateSize random voxels within chunk
             {
                 // Select random voxel within the chunk
-                int x = Random.Range(0, Chunk.width);
-                int y = Random.Range(0, Chunk.height);
-                int z = Random.Range(0, Chunk.depth);
+                int x = rng.Next(0, Chunk.width);
+                int y = rng.Next(0, Chunk.height);
+                int z = rng.Next(0, Chunk.depth);
                 Voxel voxel = voxels[x, y, z];
                 // Check if voxel is static
                 if (staticVoxels.Contains(voxel))
@@ -108,7 +114,7 @@ public class FluidFlowSystem
 
     public bool Flow(Voxel voxel, Chunk chunk, Voxel[,,] voxels, int x, int y, int z, Substance fluidType)
     {
-        System.Random rng = new System.Random(123);
+        //System.Random rng = new System.Random(123);
         voxel.framesSinceLastChange++;
         if (voxel.framesSinceLastChange > 5)//SOME_THRESHOLD for optimization
         {
@@ -141,7 +147,18 @@ public class FluidFlowSystem
         // Drain functionality for when there's only one mote of water left
         if (voxel.motes == 1)
         {
-            List<Voxel> waterVoxelsAnySize = filteredAdjacentVoxels.FindAll(v => v.substance.id == fluidType.id);
+            //List<Voxel> waterVoxelsAnySize = new List<Voxel>();
+            // = filteredAdjacentVoxels.FindAll(v => v.substance.id == fluidType.id);
+            waterVoxelsAnySize.Clear();  // Clear the list before using
+            for (int i = 0; i < filteredAdjacentVoxels.Count; i++)
+            {
+                Voxel v = filteredAdjacentVoxels[i];
+                if (v.substance.id == fluidType.id)
+                {
+                    waterVoxelsAnySize.Add(v);
+                }
+            }
+
             if (waterVoxelsAnySize.Count == 0)//when there is NO neighboring water of any mote quantity
             {
                 Voxel voxelBelow;
@@ -169,7 +186,18 @@ public class FluidFlowSystem
             {
 
                 // Look for adjacent water voxels to draw from that have MORE than 1 mote
-                List<Voxel> waterVoxels = filteredAdjacentVoxels.FindAll(v => v.substance.id == fluidType.id && v.motes > 1);
+                //List<Voxel> waterVoxels = new List<Voxel>();//
+                // = filteredAdjacentVoxels.FindAll(v => v.substance.id == fluidType.id && v.motes > 1);
+                waterVoxels.Clear();  // Clear the list before using
+                for (int i = 0; i < filteredAdjacentVoxels.Count; i++)
+                {
+                    Voxel v = filteredAdjacentVoxels[i];
+                    if (v.substance.id == fluidType.id && v.motes > 1)
+                    {
+                        waterVoxels.Add(v);
+                    }
+                }
+
 
                 if (waterVoxels.Count > 0)
                 {
