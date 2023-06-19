@@ -5,8 +5,8 @@ using UnityEngine;
 public class WaterCycleSystem
 {
     private HashSet<Chunk> activeChunks;
-    public static int PRECIPITATION_THRESHOLD = 10;// MAX STEAM BEFORE PRECIPITATION
-    public static int PRECIPITATION_AMOUNT = 2;// MAX STEAM BEFORE PRECIPITATION
+    public static int PRECIPITATION_THRESHOLD = 100;// MAX STEAM BEFORE PRECIPITATION
+    public static int PRECIPITATION_AMOUNT = 10;//
 
 
     public WaterCycleSystem()
@@ -30,6 +30,7 @@ public class WaterCycleSystem
 
     private void CondenseGas()
     {
+        Debug.Log("Condense");
         foreach (Chunk chunk in activeChunks)
         {
             Voxel[,,] voxels = chunk.getVoxels();
@@ -52,7 +53,14 @@ public class WaterCycleSystem
                                 belowV.motes = PRECIPITATION_AMOUNT;
                                 voxel.motes -= PRECIPITATION_AMOUNT;
                                 chunk.SignalMeshRegen();
-                                Debug.Log("precipitating " + PRECIPITATION_AMOUNT);
+                                //Debug.Log("precipitating " + PRECIPITATION_AMOUNT);
+                                // If the water voxel reaches 0, it should disappear
+                                if (voxel.motes == 0)
+                                {
+                                    voxel.substance = Substance.air;
+                                    //Debug.Log("evaporate");
+
+                                }
                             }
                         }
                     }
