@@ -23,14 +23,14 @@ public class World : MonoBehaviour
     private const float temperatureSystemInterval = 5.0f;
     private float temperatureSystemTimer = 0.5f;
 
-    private const float fluidFlowSystemInterval = .1f;
+    private const float fluidFlowSystemInterval = .3f;
     private float fluidFlowSystemTimer = 0.0f;
 
 
-    private const float gasFlowSystemInterval = .2f;
+    private const float gasFlowSystemInterval = .5f;
     private float gasFlowSystemTimer = 0.0f;
 
-    private const float wCycleystemInterval = 1f;
+    private const float wCycleystemInterval = 10f;
     private float wCycleSystemTimer = 0.0f;
 
     private const float fireInterval = 2f;
@@ -99,46 +99,47 @@ public class World : MonoBehaviour
     // Update is called once per frame
     private void FixedUpdate()
     {
+        HashSet<Chunk> activeChunks = getActiveChunks();
         substanceSystemTimer += Time.deltaTime;
         if(substanceSystemTimer >= substanceSystemInterval)
         {
             substanceSystemTimer -= substanceSystemInterval;
-            this.substanceInteractionSystem.UpdateSubstances(getActiveChunks());
+           //this.substanceInteractionSystem.UpdateSubstances(activeChunks);
         }
 
         temperatureSystemTimer += Time.deltaTime;
         if(temperatureSystemTimer >= temperatureSystemInterval)
         {
             temperatureSystemTimer -= temperatureSystemInterval;
-            //this.temperatureSystem.UpdateTemperatures(getActiveChunks());
+            //this.temperatureSystem.UpdateTemperatures(activeChunks);
         }
 
         fluidFlowSystemTimer += Time.deltaTime;
         if (fluidFlowSystemTimer >= fluidFlowSystemInterval)
         {
             fluidFlowSystemTimer -= fluidFlowSystemInterval;
-            this.fluidFlowSystem.UpdateFluidFlow(getActiveChunks());
+            this.fluidFlowSystem.UpdateFluidFlow(activeChunks);
         }
 
         gasFlowSystemTimer += Time.deltaTime;
         if (gasFlowSystemTimer >= gasFlowSystemInterval)
         {
             gasFlowSystemTimer -= gasFlowSystemInterval;
-            this.gasSystem.UpdateGasFlow(getActiveChunks());
+            this.gasSystem.UpdateGasFlow(activeChunks);
         }
 
         wCycleSystemTimer += Time.deltaTime;
         if(wCycleSystemTimer >= wCycleystemInterval)
         {
             wCycleSystemTimer -= wCycleystemInterval;
-            this.waterCycleSystem.UpdateWaterCycle(getActiveChunks());
+            this.waterCycleSystem.UpdateWaterCycle(activeChunks);
         }
 
         fireTimer += Time.deltaTime;
         if (fireTimer >= fireInterval)
         {
             fireTimer -= fireInterval;
-            this.fireManager.UpdateFires(getActiveChunks());
+            this.fireManager.UpdateFires(activeChunks);
         }
 
 
@@ -166,7 +167,7 @@ public class World : MonoBehaviour
     public HashSet<Chunk> getActiveChunks()
     {
         const int activeAreaRadiusX = 1;
-        const int activeAreaRadiusY = 1;
+        const int activeAreaRadiusY = 2;
         const int activeAreaRadiusZ = 1;
 
         Vector3 playerPosition = player.transform.position * (1 / Voxel.size);

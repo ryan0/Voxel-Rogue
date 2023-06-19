@@ -45,6 +45,7 @@ public class WorldGeneration
 
         GenerateTrees(width, depth, scale, heightScale, floorValue, treeProbability, terrain, random);
 
+        GenerateCastle(terrain);
 
         return terrain;
     }
@@ -94,6 +95,186 @@ public class WorldGeneration
         }
     }
 
+    public static void GenerateTowers(Substance [,,) terrain)
+    {
+        //ScanTerrainForTowerLocations(terrain);
+    }
+
+    // This code is a starting point and can be enhanced for more robust castle generation
+    public static void GenerateTower(Substance[,,] terrain, int posX, int posY, int posZ, int towerWidth, int towerHeight, int towerDepth, int doorHeight,int doorWidth)
+    {
+        //int towerWidth = 5, towerHeight = 36, towerDepth = 5;
+        //int doorHeight = 4, doorWidth = 2;
+
+        // Hardcoding the tower's bottom left corner's position
+        //int posX = 50, posY = 70, posZ = 50;
+
+        // Create the tower
+        for (int x = posX; x < posX + towerWidth; x++)
+        {
+            for (int z = posZ; z < posZ + towerDepth; z++)
+            {
+                for (int y = posY; y < posY + towerHeight; y++)
+                {
+                    // Make the tower hollow
+                    if (x == posX || x == posX + towerWidth - 1 || z == posZ || z == posZ + towerDepth - 1 || y == posY || y == posY + towerHeight - 1)
+                    {
+                        terrain[x, y, z] = Substance.stone;
+                    }
+                    else
+                    {
+                        terrain[x, y, z] = Substance.air;
+                    }
+
+                    // Add a door in the middle of one wall
+                    if (x >= posX + towerWidth / 2 - doorWidth / 2 && x < posX + towerWidth / 2 + doorWidth / 2 && z == posZ && y < posY + doorHeight && y >= posY)
+                    {
+                        terrain[x, y, z] = Substance.air;
+                    }
+                }
+            }
+        }
+    }
+
+    public static void GenerateTowerFoundation(Substance[,,] terrain, int baseX, int baseY, int baseZ, int towerWidth, int towerDepth)
+    {
+        int y = baseY - 1; // start just below the tower
+
+        while (y >= 0)
+        {
+            for (int x = baseX - 1; x < baseX + towerWidth + 1; x++)
+            {
+                for (int z = baseZ - 1; z < baseZ + towerDepth + 1; z++)
+                {
+                    if (terrain[x, y, z] == Substance.air)
+                    {
+                        terrain[x, y, z] = Substance.stone;
+                    }
+                    else
+                    {
+                        return; // we've hit non-air substance, no need to go further down
+                    }
+                }
+            }
+
+            // decrement y and increase the base size to create the pyramid effect
+            y--;
+            baseX--;
+            baseZ--;
+            towerWidth += 2;
+            towerDepth += 2;
+        }
+    }
+
+    public static List<Vector3Int> ScanTerrainForTowerLocations(Substance[,,] terrain)
+    {
+        List<Vector3Int> towerLocations = new List<Vector3Int>();
+
+        int width = terrain.GetLength(0);
+        int height = terrain.GetLength(1);
+        int depth = terrain.GetLength(2);
+
+        int towerThreshold = (int)(0.9f * height);
+
+        for (int x = 0; x < width; x++)
+        {
+            for (int z = 0; z < depth; z++)
+            {
+                for (int y = towerThreshold; y < height; y++)
+                {
+                    if (terrain[x, y, z] != Substance.air)
+                    {
+                        towerLocations.Add(new Vector3Int(x, y, z));
+                        break;
+                    }
+                }
+            }
+        }
+
+        return towerLocations;
+    }
+
+    public static int GenerateTowerAtLocation(Substance[,,] terrain, Vector3Int location)
+    {
+        int towerWidth = 5, towerHeight = 36, towerDepth = 5;
+        int doorHeight = 4, doorWidth = 2;
+
+        int posX = location.x, posY = location.y, posZ = location.z;
+
+        // Create the tower and its foundation
+        GenerateTower(terrain, posX, posY, posZ, towerWidth, towerHeight, towerDepth, doorHeight, doorWidth);
+        GenerateTowerFoundation(terrain, posX, posY, posZ, towerWidth, towerDepth);
+
+        return towerHeight;
+    }
+
+    public static void BuildWallBetweenTowers(Substance[,,] terrain, Vector3Int tower1, Vector3Int tower2, int tower1Height, int tower2Height)
+    {
+        Vector3Int diff = tower2 - tower1;
+        Vector3Int step = new Vector3Int(diff.x > 0 ? 1 : diff.x < 0 ? -1 : 0,
+                                         diff.y > 0 ? 1 : diff.y < 0 ? -1 : 0,
+                                         diff.z > 0 ? 1 : diff.z < 0 ? -1 : 0);
+
+        int wallHeight = Mathf.Max(tower1Height, tower2Height);
+        int posX = tower1.x, posY = tower1.y + tower1Height, posZ = tower1.z;
+
+        while (new Vector3Int(posX, posY - tower1Height, posZ) != tower2)
+        {
+            for (int y = posY; y > posY - wallHeight; y--)
+            {
+                if (y >= 0 && y < terrain.GetLength(1))
+                {
+                    terrain[posX, y, posZ] = Substance.stone;
+                }
+            }
+
+            posX += step.x;
+            posY += step.y;
+            posZ += step.z;
+        }
+    }
+
+
+    public static List<(Vector3Int, Vector3Int)> GenerateMinimumSpanningTree(List<Vector3Int> towerLocations)
+    {
+        List<(Vector3Int, Vector3Int)> mstEdges = new List<(Vector3Int, Vector3Int)>();
+        HashSet<Vector3Int> visited = new HashSet<Vector3Int>();
+
+        if (towerLocations.Count > 0)
+        {
+            Vector3Int current = towerLocations[0];
+            visited.Add(current);
+
+            while (visited.Count < towerLocations.Count)
+            {
+                Vector3Int nearestNeighbor = current;
+                float minDistance = float.MaxValue;
+
+                foreach (Vector3Int tower in towerLocations)
+                {
+                    if (visited.Contains(tower))
+                    {
+                        continue;
+                    }
+
+                    float distance = Vector3Int.Distance(current, tower);
+
+                    if (distance < minDistance)
+                    {
+                        minDistance = distance;
+                        nearestNeighbor = tower;
+                    }
+                }
+
+                mstEdges.Add((current, nearestNeighbor));
+                visited.Add(nearestNeighbor);
+                current = nearestNeighbor;
+            }
+        }
+
+        return mstEdges;
+    }
+
     public static void GenerateClouds(Substance[,,] terrain, int numClouds)
     {
         int width = terrain.GetLength(0);
@@ -128,8 +309,6 @@ public class WorldGeneration
             }
         }
     }
-
-
 
     private static void GenerateWorms(Substance[,,] terrain, int numWorms)
     {
@@ -260,7 +439,7 @@ public class WorldGeneration
         bool invalidTreeSpot = false;
         for (int y = terrainHeight - 1; y >= floor; y--)
         {
-            if (terrain[x, y, z] == Substance.water || terrain[x, y, z] == Substance.air)
+            if (terrain[x, y, z] == Substance.water || terrain[x, y, z] == Substance.air || terrain[x, y, z] == Substance.stone)
             {
                 invalidTreeSpot = true;
                 break;

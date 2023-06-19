@@ -12,13 +12,13 @@ public class Chunk : MonoBehaviour {
     public Chunk[] neighbors;
     public World world;
 
-    public const int width = 16;
-    public const int height = 16;
-    public const int depth = 16;
+    public const int width = 12;
+    public const int height = 12;
+    public const int depth = 12;
 
-    public int widthPub = 16;//publically accessible fields
-    public int heightPub = 16;
-    public int depthPub = 16;
+    public int widthPub = 12;//publically accessible fields
+    public int heightPub = 12;
+    public int depthPub = 12;
 
     public int xIndex = 0;
     public int yIndex = 0;
@@ -79,7 +79,7 @@ public class Chunk : MonoBehaviour {
         this.signalToRegenMesh = true;
     }
 
-    private const float meshBatchInterval = .6f;//optimization
+    private const float meshBatchInterval = 1f;//optimization
     private float meshBatchTimer = 0.0f;//batching regen meshes for performance
     private void FixedUpdate()
     {
