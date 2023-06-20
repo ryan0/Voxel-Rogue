@@ -43,10 +43,11 @@ public class WorldGeneration
 
         GenerateClouds(terrain, 30);
 
-        GenerateTrees(width, depth, scale, heightScale, floorValue, treeProbability, terrain, random);
-
         int maxTowerCount = 10; // Adjust the value as needed
         GenerateTowers(terrain, floorValue, scale, heightScale, maxTowerCount);
+
+        GenerateTrees(width, depth, scale, heightScale, floorValue, treeProbability, terrain, random);
+
 
         return terrain;
     }
@@ -102,6 +103,7 @@ public class WorldGeneration
     static int towerWidth = 5, towerHeight = 16, towerDepth = 5;
     static int doorHeight = 4, doorWidth = 2;
     static int minimumDistance = 12;
+    static List<Vector3Int> towerLocations;
 
     public static void GenerateTowers(Substance[,,] terrain, int floorValue, float scale, float heightScale, int maxTowerCount)
     {
@@ -119,14 +121,14 @@ public class WorldGeneration
         foreach ((Vector3Int, Vector3Int) edge in edges)
         {
             Debug.Log(edge.Item1 + " : " + edge.Item2);
-            BuildWallBetweenTowers(terrain, edge.Item1, edge.Item2, towerHeight, towerHeight);
+            BuildWallBetweenTowers(terrain, edge.Item1, edge.Item2, towerHeight, towerHeight, towerWidth, towerDepth);
         }
     }
 
 
     public static List<Vector3Int> ScanTerrainForTowerLocations(Substance[,,] terrain, int floorValue, float scale, float heightScale, int maxTowerCount, float minDistance)
     {
-        List<Vector3Int> towerLocations = new List<Vector3Int>();
+        towerLocations = new List<Vector3Int>();
 
         int width = terrain.GetLength(0);
         int height = terrain.GetLength(1);
@@ -181,7 +183,7 @@ public class WorldGeneration
 
         // Create the tower and its foundation
         GenerateTower(terrain, posX, posY, posZ, towerWidth, towerHeight, towerDepth, doorHeight, doorWidth);
-        GenerateTowerFoundation(terrain, posX, posY, posZ, towerWidth, towerDepth);
+        GenerateTowerFoundation(terrain, posX, posY, posZ, towerWidth, towerDepth, 8);
 
         return towerHeight;
     }
@@ -215,69 +217,93 @@ public class WorldGeneration
         }
     }
 
-    public static void GenerateTowerFoundation(Substance[,,] terrain, int baseX, int baseY, int baseZ, int towerWidth, int towerDepth)
+    public static void GenerateTowerFoundation(Substance[,,] terrain, int baseX, int baseY, int baseZ, int towerWidth, int towerDepth, int maxFoundationWidth)
     {
         int y = baseY - 1; // start just below the tower
+        bool hitSolidGround = false;
 
-        while (y >= 0 && baseX >= 0 && baseX + towerWidth < terrain.GetLength(0) && baseZ >= 0 && baseZ + towerDepth < terrain.GetLength(2))
+        while (y >= 0 && !hitSolidGround)
         {
-            for (int x = baseX - 1; x <= baseX + towerWidth; x++)
+            hitSolidGround = true; // Assume this layer will hit the ground until proven otherwise
+
+            int startX = Mathf.Max(baseX, 0);
+            int endX = Mathf.Min(baseX + towerWidth - 1, terrain.GetLength(0) - 1);
+            int startZ = Mathf.Max(baseZ, 0);
+            int endZ = Mathf.Min(baseZ + towerDepth - 1, terrain.GetLength(2) - 1);
+
+            for (int x = startX; x <= endX; x++)
             {
-                for (int z = baseZ - 1; z <= baseZ + towerDepth; z++)
+                for (int z = startZ; z <= endZ; z++)
                 {
-                    if (x >= 0 && x < terrain.GetLength(0) && z >= 0 && z < terrain.GetLength(2))
+                    if (terrain[x, y, z] == Substance.air)
                     {
-                        if (terrain[x, y, z] == Substance.air)
-                        {
-                            terrain[x, y, z] = Substance.stone;
-                        }
-                        else
-                        {
-                            return; // we've hit non-air substance, no need to go further down
-                        }
+                        terrain[x, y, z] = Substance.stone;
+                        hitSolidGround = false; // There's still air here, so not yet at ground
                     }
                 }
             }
 
-            // decrement y and increase the base size to create the pyramid effect
+            // decrement y to move down a layer
             y--;
-            baseX--;
-            baseZ--;
-            towerWidth += 2;
-            towerDepth += 2;
+
+            // If the pyramid is still within the maximum width, increase the size
+            if (towerWidth < maxFoundationWidth)
+            {
+                baseX--;
+                baseZ--;
+                towerWidth += 2;
+                towerDepth += 2;
+            }
         }
     }
-    public static void BuildWallBetweenTowers(Substance[,,] terrain, Vector3Int tower1, Vector3Int tower2, int tower1Height, int tower2Height)
+
+
+    static List<Vector3Int> wallPositions = new List<Vector3Int>();
+    public static List<Vector3Int> BuildWallBetweenTowers(Substance[,,] terrain, Vector3Int tower1, Vector3Int tower2, int tower1Height, int tower2Height, int towerWidth, int towerDepth)
     {
+        if (tower1 == tower2)
+        {
+            // If the towers are at the same position, no need to build a wall
+            return wallPositions;
+        }
+
         Vector3Int diff = tower2 - tower1;
-        Vector3Int step = new Vector3Int(diff.x > 0 ? 1 : diff.x < 0 ? -1 : 0,
-                                         diff.y > 0 ? 1 : diff.y < 0 ? -1 : 0,
-                                         diff.z > 0 ? 1 : diff.z < 0 ? -1 : 0);
+        Vector3Int step = new Vector3Int(diff.x != 0 ? (diff.x > 0 ? 1 : -1) : 0,
+                                         diff.y != 0 ? (diff.y > 0 ? 1 : -1) : 0,
+                                         diff.z != 0 ? (diff.z > 0 ? 1 : -1) : 0);
 
         int wallHeight = Mathf.Max(tower1Height, tower2Height);
         int posX = tower1.x, posY = tower1.y + tower1Height, posZ = tower1.z;
 
-        while (posX != tower2.x || posY != tower2.y + tower1Height || posZ != tower2.z)
+        while (!(posX == tower2.x && posY == tower2.y + tower2Height && posZ == tower2.z))
         {
-            for (int y = posY; y > posY - wallHeight; y--)
+            if (terrain.GetLength(0) <= posX || terrain.GetLength(1) <= posY || terrain.GetLength(2) <= posZ)
+                break;
+
+            // Build the wall from top to bottom until you reach non-air substance
+            for (int y = posY; y >= 0; y--)
             {
-                if (posX >= 0 && posX < terrain.GetLength(0) && y >= 0 && y < terrain.GetLength(1) && posZ >= 0 && posZ < terrain.GetLength(2))
+                if (terrain[posX, y, posZ] == Substance.air)
                 {
                     terrain[posX, y, posZ] = Substance.stone;
+                    wallPositions.Add(new Vector3Int(posX, y, posZ));
+                }
+                else
+                {
+                    break;
                 }
             }
 
             if (posX != tower2.x)
                 posX += step.x;
-            if (posY != tower2.y + tower1Height)
+            if (posY != tower2.y + tower2Height)
                 posY += step.y;
             if (posZ != tower2.z)
                 posZ += step.z;
         }
+
+        return wallPositions;
     }
-
-
-
 
     public static List<(Vector3Int, Vector3Int)> GenerateMinimumSpanningTree(List<Vector3Int> towerLocations)
     {
@@ -291,8 +317,9 @@ public class WorldGeneration
 
             while (visited.Count < towerLocations.Count)
             {
-                Vector3Int nearestNeighbor = current;
                 float minDistance = float.MaxValue;
+                Vector3Int nearestNeighbor = default;
+                Vector3Int nearestVisited = default;
 
                 foreach (Vector3Int tower in towerLocations)
                 {
@@ -301,18 +328,21 @@ public class WorldGeneration
                         continue;
                     }
 
-                    float distance = Vector3Int.Distance(current, tower);
-
-                    if (distance < minDistance)
+                    foreach (Vector3Int visitedTower in visited)
                     {
-                        minDistance = distance;
-                        nearestNeighbor = tower;
+                        float distance = Vector3Int.Distance(visitedTower, tower);
+
+                        if (distance < minDistance)
+                        {
+                            minDistance = distance;
+                            nearestNeighbor = tower;
+                            nearestVisited = visitedTower;
+                        }
                     }
                 }
 
-                mstEdges.Add((current, nearestNeighbor));
+                mstEdges.Add((nearestVisited, nearestNeighbor));
                 visited.Add(nearestNeighbor);
-                current = nearestNeighbor;
             }
         }
 
@@ -552,12 +582,13 @@ public class WorldGeneration
                 terrainHeight += floorValue;
 
                 bool invalidTreeSpot = CheckInvalidTreeSpot(x, z, terrain, terrainHeight, floorValue);
-
-                if (random.NextDouble() < treeProbability && !invalidTreeSpot)
+                Vector3Int treePos = new Vector3Int(x, terrainHeight, z);
+                int minDistance = 8;
+                if (random.NextDouble() < treeProbability && !invalidTreeSpot && !IsTooCloseToTowerOrWall(treePos, towerLocations,wallPositions, minDistance))
                 {
-                    Vector3Int treePos = new Vector3Int(x, terrainHeight, z);
                     GenerateTree(terrain, treePos);
                 }
+
             }
         }
     }
@@ -627,7 +658,7 @@ public class WorldGeneration
         bool invalidTreeSpot = false;
         for (int y = terrainHeight - 1; y >= floor; y--)
         {
-            if (terrain[x, y, z] == Substance.water || terrain[x, y, z] == Substance.air )//|| terrain[x, y, z] == Substance.stone)
+            if (terrain[x, y, z] == Substance.water || terrain[x, y, z] == Substance.air)
             {
                 invalidTreeSpot = true;
                 break;
@@ -635,6 +666,28 @@ public class WorldGeneration
         }
         return invalidTreeSpot;
     }
+
+    private static bool IsTooCloseToTowerOrWall(Vector3Int position, List<Vector3Int> towerPositions, List<Vector3Int> wallPositions, int minDistance)
+    {
+        foreach (Vector3Int towerPosition in towerPositions)
+        {
+            if (Vector3Int.Distance(position, towerPosition) < minDistance)
+            {
+                return true;
+            }
+        }
+
+        foreach (Vector3Int wallPosition in wallPositions)
+        {
+            if (Vector3Int.Distance(position, wallPosition) < minDistance)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
 
     /// <summary>
     /// misc experiments
