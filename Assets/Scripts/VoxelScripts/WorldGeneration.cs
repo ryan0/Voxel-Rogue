@@ -105,17 +105,11 @@ public class WorldGeneration
     static int minimumDistance = 12;
     static List<Vector3Int> towerLocations;
 
+
     public static void GenerateTowers(Substance[,,] terrain, int floorValue, float scale, float heightScale, int maxTowerCount)
     {
         List<Vector3Int> towerLocs = ScanTerrainForTowerLocations(terrain, floorValue, scale, heightScale, maxTowerCount, minimumDistance);
         List<int> towerHeights = new List<int>();
-
-        foreach (Vector3Int loc in towerLocs)
-        {
-            int towerHeight = GenerateTowerAtLocation(terrain, loc);
-            towerHeights.Add(towerHeight);
-            //floorValue += towerHeight; // Adjust floorValue to avoid overlapping towers
-        }
 
         // Clustering
         List<List<Vector3Int>> clusters = FindClusters(towerLocs, minimumDistance * 10);
@@ -124,18 +118,36 @@ public class WorldGeneration
         foreach (List<Vector3Int> cluster in clusters)
         {
             List<Vector3Int> convexHull = FindConvexHull(cluster);
+            Vector3Int clusterCenter = CalculateClusterCenter(convexHull);
+
             for (int i = 0; i < convexHull.Count; i++)
             {
                 Vector3Int start = convexHull[i];
                 Vector3Int end = convexHull[(i + 1) % convexHull.Count];
                 int startIndex = towerLocs.IndexOf(start);
                 int endIndex = towerLocs.IndexOf(end);
-                int startHeight = towerHeights[startIndex];
-                int endHeight = towerHeights[endIndex];
+                int startHeight = GenerateTowerAtLocation(terrain, start, clusterCenter);
+                int endHeight = GenerateTowerAtLocation(terrain, end, clusterCenter);
+                towerHeights.Add(startHeight);
+                towerHeights.Add(endHeight);
                 BuildWallBetweenTowers(terrain, start, end, startHeight, endHeight, towerWidth, towerDepth);
             }
         }
     }
+
+
+
+    public static Vector3Int CalculateClusterCenter(List<Vector3Int> cluster)
+    {
+        Vector3Int sum = Vector3Int.zero;
+        foreach (var tower in cluster)
+        {
+            sum += tower;
+        }
+        return new Vector3Int(sum.x / cluster.Count, sum.y / cluster.Count, sum.z / cluster.Count);
+    }
+
+
 
     //Find clusters within minimum distnace
     public static List<List<Vector3Int>> FindClusters(List<Vector3Int> towerLocations, float minDistance)
@@ -250,47 +262,72 @@ public class WorldGeneration
 
 
 
-    public static int GenerateTowerAtLocation(Substance[,,] terrain, Vector3Int location)
+    public static int GenerateTowerAtLocation(Substance[,,] terrain, Vector3Int location, Vector3Int clusterCenter)
     {
-        //int towerWidth = 5, towerHeight = 36, towerDepth = 5;
-        //int doorHeight = 4, doorWidth = 2;
         int posX = location.x, posY = location.y, posZ = location.z;
 
+        // Calculate door direction
+        Vector3Int doorDirection = clusterCenter - location;
+        if (doorDirection.x != 0) doorDirection.x = doorDirection.x > 0 ? 1 : -1;
+        if (doorDirection.z != 0) doorDirection.z = doorDirection.z > 0 ? 1 : -1;
+
         // Create the tower and its foundation
-        GenerateTower(terrain, posX, posY, posZ, towerWidth, towerHeight, towerDepth, doorHeight, doorWidth);
+        GenerateTower(terrain, posX, posY, posZ, towerWidth, towerHeight, towerDepth, doorHeight, doorWidth, doorDirection);
         GenerateTowerFoundation(terrain, posX, posY, posZ, towerWidth, towerDepth, 8);
 
         return towerHeight;
     }
 
-    public static void GenerateTower(Substance[,,] terrain, int posX, int posY, int posZ, int towerWidth, int towerHeight, int towerDepth, int doorHeight, int doorWidth)
+    public static void GenerateTower(Substance[,,] terrain, int posX, int posY, int posZ, int towerWidth, int towerHeight, int towerDepth, int doorHeight, int doorWidth, Vector3Int doorDirection)
     {
+        int maxX = terrain.GetLength(0);
+        int maxY = terrain.GetLength(1);
+        int maxZ = terrain.GetLength(2);
+
+        // Ensure the tower does not exceed the bounds of the terrain array
+        if (posX < 0 || posX + towerWidth >= maxX ||
+            posY < 0 || posY + towerHeight >= maxY ||
+            posZ < 0 || posZ + towerDepth >= maxZ)
+        {
+            Debug.LogWarning("Tower cannot be generated as it exceeds the bounds of the terrain array.");
+            return;
+        }
+
         for (int x = posX; x < posX + towerWidth; x++)
         {
             for (int z = posZ; z < posZ + towerDepth; z++)
             {
                 for (int y = posY; y < posY + towerHeight; y++)
                 {
-                    if (x >= 0 && x < terrain.GetLength(0) && y >= 0 && y < terrain.GetLength(1) && z >= 0 && z < terrain.GetLength(2))
-                    {
-                        if (x == posX || x == posX + towerWidth - 1 || z == posZ || z == posZ + towerDepth - 1 || y == posY || y == posY + towerHeight - 1)
-                        {
-                            terrain[x, y, z] = Substance.stone;
-                        }
-                        else
-                        {
-                            terrain[x, y, z] = Substance.air;
-                        }
+                    bool isDoor = false;
 
-                        if (x >= posX + towerWidth / 2 - doorWidth / 2 && x < posX + towerWidth / 2 + doorWidth / 2 && z == posZ && y < posY + doorHeight && y >= posY)
-                        {
-                            terrain[x, y, z] = Substance.air;
-                        }
+                    if (doorDirection.x > 0 && x == posX + towerWidth - 1 && z >= posZ + (towerDepth / 2) - (doorWidth / 2) && z < posZ + (towerDepth / 2) + (doorWidth / 2) && y < posY + doorHeight)
+                        isDoor = true;
+
+                    if (doorDirection.x < 0 && x == posX && z >= posZ + (towerDepth / 2) - (doorWidth / 2) && z < posZ + (towerDepth / 2) + (doorWidth / 2) && y < posY + doorHeight)
+                        isDoor = true;
+
+                    if (doorDirection.z > 0 && z == posZ + towerDepth - 1 && x >= posX + (towerWidth / 2) - (doorWidth / 2) && x < posX + (towerWidth / 2) + (doorWidth / 2) && y < posY + doorHeight)
+                        isDoor = true;
+
+                    if (doorDirection.z < 0 && z == posZ && x >= posX + (towerWidth / 2) - (doorWidth / 2) && x < posX + (towerWidth / 2) + (doorWidth / 2) && y < posY + doorHeight)
+                        isDoor = true;
+
+                    if (isDoor)
+                    {
+                        // make the door
+                        terrain[x, y, z] = Substance.air;
+                    }
+                    else
+                    {
+                        // make the walls
+                        terrain[x, y, z] = Substance.stone;
                     }
                 }
             }
         }
     }
+
 
     public static void GenerateTowerFoundation(Substance[,,] terrain, int baseX, int baseY, int baseZ, int towerWidth, int towerDepth, int maxFoundationWidth)
     {
