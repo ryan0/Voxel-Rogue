@@ -108,22 +108,90 @@ public class WorldGeneration
     public static void GenerateTowers(Substance[,,] terrain, int floorValue, float scale, float heightScale, int maxTowerCount)
     {
         List<Vector3Int> towerLocs = ScanTerrainForTowerLocations(terrain, floorValue, scale, heightScale, maxTowerCount, minimumDistance);
-       
+
         foreach (Vector3Int loc in towerLocs)
         {
-            Debug.Log(loc);
             int towerHeight = GenerateTowerAtLocation(terrain, loc);
             floorValue += towerHeight; // Adjust floorValue to avoid overlapping towers
         }
 
-        List<(Vector3Int, Vector3Int)> edges = GenerateMinimumSpanningTree(towerLocs);
-        
-        foreach ((Vector3Int, Vector3Int) edge in edges)
+        // Clustering
+        List<List<Vector3Int>> clusters = FindClusters(towerLocs, minimumDistance);
+
+        // Building walls around clusters
+        foreach (List<Vector3Int> cluster in clusters)
         {
-            Debug.Log(edge.Item1 + " : " + edge.Item2);
-            BuildWallBetweenTowers(terrain, edge.Item1, edge.Item2, towerHeight, towerHeight, towerWidth, towerDepth);
+            List<Vector3Int> convexHull = FindConvexHull(cluster);
+            for (int i = 0; i < convexHull.Count; i++)
+            {
+                Vector3Int start = convexHull[i];
+                Vector3Int end = convexHull[(i + 1) % convexHull.Count];
+                BuildWallBetweenTowers(terrain, start, end, towerHeight, towerHeight, towerWidth, towerDepth);
+            }
         }
     }
+
+    public static List<List<Vector3Int>> FindClusters(List<Vector3Int> towerLocations, float minDistance)
+    {
+        List<List<Vector3Int>> clusters = new List<List<Vector3Int>>();
+        foreach (var tower in towerLocations)
+        {
+            bool addedToCluster = false;
+            foreach (var cluster in clusters)
+            {
+                foreach (var existingTower in cluster)
+                {
+                    if (Vector3Int.Distance(existingTower, tower) < minDistance)
+                    {
+                        cluster.Add(tower);
+                        addedToCluster = true;
+                        break;
+                    }
+                }
+                if (addedToCluster) break;
+            }
+            if (!addedToCluster)
+            {
+                clusters.Add(new List<Vector3Int> { tower });
+            }
+        }
+        return clusters;
+    }
+
+    public static List<Vector3Int> FindConvexHull(List<Vector3Int> points)
+    {
+        if (points.Count < 3) return points;
+
+        // Finding the leftmost point
+        Vector3Int leftMost = points[0];
+        foreach (var p in points)
+        {
+            if (p.x < leftMost.x) leftMost = p;
+        }
+
+        // Gift wrapping algorithm (Jarvis March)
+        List<Vector3Int> hull = new List<Vector3Int>();
+        Vector3Int current = leftMost;
+        Vector3Int next;
+        do
+        {
+            hull.Add(current);
+            next = points[0];
+            foreach (var p in points)
+            {
+                // If p is to the left of the line from current to next, update next
+                int crossProduct = (next.x - current.x) * (p.z - current.z) - (next.z - current.z) * (p.x - current.x);
+                if (crossProduct > 0 || (crossProduct == 0 && Vector3Int.Distance(current, p) > Vector3Int.Distance(current, next)))
+                {
+                    next = p;
+                }
+            }
+            current = next;
+        } while (current != leftMost);
+
+        return hull;
+    }
+
 
 
     public static List<Vector3Int> ScanTerrainForTowerLocations(Substance[,,] terrain, int floorValue, float scale, float heightScale, int maxTowerCount, float minDistance)
@@ -267,23 +335,21 @@ public class WorldGeneration
             return wallPositions;
         }
 
+        int posY = Mathf.Max(tower1.y + tower1Height, tower2.y + tower2Height);
+
         Vector3Int diff = tower2 - tower1;
-        Vector3Int step = new Vector3Int(diff.x != 0 ? (diff.x > 0 ? 1 : -1) : 0,
-                                         diff.y != 0 ? (diff.y > 0 ? 1 : -1) : 0,
-                                         diff.z != 0 ? (diff.z > 0 ? 1 : -1) : 0);
+        Vector3Int step = new Vector3Int(diff.x != 0 ? (diff.x > 0 ? 1 : -1) : 0, 0, diff.z != 0 ? (diff.z > 0 ? 1 : -1) : 0);
 
-        int wallHeight = Mathf.Max(tower1Height, tower2Height);
-        int posX = tower1.x, posY = tower1.y + tower1Height, posZ = tower1.z;
+        int posX = tower1.x, posZ = tower1.z;
 
-        while (!(posX == tower2.x && posY == tower2.y + tower2Height && posZ == tower2.z))
+        while (!(posX == tower2.x && posZ == tower2.z))
         {
             if (terrain.GetLength(0) <= posX || terrain.GetLength(1) <= posY || terrain.GetLength(2) <= posZ)
                 break;
 
-            // Build the wall from top to bottom until you reach non-air substance
             for (int y = posY; y >= 0; y--)
             {
-                if (terrain[posX, y, posZ] == Substance.air)
+                /*if (terrain[posX, y, posZ] == Substance.air)
                 {
                     terrain[posX, y, posZ] = Substance.stone;
                     wallPositions.Add(new Vector3Int(posX, y, posZ));
@@ -291,13 +357,13 @@ public class WorldGeneration
                 else
                 {
                     break;
-                }
+                }*/
+                terrain[posX, y, posZ] = Substance.stone;//build stone wall through any voxels
+                wallPositions.Add(new Vector3Int(posX, y, posZ));
             }
 
             if (posX != tower2.x)
                 posX += step.x;
-            if (posY != tower2.y + tower2Height)
-                posY += step.y;
             if (posZ != tower2.z)
                 posZ += step.z;
         }
