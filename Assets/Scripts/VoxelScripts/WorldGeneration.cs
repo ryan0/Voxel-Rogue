@@ -121,7 +121,7 @@ public class WorldGeneration
             Vector3Int clusterCenter = CalculateClusterCenter(convexHull);
 
             int roadWidth = 2;// Width of the roads.
-            int lotSize = 8; // Size of the lots.
+            int lotSize = 12; // Size of the lots.
             int averageHeight;
             int townDensity = 70; // Percentage (0-100) of town density.
             // Flatten terrain within cluster
@@ -189,10 +189,14 @@ public class WorldGeneration
                 if (random.Next(0, 100) >= townDensity)
                     continue;
 
+                // Check if the lot is inside the convex hull
+                if (!IsPointInPolygon(new Vector3Int(x, 0, z), convexHull))
+                    continue;
+
                 // Randomly decide the house dimensions
-                int houseWidth = random.Next(3, lotSize - 1);
-                int houseDepth = random.Next(3, lotSize - 1);
-                int houseHeight = random.Next(4, 8);
+                int houseWidth = random.Next(5, lotSize - 1);
+                int houseDepth = random.Next(5, lotSize - 1);
+                int houseHeight = random.Next(5, 8);
 
                 // Lay house base
                 for (int hx = x; hx < x + houseWidth; hx++)
@@ -342,8 +346,8 @@ public class WorldGeneration
         {
             for (int z = minZ; z <= maxZ; z++)
             {
-                // Remove stuff above the average height
-                for (int y = averageHeight + 1; y < terrain.GetLength(1); y++)
+                // Remove stuff above the average height but not cloud layer
+                for (int y = averageHeight + 1; y < GasFlowSystem.MAX_GAS_HEIGHT; y++)
                 {
                     terrain[x, y, z] = Substance.air;
                 }
