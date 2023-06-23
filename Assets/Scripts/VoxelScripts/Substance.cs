@@ -52,6 +52,9 @@ public class Substance
     public static readonly Substance leaf = new Substance("leaf", State.SOLID, 30, true, 5);
     public static readonly Substance debug = new Substance("highlight", State.SOLID, 0);
     public static readonly Substance fire = new Substance("fire", State.SOLID, 30, false);
+    public static readonly Substance asphalt = new Substance("asphalt", State.SOLID, 30, false);
+    public static readonly Substance glass = new Substance("glass", State.SOLID, 30, false);
+
 
 
 

@@ -28,8 +28,8 @@ public class WorldGeneration
         float heightScale = 30.0f;
         int floorValue = 64;
         float treeProbability = 0.005f;
-        System.Random random = new System.Random();
         //Voxel[,,] voxels = new Voxel[width, height, depth];
+        System.Random random = new System.Random();
 
         CalculateTerrainHeights(width, depth, scale, heightScale, floorValue, terrainHeights);
 
@@ -44,7 +44,7 @@ public class WorldGeneration
         GenerateClouds(terrain, 30);
 
         int maxTowerCount = 10; // Adjust the value as needed
-        GenerateTowers(terrain, floorValue, scale, heightScale, maxTowerCount);
+        GenerateTowers(terrain, terrainHeights, floorValue, scale, heightScale, maxTowerCount);
 
         GenerateTrees(width, depth, scale, heightScale, floorValue, treeProbability, terrain, random);
 
@@ -106,19 +106,32 @@ public class WorldGeneration
     static List<Vector3Int> towerLocations;
 
 
-    public static void GenerateTowers(Substance[,,] terrain, int floorValue, float scale, float heightScale, int maxTowerCount)
+    public static void GenerateTowers(Substance[,,] terrain, int[,] terrainHeights, int floorValue, float scale, float heightScale, int maxTowerCount)
     {
         List<Vector3Int> towerLocs = ScanTerrainForTowerLocations(terrain, floorValue, scale, heightScale, maxTowerCount, minimumDistance);
         List<int> towerHeights = new List<int>();
 
         // Clustering
-        List<List<Vector3Int>> clusters = FindClusters(towerLocs, minimumDistance * 10);
+        List<List<Vector3Int>> clusters = FindClusters(towerLocs, minimumDistance * 8);
 
         // Building walls around clusters
         foreach (List<Vector3Int> cluster in clusters)
         {
             List<Vector3Int> convexHull = FindConvexHull(cluster);
             Vector3Int clusterCenter = CalculateClusterCenter(convexHull);
+
+            int roadWidth = 2;// Width of the roads.
+            int lotSize = 8; // Size of the lots.
+            int averageHeight;
+            int townDensity = 70; // Percentage (0-100) of town density.
+            // Flatten terrain within cluster
+            averageHeight = FlattenTerrainInsideTown(terrain, terrainHeights, convexHull, floorValue, Substance.dirt);
+            //lay grid of roads
+            LayGridOfRoads(terrain, convexHull, floorValue, averageHeight, roadWidth, lotSize);
+            // Lay the houses
+            List<HouseData> houses = LayHouses(terrain, convexHull, floorValue, averageHeight, roadWidth, lotSize, townDensity);
+            // The 'houses' list now contains data for the houses that were created.
+            // You can use this data for NPCs, store locations, etc.
 
             for (int i = 0; i < convexHull.Count; i++)
             {
@@ -135,8 +148,6 @@ public class WorldGeneration
         }
     }
 
-
-
     public static Vector3Int CalculateClusterCenter(List<Vector3Int> cluster)
     {
         Vector3Int sum = Vector3Int.zero;
@@ -147,6 +158,102 @@ public class WorldGeneration
         return new Vector3Int(sum.x / cluster.Count, sum.y / cluster.Count, sum.z / cluster.Count);
     }
 
+    //generate houses
+
+    public class HouseData
+    {
+        public Vector3Int Position;
+        public int Width;
+        public int Depth;
+        public int Height;
+        // Add more properties as needed for NPCs, stores, etc.
+    }
+    public static List<HouseData> LayHouses(Substance[,,] terrain, List<Vector3Int> convexHull, int floorValue, int averageHeight, int roadWidth, int lotSize, int townDensity)
+    {
+        int minX = convexHull.Min(p => p.x);
+        int maxX = convexHull.Max(p => p.x);
+        int minZ = convexHull.Min(p => p.z);
+        int maxZ = convexHull.Max(p => p.z);
+
+        Vector3Int townCenter = new Vector3Int((minX + maxX) / 2, averageHeight, (minZ + maxZ) / 2);
+
+        System.Random random = new System.Random();
+        List<HouseData> houses = new List<HouseData>();
+
+        // Iterate through the lots
+        for (int x = minX + lotSize; x < maxX; x += lotSize + roadWidth)
+        {
+            for (int z = minZ; z <= maxZ; z += lotSize + roadWidth)
+            {
+                // Check if house should be placed based on town density
+                if (random.Next(0, 100) >= townDensity)
+                    continue;
+
+                // Randomly decide the house dimensions
+                int houseWidth = random.Next(3, lotSize - 1);
+                int houseDepth = random.Next(3, lotSize - 1);
+                int houseHeight = random.Next(4, 8);
+
+                // Lay house base
+                for (int hx = x; hx < x + houseWidth; hx++)
+                {
+                    for (int hz = z; hz < z + houseDepth; hz++)
+                    {
+                        for (int hy = averageHeight + 1; hy <= averageHeight + houseHeight; hy++)
+                        {
+                            // Place windows every 4 blocks height
+                            if ((hy - averageHeight) % 4 == 0 && hy < averageHeight + houseHeight && random.Next(0, 100) < 50)
+                            {
+                                terrain[hx, hy, hz] = Substance.glass;//Substance.window;
+                            }
+                            else
+                            {
+                                terrain[hx, hy, hz] = Substance.stone;
+                            }
+                        }
+                    }
+                }
+
+                // Lay sloped wooden roof
+                for (int rx = x; rx < x + houseWidth; rx++)
+                {
+                    for (int rz = z; rz < z + houseDepth; rz++)
+                    {
+                        int roofHeight = houseHeight + (Mathf.Abs(rx - (x + houseWidth / 2)) + Mathf.Abs(rz - (z + houseDepth / 2))) / 2;
+                        if (averageHeight + 1 + roofHeight < terrain.GetLength(1))
+                        {
+                            terrain[rx, averageHeight + 1 + roofHeight, rz] = Substance.wood;
+                        }
+                    }
+                }
+
+                // Place door that faces the town center
+                int doorX, doorZ;
+                if (Mathf.Abs(townCenter.x - x) < Mathf.Abs(townCenter.z - z))
+                {
+                    doorX = x + houseWidth / 2;
+                    doorZ = (townCenter.z <= z) ? z : z + houseDepth - 1;
+                }
+                else
+                {
+                    doorX = (townCenter.x <= x) ? x : x + houseWidth - 1;
+                    doorZ = z + houseDepth / 2;
+                }
+                terrain[doorX, averageHeight + 1, doorZ] = Substance.air;//Substance.door
+
+                // Store house data for future use
+                houses.Add(new HouseData
+                {
+                    Position = new Vector3Int(x, averageHeight + 1, z),
+                    Width = houseWidth,
+                    Depth = houseDepth,
+                    Height = houseHeight
+                });
+            }
+        }
+
+        return houses;
+    }
 
 
     //Find clusters within minimum distnace
@@ -209,6 +316,116 @@ public class WorldGeneration
         } while (current != leftMost);
 
         return hull;
+    }
+
+    public static int FlattenTerrainInsideTown(Substance[,,] terrain, int[,] terrainHeights, List<Vector3Int> convexHull, int floorValue, Substance foundationType)
+    {
+        int minX = convexHull.Min(p => p.x);
+        int maxX = convexHull.Max(p => p.x);
+        int minZ = convexHull.Min(p => p.z);
+        int maxZ = convexHull.Max(p => p.z);
+
+        int totalHeight = 0;
+        int count = 0;
+        for (int x = minX; x <= maxX; x++)
+        {
+            for (int z = minZ; z <= maxZ; z++)
+            {
+                totalHeight += terrainHeights[x, z];
+                count++;
+            }
+        }
+        int averageHeight = totalHeight / count;
+
+        // Flatten terrain and make it the foundation type
+        for (int x = minX; x <= maxX; x++)
+        {
+            for (int z = minZ; z <= maxZ; z++)
+            {
+                // Remove stuff above the average height
+                for (int y = averageHeight + 1; y < terrain.GetLength(1); y++)
+                {
+                    terrain[x, y, z] = Substance.air;
+                }
+
+                // Set foundation type up to the average height
+                for (int y = floorValue; y < averageHeight; y++)
+                {
+                    terrain[x, y, z] = foundationType;
+                }
+            }
+        }
+        return averageHeight;
+    }
+
+    public static bool IsPointInPolygon(Vector3Int point, List<Vector3Int> polygon)
+    {
+        int count = 0;
+        for (int i = 0; i < polygon.Count; i++)
+        {
+            Vector3Int a = polygon[i];
+            Vector3Int b = polygon[(i + 1) % polygon.Count];
+
+            if ((a.z <= point.z && b.z > point.z) || (b.z <= point.z && a.z > point.z))
+            {
+                float t = (float)(point.z - a.z) / (b.z - a.z);
+                if (a.x + t * (b.x - a.x) < point.x)
+                {
+                    count++;
+                }
+            }
+        }
+        return count % 2 == 1;
+    }
+
+    public static void LayGridOfRoads(Substance[,,] terrain, List<Vector3Int> convexHull, int floorValue, int averageHeight, int roadWidth, int lotSize)
+    {
+        int minX = convexHull.Min(p => p.x);
+        int maxX = convexHull.Max(p => p.x);
+        int minZ = convexHull.Min(p => p.z);
+        int maxZ = convexHull.Max(p => p.z);
+
+        List<Vector3Int> hull2D = convexHull.Select(p => new Vector3Int(p.x, 0, p.z)).ToList();
+
+        for (int x = minX + lotSize; x < maxX; x += lotSize + roadWidth)
+        {
+            for (int z = minZ; z <= maxZ; z++)
+            {
+                if (!IsPointInPolygon(new Vector3Int(x, 0, z), hull2D))
+                {
+                    continue;
+                }
+
+                for (int w = 0; w < roadWidth; w++)
+                {
+                    int currentX = x + w;
+                    if (currentX >= terrain.GetLength(0)) continue;
+
+                    // Only the top level should be asphalt
+                    terrain[currentX, averageHeight, z] = Substance.asphalt;
+                }
+            }
+        }
+
+        for (int z = minZ + lotSize; z < maxZ; z += lotSize + roadWidth)
+        {
+            for (int x = minX; x <= maxX; x++)
+            {
+                if (!IsPointInPolygon(new Vector3Int(x, 0, z), hull2D))
+                {
+                    continue;
+                }
+
+                for (int w = 0; w < roadWidth; w++)
+                {
+                    int currentZ = z + w;
+                    if (currentZ >= terrain.GetLength(2)) continue;
+
+                    // Only the top level should be asphalt
+                    terrain[x, averageHeight, currentZ] = Substance.asphalt;
+                }
+            }
+        }
     }
 
 
