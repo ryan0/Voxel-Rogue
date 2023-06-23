@@ -108,15 +108,17 @@ public class WorldGeneration
     public static void GenerateTowers(Substance[,,] terrain, int floorValue, float scale, float heightScale, int maxTowerCount)
     {
         List<Vector3Int> towerLocs = ScanTerrainForTowerLocations(terrain, floorValue, scale, heightScale, maxTowerCount, minimumDistance);
+        List<int> towerHeights = new List<int>();
 
         foreach (Vector3Int loc in towerLocs)
         {
             int towerHeight = GenerateTowerAtLocation(terrain, loc);
-            floorValue += towerHeight; // Adjust floorValue to avoid overlapping towers
+            towerHeights.Add(towerHeight);
+            //floorValue += towerHeight; // Adjust floorValue to avoid overlapping towers
         }
 
         // Clustering
-        List<List<Vector3Int>> clusters = FindClusters(towerLocs, minimumDistance);
+        List<List<Vector3Int>> clusters = FindClusters(towerLocs, minimumDistance * 10);
 
         // Building walls around clusters
         foreach (List<Vector3Int> cluster in clusters)
@@ -126,11 +128,16 @@ public class WorldGeneration
             {
                 Vector3Int start = convexHull[i];
                 Vector3Int end = convexHull[(i + 1) % convexHull.Count];
-                BuildWallBetweenTowers(terrain, start, end, towerHeight, towerHeight, towerWidth, towerDepth);
+                int startIndex = towerLocs.IndexOf(start);
+                int endIndex = towerLocs.IndexOf(end);
+                int startHeight = towerHeights[startIndex];
+                int endHeight = towerHeights[endIndex];
+                BuildWallBetweenTowers(terrain, start, end, startHeight, endHeight, towerWidth, towerDepth);
             }
         }
     }
 
+    //Find clusters within minimum distnace
     public static List<List<Vector3Int>> FindClusters(List<Vector3Int> towerLocations, float minDistance)
     {
         List<List<Vector3Int>> clusters = new List<List<Vector3Int>>();
@@ -193,7 +200,7 @@ public class WorldGeneration
     }
 
 
-
+    //Towers must be separated by minimum distance
     public static List<Vector3Int> ScanTerrainForTowerLocations(Substance[,,] terrain, int floorValue, float scale, float heightScale, int maxTowerCount, float minDistance)
     {
         towerLocations = new List<Vector3Int>();
@@ -329,47 +336,40 @@ public class WorldGeneration
     static List<Vector3Int> wallPositions = new List<Vector3Int>();
     public static List<Vector3Int> BuildWallBetweenTowers(Substance[,,] terrain, Vector3Int tower1, Vector3Int tower2, int tower1Height, int tower2Height, int towerWidth, int towerDepth)
     {
+        List<Vector3Int> wallPositions = new List<Vector3Int>();
+
         if (tower1 == tower2)
         {
             // If the towers are at the same position, no need to build a wall
             return wallPositions;
         }
 
-        int posY = Mathf.Max(tower1.y + tower1Height, tower2.y + tower2Height);
-
         Vector3Int diff = tower2 - tower1;
         Vector3Int step = new Vector3Int(diff.x != 0 ? (diff.x > 0 ? 1 : -1) : 0, 0, diff.z != 0 ? (diff.z > 0 ? 1 : -1) : 0);
 
-        int posX = tower1.x, posZ = tower1.z;
+        int totalSteps = Mathf.Max(Mathf.Abs(diff.x), Mathf.Abs(diff.z));
 
-        while (!(posX == tower2.x && posZ == tower2.z))
+        for (int i = 0; i <= totalSteps; i++)
         {
+            float t = (float)i / totalSteps;
+
+            int posX = Mathf.RoundToInt(Mathf.Lerp(tower1.x, tower2.x, t));
+            int posZ = Mathf.RoundToInt(Mathf.Lerp(tower1.z, tower2.z, t));
+            int posY = Mathf.RoundToInt(Mathf.Lerp(tower1.y + tower1Height, tower2.y + tower2Height, t));
+
             if (terrain.GetLength(0) <= posX || terrain.GetLength(1) <= posY || terrain.GetLength(2) <= posZ)
-                break;
+                continue;
 
             for (int y = posY; y >= 0; y--)
             {
-                /*if (terrain[posX, y, posZ] == Substance.air)
-                {
-                    terrain[posX, y, posZ] = Substance.stone;
-                    wallPositions.Add(new Vector3Int(posX, y, posZ));
-                }
-                else
-                {
-                    break;
-                }*/
-                terrain[posX, y, posZ] = Substance.stone;//build stone wall through any voxels
+                terrain[posX, y, posZ] = Substance.stone; //build stone wall through any voxels
                 wallPositions.Add(new Vector3Int(posX, y, posZ));
             }
-
-            if (posX != tower2.x)
-                posX += step.x;
-            if (posZ != tower2.z)
-                posZ += step.z;
         }
 
         return wallPositions;
     }
+
 
     public static List<(Vector3Int, Vector3Int)> GenerateMinimumSpanningTree(List<Vector3Int> towerLocations)
     {
