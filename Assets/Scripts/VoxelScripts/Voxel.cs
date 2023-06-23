@@ -16,7 +16,6 @@ public class Voxel
     public Chunk chunk { get; private set; }
 
     public Substance substance = Substance.air;
-    public int mass = 10;
     public float temperature;
     public int motes { get; set; } // new property for motes
     public Fire fire;
