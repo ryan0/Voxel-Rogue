@@ -103,55 +103,105 @@ public class WorldGeneration
     /// </summary>
     static int towerWidth = 5, towerHeight = 18, towerDepth = 5;
     static int doorHeight = 4, doorWidth = 2;
-    static int minimumDistance = 20;
+    static int minimumDistance = 12;//minimum distance between towers
     static List<Vector3Int> towerLocations;
 
+    public class TownData
+    {
+        public Vector3Int ClusterCenter { get; set; }
+        public List<HouseData> Houses { get; set; }
+        public List<Vector3Int> WallGates { get; set; }
+
+        public TownData(Vector3Int clusterCenter, List<HouseData> houses, List<Vector3Int> wallGates)
+        {
+            ClusterCenter = clusterCenter;
+            Houses = houses;
+            WallGates = wallGates;
+        }
+    }
+    public static List<TownData> WorldTownsData = new List<TownData>();
+    public static List<Vector3Int> towerLocs; 
 
     public static void GenerateTowers(Substance[,,] terrain, int[,] terrainHeights, int floorValue, float scale, float heightScale, int maxTowerCount)
     {
-        List<Vector3Int> towerLocs = ScanTerrainForTowerLocations(terrain, floorValue, scale, heightScale, maxTowerCount, minimumDistance);
+        towerLocs = ScanTerrainForTowerLocations(terrain, floorValue, scale, heightScale, maxTowerCount, minimumDistance);
         List<int> towerHeights = new List<int>();
 
         // Clustering
-        List<List<Vector3Int>> clusters = FindClusters(towerLocs, minimumDistance * 8);
+        List<List<Vector3Int>> clusters = FindClusters(towerLocs, minimumDistance * 7);//Cluster radius is minimumDistance * X
 
         // Building walls around clusters
         foreach (List<Vector3Int> cluster in clusters)
         {
             List<Vector3Int> convexHull = FindConvexHull(cluster);
-            Vector3Int clusterCenter = CalculateClusterCenter(convexHull);
-
-            int roadWidth = 2;// Width of the roads.
-            int lotSize = 12; // Size of the lots.
-            int minTowerTop = towerHeight + floorValue;
-            int averageHeight;
-            int townDensity = 70; // Percentage (0-100) of town density.
-            // Flatten terrain within cluster
-            averageHeight = FlattenTerrainInsideTown(terrain, terrainHeights, convexHull, floorValue, Substance.dirt, 10);
-            //lay grid of roads
-            LayGridOfRoads(terrain, convexHull, floorValue, averageHeight, roadWidth, lotSize);
-            // Lay the houses
-            List<HouseData> houses = LayHouses(terrain, convexHull, floorValue, averageHeight, roadWidth, lotSize, townDensity);
-            // The 'houses' list now contains data for the houses that were created.
-            // You can use this data for NPCs, store locations, etc.
-
-            for (int i = 0; i < convexHull.Count; i++)
+            if (convexHull.Count > 3)
             {
-                Vector3Int start = convexHull[i];
-                Vector3Int end = convexHull[(i + 1) % convexHull.Count];
-                int startIndex = towerLocs.IndexOf(start);
-                int endIndex = towerLocs.IndexOf(end);
-                int startHeight = CalculateTowerAtLocation(terrain, start, clusterCenter, averageHeight, minTowerTop);
-                int endHeight = CalculateTowerAtLocation(terrain, end, clusterCenter, averageHeight, minTowerTop);
-                towerHeights.Add(startHeight);
-                towerHeights.Add(endHeight);
-                BuildWallBetweenTowers(terrain, start, end, startHeight, endHeight, towerWidth, towerDepth, clusterCenter, averageHeight);
-                GenerateTowerAtLocation(terrain, start, clusterCenter, averageHeight, minTowerTop);
-                GenerateTowerAtLocation(terrain, end, clusterCenter, averageHeight, minTowerTop);
+                Vector3Int clusterCenter = CalculateClusterCenter(convexHull);
+
+                int roadWidth = 2;// Width of the roads.
+                int lotSize = 12; // Size of the lots.
+                int minTowerTop = towerHeight + floorValue;
+                int averageHeight;
+                int townDensity = 70; // Percentage (0-100) of town density.
+                                      // Flatten terrain within cluster
+                averageHeight = FlattenTerrainInsideTown(terrain, terrainHeights, convexHull, floorValue, Substance.dirt, 10);
+                //lay grid of roads
+                LayGridOfRoads(terrain, convexHull, floorValue, averageHeight, roadWidth, lotSize);
+                // Lay the houses
+                List<HouseData> houses = LayHouses(terrain, convexHull, floorValue, averageHeight, roadWidth, lotSize, townDensity);
+
+                // The 'houses' list now contains data for the houses that were created.
+                // You can use this data for NPCs, store locations, etc.
+
+                List<Vector3Int> allGatesPositions = new List<Vector3Int>();
+
+
+                for (int i = 0; i < convexHull.Count; i++)
+                {
+                    Vector3Int start = convexHull[i];
+                    Vector3Int end = convexHull[(i + 1) % convexHull.Count];
+                    int startIndex = towerLocs.IndexOf(start);
+                    int endIndex = towerLocs.IndexOf(end);
+                    int startHeight = CalculateTowerAtLocation(terrain, start, clusterCenter, averageHeight, minTowerTop);
+                    int endHeight = CalculateTowerAtLocation(terrain, end, clusterCenter, averageHeight, minTowerTop);
+                    towerHeights.Add(startHeight);
+                    towerHeights.Add(endHeight);
+                    //build the wall
+                    BuildWallBetweenTowers(terrain, start, end, startHeight, endHeight, towerWidth, towerDepth, clusterCenter, averageHeight);
+                    // Get the gate positions and add them to allGatesPositions
+                    List<Vector3Int> gatePositions = GetWallGates(start, end, clusterCenter, towerWidth, towerDepth);
+                    allGatesPositions.AddRange(gatePositions);
+                    // Generate towers
+                    GenerateTowerAtLocation(terrain, start, clusterCenter, averageHeight, minTowerTop);
+                    GenerateTowerAtLocation(terrain, end, clusterCenter, averageHeight, minTowerTop);
+                }
+
+                // Store the town data in the global list
+                WorldTownsData.Add(new TownData(clusterCenter, houses, allGatesPositions));
             }
+            else
+            {
+                Vector3Int clusterCenter = CalculateClusterCenter(convexHull);
+
+                int roadWidth = 2;// Width of the roads.
+                int lotSize = 12; // Size of the lots.
+                int minTowerTop = towerHeight + floorValue;
+                int averageHeight;
+                int townDensity = 70; // Percentage (0-100) of town density.
+                                      // Flatten terrain within cluster
+                //draw the lone towers
+                for (int i = 0; i < convexHull.Count; i++)
+                {
+                    Vector3Int start = convexHull[i];
+                    Vector3Int end = convexHull[(i + 1) % convexHull.Count];
+                    // Generate towers
+                    GenerateTowerAtLocation(terrain, start, clusterCenter, floorValue, minTowerTop);
+                    GenerateTowerAtLocation(terrain, end, clusterCenter, floorValue, minTowerTop);
+                }
+            }
+
         }
     }
-
 
     public static Vector3Int CalculateClusterCenter(List<Vector3Int> cluster)
     {
@@ -424,7 +474,6 @@ public class WorldGeneration
         return false;
     }
 
-
     private static float DistancePointToLineSegment(Vector3 point, Vector3 vertex1, Vector3 vertex2)
     {
         Vector3 line = vertex2 - vertex1;
@@ -505,7 +554,6 @@ public class WorldGeneration
             }
         }
     }
-
 
     //Towers must be separated by minimum distance
     public static List<Vector3Int> ScanTerrainForTowerLocations(Substance[,,] terrain, int floorValue, float scale, float heightScale, int maxTowerCount, float minDistance)
@@ -726,6 +774,7 @@ public class WorldGeneration
     }
 
 
+
     static List<Vector3Int>  wallPositions = new List<Vector3Int>();
 
     public static List<Vector3Int> BuildWallBetweenTowers(Substance[,,] terrain, Vector3Int tower1, Vector3Int tower2, int tower1Height, int tower2Height, int towerWidth, int towerDepth, Vector3Int clusterCenter, int averageHeight)
@@ -793,6 +842,51 @@ public class WorldGeneration
                                                                  // Add logic here to populate wallPositions based on your specific requirements.
 
         return wallPositions;
+    }
+
+    public static List<Vector3Int> GetWallGates(Vector3Int tower1, Vector3Int tower2, Vector3Int clusterCenter, int towerWidth, int towerDepth)
+    {
+        List<Vector3Int> gatePositions = new List<Vector3Int>();
+
+        // Gate dimensions
+        int gateHeight = 8;
+        int gateWidth = 12;
+
+        // Calculate the unit vectors pointing from the cluster center to each tower
+        Vector3 dirToTower1 = ((Vector3)(tower1 - clusterCenter)).normalized;
+        Vector3 dirToTower2 = ((Vector3)(tower2 - clusterCenter)).normalized;
+
+        // Calculate offsets using the unit vectors
+        Vector3Int offset1 = new Vector3Int(Mathf.RoundToInt(dirToTower1.x * towerWidth), 0, Mathf.RoundToInt(dirToTower1.z * towerDepth));
+        Vector3Int offset2 = new Vector3Int(Mathf.RoundToInt(dirToTower2.x * towerWidth), 0, Mathf.RoundToInt(dirToTower2.z * towerDepth));
+
+        // Start and end positions of the wall
+        Vector3Int start = tower1 + offset1;
+        Vector3Int end = tower2 + offset2;
+
+        int totalSteps = Mathf.Max(Mathf.Abs(end.x - start.x), Mathf.Abs(end.z - start.z));
+
+        // Loop through the positions to find the gate positions
+        for (int i = 0; i <= totalSteps; i++)
+        {
+            float t = (float)i / totalSteps;
+
+            int posX = Mathf.RoundToInt(Mathf.Lerp(start.x, end.x, t));
+            int posZ = Mathf.RoundToInt(Mathf.Lerp(start.z, end.z, t));
+
+            // Check if current position is within the gate area in terms of x/z
+            bool isWithinGateArea = (i >= totalSteps / 2 - gateWidth / 2) && (i <= totalSteps / 2 + gateWidth / 2);
+
+            if (isWithinGateArea)
+            {
+                for (int y = 0; y < gateHeight; y++)
+                {
+                    gatePositions.Add(new Vector3Int(posX, y, posZ));
+                }
+            }
+        }
+
+        return gatePositions;
     }
 
 
