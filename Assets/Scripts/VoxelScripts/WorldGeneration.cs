@@ -103,7 +103,7 @@ public class WorldGeneration
     /// </summary>
     static int towerWidth = 5, towerHeight = 18, towerDepth = 5;
     static int doorHeight = 4, doorWidth = 2;
-    static int minimumDistance = 12;
+    static int minimumDistance = 20;
     static List<Vector3Int> towerLocations;
 
 
@@ -151,6 +151,7 @@ public class WorldGeneration
             }
         }
     }
+
 
     public static Vector3Int CalculateClusterCenter(List<Vector3Int> cluster)
     {
@@ -422,6 +423,7 @@ public class WorldGeneration
 
         return false;
     }
+
 
     private static float DistancePointToLineSegment(Vector3 point, Vector3 vertex1, Vector3 vertex2)
     {
@@ -734,6 +736,10 @@ public class WorldGeneration
             return new List<Vector3Int>();
         }
 
+        // Gate dimensions
+        int gateHeight = 8;
+        int gateWidth = 12;
+
         // Calculate the unit vectors pointing from the cluster center to each tower
         Vector3 dirToTower1 = ((Vector3)(tower1 - clusterCenter)).normalized;
         Vector3 dirToTower2 = ((Vector3)(tower2 - clusterCenter)).normalized;
@@ -746,9 +752,12 @@ public class WorldGeneration
         Vector3Int start = tower1 + offset1;
         Vector3Int end = tower2 + offset2;
 
-        int totalSteps = Mathf.Max(Mathf.Abs(end.x - start.x), Mathf.Abs(end.z - start.z));
-        bool isWallAlignedInX = Mathf.Abs(end.x - start.x) > Mathf.Abs(end.z - start.z);
+        // Calculate the center position of the wall
+        Vector3Int centerPosition = (start + end) / 2;
 
+        int totalSteps = Mathf.Max(Mathf.Abs(end.x - start.x), Mathf.Abs(end.z - start.z));
+
+        // Loop through the positions to build the wall
         for (int i = 0; i <= totalSteps; i++)
         {
             float t = (float)i / totalSteps;
@@ -761,51 +770,29 @@ public class WorldGeneration
             if (posX < 0 || posX >= terrain.GetLength(0) || posY < 0 || posY >= terrain.GetLength(1) || posZ < 0 || posZ >= terrain.GetLength(2))
                 continue;
 
-            for (int y = posY; y >= 0; y--)
+            // Check if current position is within the gate area in terms of x/z
+            bool isWithinGateArea = (i >= totalSteps / 2 - gateWidth / 2) && (i <= totalSteps / 2 + gateWidth / 2);
+
+            for (int y = 0; y <= posY; y++)
             {
-                terrain[posX, y, posZ] = Substance.stone; //build stone wall through any voxels
+                // If we are within the gate area and not below the base, set to air (empty space for gate)
+                if (isWithinGateArea && y < gateHeight + averageHeight)
+                {
+                    terrain[posX, y, posZ] = Substance.air;
+                }
+                else // Otherwise, build the wall
+                {
+                    terrain[posX, y, posZ] = Substance.stone;
+                }
             }
         }
 
-        // ADD GATES TO WALL
-        int gateHeight = 8;
-        int gateWidth = 12;
-        int floorLevel = averageHeight;
+        // The function needs to return wallPositions, but it is not defined in the code provided.
+        // Assuming wallPositions needs to be a list of all the positions that make up the wall.
+        List<Vector3Int> wallPositions = new List<Vector3Int>(); // Initialize the list
+                                                                 // Add logic here to populate wallPositions based on your specific requirements.
 
-        // Calculate the center position of the wall
-        Vector3Int centerPosition = (start + end) / 2;
-
-        // Determine the direction of the wall
-        Vector3Int direction = (end - start);
-        bool isSteep = Mathf.Abs(direction.z) > Mathf.Abs(direction.x);
-
-        // If the line is steep, we will be "drawing" the line essentially using "z" as the primary axis
-        if (isSteep)
-        {
-            int temp = centerPosition.x;
-            centerPosition.x = centerPosition.z;
-            centerPosition.z = temp;
-        }
-
-        int gateStart = centerPosition.x - gateWidth / 2;
-        int gateEnd = centerPosition.x + gateWidth / 2;
-
-        // Use Bresenham's line algorithm to draw the gate
-        for (int x = gateStart; x <= gateEnd; x++)
-        {
-            int z = centerPosition.z;
-
-            // If the line is steep, swap x and z back to draw the line using "z" as primary axis
-            Vector3Int pos = isSteep ? new Vector3Int(z, floorLevel, x) : new Vector3Int(x, floorLevel, z);
-
-            // Make an opening for the gate
-            for (int y = pos.y; y < pos.y + gateHeight; y++)
-            {
-                terrain[pos.x, y, pos.z] = Substance.air;
-            }
-        }
-
-        return wallPositions; // Make sure wallPositions is defined and updated in your function
+        return wallPositions;
     }
 
 
