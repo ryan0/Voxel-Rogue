@@ -101,7 +101,7 @@ public class WorldGeneration
     /// <summary>
     /// Tower generation and tower fields
     /// </summary>
-    static int towerWidth = 5, towerHeight = 16, towerDepth = 5;
+    static int towerWidth = 5, towerHeight = 18, towerDepth = 5;
     static int doorHeight = 4, doorWidth = 2;
     static int minimumDistance = 12;
     static List<Vector3Int> towerLocations;
@@ -377,7 +377,7 @@ public class WorldGeneration
 
 
         // Flatten terrain and make it the foundation type
-        for (int x = minX; x <= maxX; x++)
+        for (int x = minX; x <= maxX; x++)//ADD 2 to avoid off by one issues
         {
             for (int z = minZ; z <= maxZ; z++)
             {
@@ -566,6 +566,10 @@ public class WorldGeneration
         int towerMaxHeight = Mathf.Max(posY + towerHeight, minTowerTop );
 
         Vector3Int defaultDoorDirection = new Vector3Int(1, 0, 0); // or any direction you want as default
+        if(doorDirection == new Vector3Int(0,0,0))
+        {
+            doorDirection = defaultDoorDirection;
+        }
         // Adjust the starting position based on the door direction
         if (doorDirection.x < 0)
         {
