@@ -692,8 +692,8 @@ public class WorldGeneration
         Vector3Int step = new Vector3Int(diff.x != 0 ? (diff.x > 0 ? 1 : -1) : 0, 0, diff.z != 0 ? (diff.z > 0 ? 1 : -1) : 0);
 
         // Offset the starting and ending positions to account for tower width and depth
-        Vector3Int offset1 = new Vector3Int(step.z * towerDepth / 2, 0, -step.x * towerWidth / 2);
-        Vector3Int offset2 = new Vector3Int(-step.z * towerDepth / 2, 0, step.x * towerWidth / 2);
+        Vector3Int offset1 = new Vector3Int(step.z * towerDepth / 2 +1, 0, -step.x * towerWidth / 2 - 1);
+        Vector3Int offset2 = new Vector3Int(-step.z * towerDepth / 2 -1, 0, step.x * towerWidth / 2 + 1);
 
         Vector3Int start = tower1 + offset1;
         Vector3Int end = tower2 + offset2;
