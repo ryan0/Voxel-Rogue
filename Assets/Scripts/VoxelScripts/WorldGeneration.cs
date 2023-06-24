@@ -145,7 +145,7 @@ public class WorldGeneration
                 int endHeight = CalculateTowerAtLocation(terrain, end, clusterCenter, averageHeight, minTowerTop);
                 towerHeights.Add(startHeight);
                 towerHeights.Add(endHeight);
-                BuildWallBetweenTowers(terrain, start, end, startHeight, endHeight, towerWidth, towerDepth, clusterCenter);
+                BuildWallBetweenTowers(terrain, start, end, startHeight, endHeight, towerWidth, towerDepth, clusterCenter, averageHeight);
                 GenerateTowerAtLocation(terrain, start, clusterCenter, averageHeight, minTowerTop);
                 GenerateTowerAtLocation(terrain, end, clusterCenter, averageHeight, minTowerTop);
             }
@@ -695,13 +695,14 @@ public class WorldGeneration
 
     static List<Vector3Int>  wallPositions = new List<Vector3Int>();
 
-    public static List<Vector3Int> BuildWallBetweenTowers(Substance[,,] terrain, Vector3Int tower1, Vector3Int tower2, int tower1Height, int tower2Height, int towerWidth, int towerDepth, Vector3Int clusterCenter)
+    public static List<Vector3Int> BuildWallBetweenTowers(Substance[,,] terrain, Vector3Int tower1, Vector3Int tower2, int tower1Height, int tower2Height, int towerWidth, int towerDepth, Vector3Int clusterCenter, int averageHeight)
     {
         if (tower1 == tower2)
         {
             // If the towers are at the same position, no need to build a wall
             return new List<Vector3Int>();
         }
+
         // Calculate the unit vectors pointing from the cluster center to each tower
         Vector3 dirToTower1 = ((Vector3)(tower1 - clusterCenter)).normalized;
         Vector3 dirToTower2 = ((Vector3)(tower2 - clusterCenter)).normalized;
@@ -715,6 +716,7 @@ public class WorldGeneration
         Vector3Int end = tower2 + offset2;
 
         int totalSteps = Mathf.Max(Mathf.Abs(end.x - start.x), Mathf.Abs(end.z - start.z));
+        bool isWallAlignedInX = Mathf.Abs(end.x - start.x) > Mathf.Abs(end.z - start.z);
 
         for (int i = 0; i <= totalSteps; i++)
         {
@@ -731,15 +733,40 @@ public class WorldGeneration
             for (int y = posY; y >= 0; y--)
             {
                 terrain[posX, y, posZ] = Substance.stone; //build stone wall through any voxels
+            }
+        }
 
-                // Rest of the code
+        //ADD GATES TO WALL
+        int gateHeight = 8;
+        int gateWidth = 12;
+        int floorLevel = averageHeight;
+
+        // Calculate the center position of the wall
+        Vector3Int centerPosition = (start + end) / 2;
+
+        // Make an opening for the gate at the center position
+        for (int y = floorLevel; y < floorLevel + gateHeight; y++)
+        {
+            for (int width = -gateWidth / 2; width <= gateWidth / 2; width++)
+            {
+                if (isWallAlignedInX)
+                {
+                    // Wall is aligned in X direction, create gate opening in X direction
+                    terrain[centerPosition.x + width, y, centerPosition.z] = Substance.air;
+                }
+                else
+                {
+                    // Wall is aligned in Z direction, create gate opening in Z direction
+                    terrain[centerPosition.x, y, centerPosition.z + width] = Substance.air;
+                }
             }
         }
 
         return wallPositions; // Make sure wallPositions is defined and updated in your function
     }
 
-        public static List<(Vector3Int, Vector3Int)> GenerateMinimumSpanningTree(List<Vector3Int> towerLocations)
+
+    public static List<(Vector3Int, Vector3Int)> GenerateMinimumSpanningTree(List<Vector3Int> towerLocations)
     {
         List<(Vector3Int, Vector3Int)> mstEdges = new List<(Vector3Int, Vector3Int)>();
         HashSet<Vector3Int> visited = new HashSet<Vector3Int>();
