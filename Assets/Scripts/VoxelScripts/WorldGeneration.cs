@@ -127,7 +127,7 @@ public class WorldGeneration
             int averageHeight;
             int townDensity = 70; // Percentage (0-100) of town density.
             // Flatten terrain within cluster
-            averageHeight = FlattenTerrainInsideTown(terrain, terrainHeights, convexHull, floorValue, Substance.dirt);
+            averageHeight = FlattenTerrainInsideTown(terrain, terrainHeights, convexHull, floorValue, Substance.dirt, 10);
             //lay grid of roads
             LayGridOfRoads(terrain, convexHull, floorValue, averageHeight, roadWidth, lotSize);
             // Lay the houses
@@ -351,12 +351,12 @@ public class WorldGeneration
         return hull;
     }
 
-    public static int FlattenTerrainInsideTown(Substance[,,] terrain, int[,] terrainHeights, List<Vector3Int> convexHull, int floorValue, Substance foundationType)
+    public static int FlattenTerrainInsideTown(Substance[,,] terrain, int[,] terrainHeights, List<Vector3Int> convexHull, int floorValue, Substance foundationType, int padding)
     {
-        int minX = convexHull.Min(p => p.x);
-        int maxX = convexHull.Max(p => p.x);
-        int minZ = convexHull.Min(p => p.z);
-        int maxZ = convexHull.Max(p => p.z);
+        int minX = Mathf.Max(0, convexHull.Min(p => p.x) - padding);
+        int maxX = Mathf.Min(terrain.GetLength(0) - 1, convexHull.Max(p => p.x) + padding);
+        int minZ = Mathf.Max(0, convexHull.Min(p => p.z) - padding);
+        int maxZ = Mathf.Min(terrain.GetLength(2) - 1, convexHull.Max(p => p.z) + padding);
 
         int totalHeight = 0;
         int count = 0;
@@ -375,20 +375,17 @@ public class WorldGeneration
         // Check if count is greater than zero to avoid division by zero
         int averageHeight = (count > 0) ? totalHeight / count : floorValue;
 
-
         // Flatten terrain and make it the foundation type
-        for (int x = minX; x <= maxX; x++)//ADD 2 to avoid off by one issues
+        for (int x = minX; x <= maxX; x++)
         {
             for (int z = minZ; z <= maxZ; z++)
             {
-                if (IsPointInPolygon(new Vector3Int(x, 0, z), convexHull))
+                // Extend the flattening around the town by including the padding area
+                if (IsPointInPolygonWithExtension(new Vector3Int(x, 0, z), convexHull, padding))
                 {
                     // Set foundation type up to the average height
-                    //for (int y = floorValue; y <= averageHeight; y++)
-                    {
-                        terrain[x, averageHeight, z] = foundationType;
-                        terrainHeights[x, z] = averageHeight;
-                    }
+                    terrain[x, averageHeight, z] = foundationType;
+                    terrainHeights[x, z] = averageHeight;
 
                     // Remove stuff above the average height but not cloud layer
                     for (int y = averageHeight + 1; y < GasFlowSystem.MAX_GAS_HEIGHT; y++)
@@ -402,6 +399,40 @@ public class WorldGeneration
         return averageHeight;
     }
 
+    private static bool IsPointInPolygonWithExtension(Vector3Int point, List<Vector3Int> convexHull, int padding)
+    {
+        // First check if the point is inside the polygon
+        if (IsPointInPolygon(point, convexHull))
+        {
+            return true;
+        }
+
+        // Check if the point is within the padding area around the polygon
+        for (int i = 0; i < convexHull.Count; i++)
+        {
+            Vector3Int vertex1 = convexHull[i];
+            Vector3Int vertex2 = convexHull[(i + 1) % convexHull.Count]; // Next vertex, wrap around to 0 for the last one
+
+            float distance = DistancePointToLineSegment(new Vector3(point.x, 0, point.z), new Vector3(vertex1.x, 0, vertex1.z), new Vector3(vertex2.x, 0, vertex2.z));
+            if (distance <= padding)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static float DistancePointToLineSegment(Vector3 point, Vector3 vertex1, Vector3 vertex2)
+    {
+        Vector3 line = vertex2 - vertex1;
+        Vector3 pointToVertex1 = point - vertex1;
+
+        float t = Mathf.Max(0, Mathf.Min(1, Vector3.Dot(pointToVertex1, line) / line.sqrMagnitude));
+        Vector3 projection = vertex1 + t * line; // This is the projection of the point onto the line segment
+
+        return Vector3.Distance(point, projection);
+    }
 
     public static bool IsPointInPolygon(Vector3Int point, List<Vector3Int> polygon)
     {
@@ -736,7 +767,7 @@ public class WorldGeneration
             }
         }
 
-        //ADD GATES TO WALL
+        // ADD GATES TO WALL
         int gateHeight = 8;
         int gateWidth = 12;
         int floorLevel = averageHeight;
@@ -744,21 +775,33 @@ public class WorldGeneration
         // Calculate the center position of the wall
         Vector3Int centerPosition = (start + end) / 2;
 
-        // Make an opening for the gate at the center position
-        for (int y = floorLevel; y < floorLevel + gateHeight; y++)
+        // Determine the direction of the wall
+        Vector3Int direction = (end - start);
+        bool isSteep = Mathf.Abs(direction.z) > Mathf.Abs(direction.x);
+
+        // If the line is steep, we will be "drawing" the line essentially using "z" as the primary axis
+        if (isSteep)
         {
-            for (int width = -gateWidth / 2; width <= gateWidth / 2; width++)
+            int temp = centerPosition.x;
+            centerPosition.x = centerPosition.z;
+            centerPosition.z = temp;
+        }
+
+        int gateStart = centerPosition.x - gateWidth / 2;
+        int gateEnd = centerPosition.x + gateWidth / 2;
+
+        // Use Bresenham's line algorithm to draw the gate
+        for (int x = gateStart; x <= gateEnd; x++)
+        {
+            int z = centerPosition.z;
+
+            // If the line is steep, swap x and z back to draw the line using "z" as primary axis
+            Vector3Int pos = isSteep ? new Vector3Int(z, floorLevel, x) : new Vector3Int(x, floorLevel, z);
+
+            // Make an opening for the gate
+            for (int y = pos.y; y < pos.y + gateHeight; y++)
             {
-                if (isWallAlignedInX)
-                {
-                    // Wall is aligned in X direction, create gate opening in X direction
-                    terrain[centerPosition.x + width, y, centerPosition.z] = Substance.air;
-                }
-                else
-                {
-                    // Wall is aligned in Z direction, create gate opening in Z direction
-                    terrain[centerPosition.x, y, centerPosition.z + width] = Substance.air;
-                }
+                terrain[pos.x, y, pos.z] = Substance.air;
             }
         }
 
