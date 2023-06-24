@@ -43,10 +43,11 @@ public class WorldGeneration
 
         GenerateClouds(terrain, 30);
 
+        GenerateTrees(width, depth, scale, heightScale, floorValue, treeProbability, terrain, random);
+
         int maxTowerCount = 10; // Adjust the value as needed
         GenerateTowers(terrain, terrainHeights, floorValue, scale, heightScale, maxTowerCount);
 
-        GenerateTrees(width, depth, scale, heightScale, floorValue, treeProbability, terrain, random);
 
 
         return terrain;
@@ -122,6 +123,7 @@ public class WorldGeneration
 
             int roadWidth = 2;// Width of the roads.
             int lotSize = 12; // Size of the lots.
+            int minTowerTop = towerHeight + floorValue;
             int averageHeight;
             int townDensity = 70; // Percentage (0-100) of town density.
             // Flatten terrain within cluster
@@ -139,13 +141,13 @@ public class WorldGeneration
                 Vector3Int end = convexHull[(i + 1) % convexHull.Count];
                 int startIndex = towerLocs.IndexOf(start);
                 int endIndex = towerLocs.IndexOf(end);
-                int startHeight = CalculateTowerAtLocation(terrain, start, clusterCenter);
-                int endHeight = CalculateTowerAtLocation(terrain, end, clusterCenter);
+                int startHeight = CalculateTowerAtLocation(terrain, start, clusterCenter, averageHeight, minTowerTop);
+                int endHeight = CalculateTowerAtLocation(terrain, end, clusterCenter, averageHeight, minTowerTop);
                 towerHeights.Add(startHeight);
                 towerHeights.Add(endHeight);
-                BuildWallBetweenTowers(terrain, start, end, startHeight, endHeight, towerWidth, towerDepth);
-                GenerateTowerAtLocation(terrain, start, clusterCenter);
-                GenerateTowerAtLocation(terrain, end, clusterCenter);
+                BuildWallBetweenTowers(terrain, start, end, startHeight, endHeight, towerWidth, towerDepth, clusterCenter);
+                GenerateTowerAtLocation(terrain, start, clusterCenter, averageHeight, minTowerTop);
+                GenerateTowerAtLocation(terrain, end, clusterCenter, averageHeight, minTowerTop);
             }
         }
     }
@@ -182,8 +184,8 @@ public class WorldGeneration
         System.Random random = new System.Random();
         List<HouseData> houses = new List<HouseData>();
 
-        int doorWidth = 2;
-        int doorHeight = 3;
+       // int doorWidth = 2;
+       // int doorHeight = 3;
 
         // Iterate through the lots
         for (int x = minX + lotSize + roadWidth; x < maxX; x += lotSize + roadWidth)
@@ -521,7 +523,7 @@ public class WorldGeneration
     }
 
 
-    public static int CalculateTowerAtLocation(Substance[,,] terrain, Vector3Int location, Vector3Int clusterCenter)
+    public static int CalculateTowerAtLocation(Substance[,,] terrain, Vector3Int location, Vector3Int clusterCenter, int averageHeight, int minTowerTop)
     {
         int posX = location.x, posY = location.y, posZ = location.z;
 
@@ -533,11 +535,12 @@ public class WorldGeneration
         // Create the tower and its foundation
         //GenerateTower(terrain, posX, posY, posZ, towerWidth, towerHeight, towerDepth, doorHeight, doorWidth, doorDirection);
         //GenerateTowerFoundation(terrain, posX, posY, posZ, towerWidth, towerDepth, 8);
-        
-        return towerHeight;
+
+        return Mathf.Max(posY + towerHeight, minTowerTop) - posY;
+
     }
 
-    public static void GenerateTowerAtLocation(Substance[,,] terrain, Vector3Int location, Vector3Int clusterCenter)
+    public static void GenerateTowerAtLocation(Substance[,,] terrain, Vector3Int location, Vector3Int clusterCenter, int averageHeight, int minTowerTop)
     {
         int posX = location.x, posY = location.y, posZ = location.z;
 
@@ -547,18 +550,22 @@ public class WorldGeneration
         if (doorDirection.z != 0) doorDirection.z = doorDirection.z > 0 ? 1 : -1;
 
         // Create the tower and its foundation
-        GenerateTower(terrain, posX, posY, posZ, towerWidth, towerHeight, towerDepth, doorHeight, doorWidth, doorDirection);
+        GenerateTower(terrain, posX, posY, posZ, towerWidth, towerHeight, towerDepth, doorHeight, doorWidth, doorDirection, averageHeight, minTowerTop);
         GenerateTowerFoundation(terrain, posX, posY, posZ, towerWidth, towerDepth, 8, doorDirection);
 
         //return towerHeight;
     }
 
-    public static void GenerateTower(Substance[,,] terrain, int posX, int posY, int posZ, int towerWidth, int towerHeight, int towerDepth, int doorHeight, int doorWidth, Vector3Int doorDirection)
+    public static void GenerateTower(Substance[,,] terrain, int posX, int posY, int posZ, int towerWidth, int towerHeight, int towerDepth, int doorHeight, int doorWidth, Vector3Int doorDirection, int averageHeight, int minTowerTop)
     {
         int maxX = terrain.GetLength(0);
         int maxY = terrain.GetLength(1);
         int maxZ = terrain.GetLength(2);
 
+        // Ensure towerHeight is at least as tall as minTowerTop
+        int towerMaxHeight = Mathf.Max(posY + towerHeight, minTowerTop );
+
+        Vector3Int defaultDoorDirection = new Vector3Int(1, 0, 0); // or any direction you want as default
         // Adjust the starting position based on the door direction
         if (doorDirection.x < 0)
         {
@@ -572,7 +579,7 @@ public class WorldGeneration
 
         // Ensure the tower does not exceed the bounds of the terrain array
         if (posX < 0 || posX + towerWidth >= maxX ||
-            posY < 0 || posY + towerHeight >= maxY ||
+            posY < 0 || towerMaxHeight >= maxY ||
             posZ < 0 || posZ + towerDepth >= maxZ)
         {
             Debug.LogWarning("Tower cannot be generated as it exceeds the bounds of the terrain array.");
@@ -584,22 +591,25 @@ public class WorldGeneration
         {
             for (int z = posZ; z < posZ + towerDepth; z++)
             {
-                for (int y = posY; y < posY + towerHeight; y++)
+                for (int y = posY; y < towerMaxHeight; y++)
                 {
                     bool isDoor = false;
-
+                    //max height ends at max of average height+doorHeight and posY+doorHeight
                     // Calculate if the position is a door or inside the tower
-                    if (doorDirection.x < 0 && x == posX && z >= posZ + (towerDepth / 2) - (doorWidth / 2) && z < posZ + (towerDepth / 2) + (doorWidth / 2) && y < posY + doorHeight)
-                        isDoor = true;
-                    if (doorDirection.x > 0 && x == posX + towerWidth - 1 && z >= posZ + (towerDepth / 2) - (doorWidth / 2) && z < posZ + (towerDepth / 2) + (doorWidth / 2) && y < posY + doorHeight)
-                        isDoor = true;
-                    if (doorDirection.z < 0 && z == posZ && x >= posX + (towerWidth / 2) - (doorWidth / 2) && x < posX + (towerWidth / 2) + (doorWidth / 2) && y < posY + doorHeight)
-                        isDoor = true;
-                    if (doorDirection.z > 0 && z == posZ + towerDepth - 1 && x >= posX + (towerWidth / 2) - (doorWidth / 2) && x < posX + (towerWidth / 2) + (doorWidth / 2) && y < posY + doorHeight)
-                        isDoor = true;
+                    if (y >= averageHeight && y <= Mathf.Max(averageHeight + doorHeight, posY+doorHeight))
+                    {
+                        if (doorDirection.x < 0 && x == posX && z >= posZ + (towerDepth / 2) - (doorWidth / 2) && z < posZ + (towerDepth / 2) + (doorWidth / 2))
+                            isDoor = true;
+                        if (doorDirection.x > 0 && x == posX + towerWidth - 1 && z >= posZ + (towerDepth / 2) - (doorWidth / 2) && z < posZ + (towerDepth / 2) + (doorWidth / 2))
+                            isDoor = true;
+                        if (doorDirection.z < 0 && z == posZ && x >= posX + (towerWidth / 2) - (doorWidth / 2) && x < posX + (towerWidth / 2) + (doorWidth / 2))
+                            isDoor = true;
+                        if (doorDirection.z > 0 && z == posZ + towerDepth - 1 && x >= posX + (towerWidth / 2) - (doorWidth / 2) && x < posX + (towerWidth / 2) + (doorWidth / 2))
+                            isDoor = true;
+                    }
 
                     // Calculate if the position is a wall of the tower
-                    bool isWall = x == posX || x == posX + towerWidth - 1 || z == posZ || z == posZ + towerDepth - 1 || y == posY || y == posY + towerHeight - 1;
+                    bool isWall = x == posX || x == posX + towerWidth - 1 || z == posZ || z == posZ + towerDepth - 1 || y == posY || y == towerMaxHeight - 1;
 
                     if (isDoor)
                     {
@@ -620,6 +630,7 @@ public class WorldGeneration
             }
         }
     }
+
 
     public static void GenerateTowerFoundation(Substance[,,] terrain, int baseX, int baseY, int baseZ, int towerWidth, int towerDepth, int maxFoundationWidth, Vector3Int doorDirection)
     {
@@ -680,21 +691,22 @@ public class WorldGeneration
 
     static List<Vector3Int>  wallPositions = new List<Vector3Int>();
 
-    public static List<Vector3Int> BuildWallBetweenTowers(Substance[,,] terrain, Vector3Int tower1, Vector3Int tower2, int tower1Height, int tower2Height, int towerWidth, int towerDepth)
+    public static List<Vector3Int> BuildWallBetweenTowers(Substance[,,] terrain, Vector3Int tower1, Vector3Int tower2, int tower1Height, int tower2Height, int towerWidth, int towerDepth, Vector3Int clusterCenter)
     {
         if (tower1 == tower2)
         {
             // If the towers are at the same position, no need to build a wall
             return new List<Vector3Int>();
         }
+        // Calculate the unit vectors pointing from the cluster center to each tower
+        Vector3 dirToTower1 = ((Vector3)(tower1 - clusterCenter)).normalized;
+        Vector3 dirToTower2 = ((Vector3)(tower2 - clusterCenter)).normalized;
 
-        Vector3Int diff = tower2 - tower1;
-        Vector3Int step = new Vector3Int(diff.x != 0 ? (diff.x > 0 ? 1 : -1) : 0, 0, diff.z != 0 ? (diff.z > 0 ? 1 : -1) : 0);
+        // Calculate offsets using the unit vectors
+        Vector3Int offset1 = new Vector3Int(Mathf.RoundToInt(dirToTower1.x * towerWidth), 0, Mathf.RoundToInt(dirToTower1.z * towerDepth));
+        Vector3Int offset2 = new Vector3Int(Mathf.RoundToInt(dirToTower2.x * towerWidth), 0, Mathf.RoundToInt(dirToTower2.z * towerDepth));
 
-        // Offset the starting and ending positions to account for tower width and depth
-        Vector3Int offset1 = new Vector3Int(step.z * towerDepth / 2 +1, 0, -step.x * towerWidth / 2 - 1);
-        Vector3Int offset2 = new Vector3Int(-step.z * towerDepth / 2 -1, 0, step.x * towerWidth / 2 + 1);
-
+        // Start and end positions of the wall
         Vector3Int start = tower1 + offset1;
         Vector3Int end = tower2 + offset2;
 
@@ -706,54 +718,24 @@ public class WorldGeneration
 
             int posX = Mathf.RoundToInt(Mathf.Lerp(start.x, end.x, t));
             int posZ = Mathf.RoundToInt(Mathf.Lerp(start.z, end.z, t));
-            int posY = Mathf.RoundToInt(Mathf.Lerp(start.y + tower1Height, end.y + tower2Height, t)) - 4; //wall should be 4 lower
+            int posY = Mathf.RoundToInt(Mathf.Lerp(start.y + tower1Height, end.y + tower2Height, t)) - 4;
 
-            if (terrain.GetLength(0) <= posX || terrain.GetLength(1) <= posY || terrain.GetLength(2) <= posZ)
+            // Check if indices are within valid range before accessing the array
+            if (posX < 0 || posX >= terrain.GetLength(0) || posY < 0 || posY >= terrain.GetLength(1) || posZ < 0 || posZ >= terrain.GetLength(2))
                 continue;
 
             for (int y = posY; y >= 0; y--)
             {
                 terrain[posX, y, posZ] = Substance.stone; //build stone wall through any voxels
 
-                // Create an inner wall 1 block inwards
-                if (step.x != 0)
-                {
-                    if (posZ + 1 < terrain.GetLength(2)) // Check bounds
-                    {
-                        terrain[posX, y, posZ + 1] = Substance.stone; // Build inner wall
-                    }
-                }
-                else if (step.z != 0)
-                {
-                    if (posX + 1 < terrain.GetLength(0)) // Check bounds
-                    {
-                        terrain[posX + 1, y, posZ] = Substance.stone; // Build inner wall
-                    }
-                }
-
-                // Create an outer wall 1 block outwards
-                if (step.x != 0)
-                {
-                    if (posZ - 1 >= 0) // Check bounds
-                    {
-                        terrain[posX, y, posZ - 1] = Substance.stone; // Build outer wall
-                    }
-                }
-                else if (step.z != 0)
-                {
-                    if (posX - 1 >= 0) // Check bounds
-                    {
-                        terrain[posX - 1, y, posZ] = Substance.stone; // Build outer wall
-                    }
-                }
+                // Rest of the code
             }
         }
 
-        return wallPositions;
+        return wallPositions; // Make sure wallPositions is defined and updated in your function
     }
 
-
-    public static List<(Vector3Int, Vector3Int)> GenerateMinimumSpanningTree(List<Vector3Int> towerLocations)
+        public static List<(Vector3Int, Vector3Int)> GenerateMinimumSpanningTree(List<Vector3Int> towerLocations)
     {
         List<(Vector3Int, Vector3Int)> mstEdges = new List<(Vector3Int, Vector3Int)>();
         HashSet<Vector3Int> visited = new HashSet<Vector3Int>();
@@ -1032,7 +1014,7 @@ public class WorldGeneration
                 bool invalidTreeSpot = CheckInvalidTreeSpot(x, z, terrain, terrainHeight, floorValue);
                 Vector3Int treePos = new Vector3Int(x, terrainHeight, z);
                 int minDistance = 8;
-                if (random.NextDouble() < treeProbability && !invalidTreeSpot && !IsTooCloseToTowerOrWall(treePos, towerLocations,wallPositions, minDistance))
+                if (random.NextDouble() < treeProbability && !invalidTreeSpot)// && !IsTooCloseToTowerOrWall(treePos, towerLocations,wallPositions, minDistance))
                 {
                     GenerateTree(terrain, treePos);
                 }
