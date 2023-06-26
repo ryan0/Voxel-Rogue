@@ -8,12 +8,16 @@ public class TownData
     public Vector3Int ClusterCenter { get; set; }
     public List<HouseData> Houses { get; set; }
     public List<Vector3Int> WallGates { get; set; }
+    public HashSet<Vector3Int> TowerLocs { get; set; }
+    public List<Vector3Int> WallData { get; set; }
 
-    public TownData(Vector3Int clusterCenter, List<HouseData> houses, List<Vector3Int> wallGates)
+    public TownData(Vector3Int clusterCenter, List<HouseData> houses, List<Vector3Int> wallGates, HashSet<Vector3Int> towers, List<Vector3Int> WalLData)
     {
         ClusterCenter = clusterCenter;
         Houses = houses;
         WallGates = wallGates;
+        TowerLocs = towers;
+        WallData = WallData;
     }
 }
 
@@ -49,6 +53,7 @@ public class TownGeneration
    
     public static List<TownData> WorldTownsData = new List<TownData>();
     public static List<Vector3Int> towerLocs;
+    public static List<Vector3Int> wallPositionsAll = new List<Vector3Int>();
 
     public void GenerateTowers(Substance[,,] terrain, int[,] terrainHeights, int floorValue, float scale, float heightScale, int maxTowerCount)
     {
@@ -71,13 +76,12 @@ public class TownGeneration
                 int minTowerTop = towerHeight + floorValue + 8;
                 int averageHeight;
                 int townDensity = 70; // Percentage (0-100) of town density.
-                                      // Flatten terrain within cluster
                 List<HouseData> houses = CheckHouses(terrain, convexHull, floorValue, floorValue, roadWidth, lotSize, townDensity);//averageheihgt set to floorvalue
                 if (houses.Count < 4)
                 {
                     continue;
                 }
-
+                // Flatten terrain within cluster
                 averageHeight = FlattenTerrainInsideTown(terrain, terrainHeights, convexHull, floorValue, Substance.dirt, 10);
                 //lay grid of roads
                 LayGridOfRoads(terrain, convexHull, floorValue, averageHeight, roadWidth, lotSize);
@@ -89,9 +93,11 @@ public class TownGeneration
                 // You can use this data for NPCs, store locations, etc.
 
                 List<Vector3Int> allGatesPositions = new List<Vector3Int>();
+                List<Vector3Int> wallPositionsTown = new List<Vector3Int>();
 
+                HashSet<Vector3Int> uniqueTowerPositions = new HashSet<Vector3Int>(); // Use HashSet to avoid duplication
 
-                for (int i = 0; i < convexHull.Count; i++)
+                for (int i = 0; i < convexHull.Count; i++)//for each polygon
                 {
                     Vector3Int start = convexHull[i];
                     Vector3Int end = convexHull[(i + 1) % convexHull.Count];
@@ -101,18 +107,21 @@ public class TownGeneration
                     int endHeight = CalculateTowerAtLocation(terrain, end, clusterCenter, averageHeight, minTowerTop);
                     towerHeights.Add(startHeight);
                     towerHeights.Add(endHeight);
-                    //build the wall
-                    BuildWallBetweenTowers(terrain, start, end, startHeight, endHeight, towerWidth, towerDepth, clusterCenter, averageHeight);
+                    //build the wall, add the walls within the town to a town wall position list
+                    wallPositionsTown.Concat(BuildWallBetweenTowers(terrain, start, end, startHeight, endHeight, towerWidth, towerDepth, clusterCenter, averageHeight));
                     // Get the gate positions and add them to allGatesPositions
                     List<Vector3Int> gatePositions = GetWallGates(start, end, clusterCenter, towerWidth, towerDepth);
                     allGatesPositions.AddRange(gatePositions);
                     // Generate towers
                     GenerateTowerAtLocation(terrain, start, clusterCenter, averageHeight, minTowerTop);
                     GenerateTowerAtLocation(terrain, end, clusterCenter, averageHeight, minTowerTop);
+                    // Add the positions to HashSet to ensure uniqueness
+                    uniqueTowerPositions.Add(start);
+                    uniqueTowerPositions.Add(end);
                 }
-
+                wallPositionsAll.Concat(wallPositionsTown);
                 // Store the town data in the global list
-                WorldTownsData.Add(new TownData(clusterCenter, houses, allGatesPositions));
+                WorldTownsData.Add(new TownData(clusterCenter, houses, allGatesPositions, uniqueTowerPositions, wallPositionsTown));
             }
             else
             {
@@ -450,7 +459,8 @@ public class TownGeneration
                 {
                     // Set foundation type up to the average height
                     terrain[x, averageHeight, z] = foundationType;
-                    terrainHeights[x, z] = averageHeight;
+                    //terrainHeights[x, z] = averageHeight;
+                    WorldGeneration.terrainHeights[x, z] = averageHeight;
 
                     // Remove stuff above the average height but not cloud layer
                     for (int y = averageHeight + 1; y < GasFlowSystem.MAX_GAS_HEIGHT; y++)
@@ -464,7 +474,7 @@ public class TownGeneration
         return averageHeight;
     }
 
-    private static bool IsPointInPolygonWithExtension(Vector3Int point, List<Vector3Int> convexHull, int padding)
+    public static bool IsPointInPolygonWithExtension(Vector3Int point, List<Vector3Int> convexHull, int padding)
     {
         // First check if the point is inside the polygon
         if (IsPointInPolygon(point, convexHull))
@@ -788,9 +798,7 @@ public class TownGeneration
     }
 
 
-
-    static List<Vector3Int> wallPositions = new List<Vector3Int>();
-
+    
     public static List<Vector3Int> BuildWallBetweenTowers(Substance[,,] terrain, Vector3Int tower1, Vector3Int tower2, int tower1Height, int tower2Height, int towerWidth, int towerDepth, Vector3Int clusterCenter, int averageHeight)
     {
         if (tower1 == tower2)
@@ -798,6 +806,10 @@ public class TownGeneration
             // If the towers are at the same position, no need to build a wall
             return new List<Vector3Int>();
         }
+
+        // Gate dimensions (assuming you want to use these for the gate area)
+        int gateWidth = 12;
+        int gateHeight = 8;
 
         // Calculate the unit vectors pointing from the cluster center to each tower
         Vector3 dirToTower1 = ((Vector3)(tower1 - clusterCenter)).normalized;
@@ -815,6 +827,9 @@ public class TownGeneration
         Vector3Int centerPosition = (start + end) / 2;
 
         int totalSteps = Mathf.Max(Mathf.Abs(end.x - start.x), Mathf.Abs(end.z - start.z));
+
+        // Initialize the list to keep track of wall positions
+        List<Vector3Int> wallPositions = new List<Vector3Int>();
 
         // Loop through the positions to build the wall
         for (int i = 0; i <= totalSteps; i++)
@@ -834,6 +849,8 @@ public class TownGeneration
 
             for (int y = 0; y <= posY; y++)
             {
+                Vector3Int currentPosition = new Vector3Int(posX, y, posZ);
+
                 // If we are within the gate area and not below the base, set to air (empty space for gate)
                 if (isWithinGateArea && y < gateHeight + averageHeight)
                 {
@@ -842,25 +859,24 @@ public class TownGeneration
                 else // Otherwise, build the wall
                 {
                     terrain[posX, y, posZ] = Substance.stone;
+                    // Add the current position to wallPositions
+                    wallPositions.Add(currentPosition);
                 }
             }
         }
 
-        // The function needs to return wallPositions, but it is not defined in the code provided.
-        // Assuming wallPositions needs to be a list of all the positions that make up the wall.
-        List<Vector3Int> wallPositions = new List<Vector3Int>(); // Initialize the list
-                                                                 // Add logic here to populate wallPositions based on your specific requirements.
-
         return wallPositions;
     }
+
+
 
     public static List<Vector3Int> GetWallGates(Vector3Int tower1, Vector3Int tower2, Vector3Int clusterCenter, int towerWidth, int towerDepth)
     {
         List<Vector3Int> gatePositions = new List<Vector3Int>();
 
         // Gate dimensions
-        int gateHeight = 8;
-        int gateWidth = 12;
+        //int gateHeight = 8;
+        //int gateWidth = 12;
 
         // Calculate the unit vectors pointing from the cluster center to each tower
         Vector3 dirToTower1 = ((Vector3)(tower1 - clusterCenter)).normalized;
@@ -975,12 +991,16 @@ public class TownGeneration
         // Update the heights of the start and end gates based on terrainHeights
         startGate.y = terrainHeights[startGate.x, startGate.z];
         endGate.y = terrainHeights[endGate.x, endGate.z];
+
         for (int i = 0; i <= totalSteps; i++)
         {
             float t = (float)i / totalSteps;
             int posX = Mathf.RoundToInt(Mathf.Lerp(startGate.x, endGate.x, t));
             int posZ = Mathf.RoundToInt(Mathf.Lerp(startGate.z, endGate.z, t));
-            int posY = Mathf.RoundToInt(Mathf.Lerp(startGate.y, endGate.y, t));
+
+            // Linearly interpolate between the starting and ending gate heights
+            int centerY = Mathf.RoundToInt(Mathf.Lerp(startGate.y, endGate.y, t));
+
             // Build road by clearing area of gateWidth
             for (int roadX = posX - gateWidth / 2; roadX <= posX + gateWidth / 2; roadX++)
             {
@@ -988,17 +1008,36 @@ public class TownGeneration
                 {
                     if (roadX >= 0 && roadZ >= 0 && roadX < terrain.GetLength(0) && roadZ < terrain.GetLength(2))
                     {
-                        terrain[roadX, posY, roadZ] = Substance.asphalt;
-                        terrainHeights[roadX, roadZ] = posY;
-                        //clear voxels above the road
-                        for (int y  = posY + 1; y < GasFlowSystem.MAX_GAS_HEIGHT; y++)
-                        {
-                            terrain[roadX, y, roadZ] = Substance.air;
-                        }
+                        // Fetch the height values for the left and right edges of the road
+                        int leftEdgeHeight = terrainHeights[Mathf.Max(roadX - gateWidth / 2, 0), roadZ];
+                        int rightEdgeHeight = terrainHeights[Mathf.Min(roadX + gateWidth / 2, terrain.GetLength(0) - 1), roadZ];
 
+                        // Linearly interpolate between the left and right edge heights
+                        float edgeLerpFactor = (float)(roadX - posX + gateWidth / 2) / gateWidth;
+                        int edgeHeight = Mathf.RoundToInt(Mathf.Lerp(leftEdgeHeight, rightEdgeHeight, edgeLerpFactor));
+
+                        // Damping factor for smoothness (value between 0 and 1)
+                        float dampingFactor = 0.8f;
+                        int roadY = Mathf.RoundToInt(centerY * dampingFactor + edgeHeight * (1 - dampingFactor));
+
+                        // Set the terrain value to road material
+                        terrain[roadX, roadY, roadZ] = Substance.asphalt;
+
+                        // Update terrainHeights array
+                        //terrainHeights[roadX, roadZ] = roadY;
+                        WorldGeneration.terrainHeights[roadX, roadZ] = roadY;
+
+                        // Clear voxels above the road
+                        for (int y = roadY + 1; y < GasFlowSystem.MAX_GAS_HEIGHT; y++)
+                        {
+                            //Vector3Int currentPosition = new Vector3Int(roadX, y, roadZ);
+
+                            //terrain[roadX, y, roadZ] = Substance.air;
+                        }
                     }
                 }
             }
         }
     }
+
 }

@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System.Linq;
 
 public class WorldGeneration
 {
@@ -16,12 +17,14 @@ public class WorldGeneration
         return (xy + xz + yz + yx + zx + zy) / 6f;
     }
 
+    public static int width = World.chunksX * Chunk.width;
+    public static int height = World.chunksY * Chunk.height;
+    public static int depth = World.chunksZ * Chunk.depth;
+    public static int[,] terrainHeights = new int[width, depth];
+
     public static Substance[,,] GenerateTerrain()
     {
-        int width = World.chunksX * Chunk.width;
-        int height = World.chunksY * Chunk.height;
-        int depth = World.chunksZ * Chunk.depth;
-        int[,] terrainHeights = new int[width, depth];
+
         Substance[,,] terrain = new Substance[width, height, depth];
         float scale = 0.1f * Voxel.size;
         float heightScale = 30.0f;
@@ -42,12 +45,11 @@ public class WorldGeneration
 
         GenerateClouds(terrain, 30);
 
-        GenerateTrees(width, depth, scale, heightScale, floorValue, treeProbability, terrain, random);
-
         int maxTowerCount = 25; // Adjust the value as needed
         TownGeneration townGenerator = new TownGeneration();
         townGenerator.GenerateTowers(terrain, terrainHeights, floorValue, scale, heightScale, maxTowerCount);
 
+        GenerateTrees(width, depth, scale, heightScale, floorValue, treeProbability, terrain, random);
 
 
         return terrain;
@@ -327,13 +329,13 @@ public class WorldGeneration
         {
             for (int z = 0; z < depth; z++)
             {
-                int terrainHeight = Mathf.FloorToInt(Mathf.PerlinNoise(x * scale, z * scale) * heightScale);
-                terrainHeight += floorValue;
-
-                bool invalidTreeSpot = CheckInvalidTreeSpot(x, z, terrain, terrainHeight, floorValue);
+                //int terrainHeight = Mathf.FloorToInt(Mathf.PerlinNoise(x * scale, z * scale) * heightScale);
+                //terrainHeight += floorValue;
+                int terrainHeight = terrainHeights[x, z];
+                bool invalidTreeSpot = CheckInvalidTreeSpot(x, z, terrain, terrainHeight, floorValue, TownGeneration.WorldTownsData);
                 Vector3Int treePos = new Vector3Int(x, terrainHeight, z);
-                int minDistance = 8;
-                if (random.NextDouble() < treeProbability && !invalidTreeSpot)// && !IsTooCloseToTowerOrWall(treePos, towerLocations,wallPositions, minDistance))
+                //int minDistance = 8;
+                if (random.NextDouble() < treeProbability && !invalidTreeSpot)// && !IsTooCloseToTowerOrWall(treePos, TownGeneration.towerLocs, TownGeneration.wallPositionsAll, minDistance))
                 {
                     GenerateTree(terrain, treePos);
                 }
@@ -402,19 +404,38 @@ public class WorldGeneration
         }
     }
 
-    private static bool CheckInvalidTreeSpot(int x, int z, Substance[,,] terrain, int terrainHeight, int floor)
+    private static bool CheckInvalidTreeSpot(int x, int z, Substance[,,] terrain, int terrainHeight, int floor, List<TownData> worldTownsData)
     {
         bool invalidTreeSpot = false;
-        for (int y = terrainHeight - 1; y >= floor; y--)
+
+        int y = terrainHeight-1;
+
+        if (terrain[x, y, z] == Substance.water || terrain[x, y, z] == Substance.air || terrain[x, y, z] == Substance.asphalt || terrain[x, y, z] == Substance.stone)
         {
-            if (terrain[x, y, z] == Substance.water || terrain[x, y, z] == Substance.air)
+            invalidTreeSpot = true;
+            //terrain[x, y, z] = Substance.debug;
+
+        }
+
+        // Check if position is within any town
+        foreach (var town in worldTownsData)
+        {
+
+            // Check if the position is within the bounds of this town
+            if (TownGeneration.IsPointInPolygonWithExtension(new Vector3Int(x,y,z),town.TowerLocs.ToList(), 12))//12 away from walls
             {
                 invalidTreeSpot = true;
                 break;
             }
+            else
+            {
+
+            }
         }
+
         return invalidTreeSpot;
     }
+
 
     private static bool IsTooCloseToTowerOrWall(Vector3Int position, List<Vector3Int> towerPositions, List<Vector3Int> wallPositions, int minDistance)
     {
