@@ -4,9 +4,9 @@ using UnityEngine;
 
 public class World : MonoBehaviour
 {
-    public const int chunksX = 12;
+    public const int chunksX = 20;
     public const int chunksY = 8;
-    public const int chunksZ = 12;
+    public const int chunksZ = 20;
 
     [SerializeField]
     private GameObject player;

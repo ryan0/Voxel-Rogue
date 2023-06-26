@@ -45,7 +45,7 @@ public class WorldGeneration
 
         GenerateClouds(terrain, 30);
 
-        int maxTowerCount = 25; // Adjust the value as needed
+        int maxTowerCount = 40; // Adjust the value as needed
         TownGeneration townGenerator = new TownGeneration();
         townGenerator.GenerateTowers(terrain, terrainHeights, floorValue, scale, heightScale, maxTowerCount);
 
