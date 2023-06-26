@@ -16,9 +16,9 @@ public class Chunk : MonoBehaviour {
     public const int height = 16;
     public const int depth = 16;
 
-    public int widthPub = 16;//publically accessible fields
-    public int heightPub = 16;
-    public int depthPub = 16;
+    //public int widthPub = 16;//publically accessible fields
+    //public int heightPub = 16;
+    //public int depthPub = 16;
 
     public int xIndex = 0;
     public int yIndex = 0;
@@ -60,6 +60,11 @@ public class Chunk : MonoBehaviour {
         return chunk;
     }
 
+    public Vector3Int GetIndex()
+    {
+        return new Vector3Int(xIndex, yIndex, zIndex);
+    }
+
     private void Start()
     {
         mesh.GenerateMesh(voxels, xIndex, yIndex, zIndex);
@@ -91,14 +96,6 @@ public class Chunk : MonoBehaviour {
             if (signalToRegenMesh)
             {
                 signalToRegenMesh = false;
-                foreach (Chunk c in neighbors)
-                {//need to regen neighboring chunks to show neighboring interactions
-                    if (c != null)
-                    {
-                        c.mesh.DestroyMesh();
-                        c.mesh.GenerateMesh(c.voxels, c.xIndex, c.yIndex, c.zIndex);
-                    }
-                }
                 mesh.DestroyMesh();
                 mesh.GenerateMesh(voxels, xIndex, yIndex, zIndex);
             }
@@ -162,6 +159,41 @@ public class Chunk : MonoBehaviour {
         {
             //Debug.Log("Adding voxel from North neighbour.");
             adjacentVoxels[2] = northNeighbour.getVoxels()[x, y, 0];
+        }
+
+        return adjacentVoxels;
+    }
+
+    public Voxel[] GetVoxelsHorizonatllyAdjacentTo(int x, int y, int z)
+    {
+        Voxel[] adjacentVoxels = new Voxel[4];
+
+        // Handling voxel adjacencies within the same chunk
+        adjacentVoxels[0] = (x < width - 1) ? voxels[x + 1, y, z] : null;//east
+        adjacentVoxels[1] = (z < depth - 1) ? voxels[x, y, z + 1] : null;//north
+        adjacentVoxels[2] = (x > 0) ? voxels[x - 1, y, z] : null;//west
+        adjacentVoxels[3] = (z > 0) ? voxels[x, y, z - 1] : null;//south
+
+        // Handling voxel adjacencies between chunks
+        if (x == 0 && westNeighbour != null)
+        {
+            //Debug.Log("Adding voxel from West neighbour.");
+            adjacentVoxels[2] = westNeighbour.getVoxels()[width - 1, y, z];
+        }
+        if (x == width - 1 && eastNeighbour != null)
+        {
+            //Debug.Log("Adding voxel from East neighbour.");
+            adjacentVoxels[0] = eastNeighbour.getVoxels()[0, y, z];
+        }
+        if (z == 0 && southNeighbour != null)
+        {
+            //Debug.Log("Adding voxel from South neighbour.");
+            adjacentVoxels[3] = southNeighbour.getVoxels()[x, y, depth - 1];
+        }
+        if (z == depth - 1 && northNeighbour != null)
+        {
+            //Debug.Log("Adding voxel from North neighbour.");
+            adjacentVoxels[1] = northNeighbour.getVoxels()[x, y, 0];
         }
 
         return adjacentVoxels;

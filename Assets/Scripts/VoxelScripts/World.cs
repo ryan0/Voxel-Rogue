@@ -100,19 +100,19 @@ public class World : MonoBehaviour
     private void FixedUpdate()
     {
         HashSet<Chunk> activeChunks = getActiveChunks();
-        substanceSystemTimer += Time.deltaTime;
-        if(substanceSystemTimer >= substanceSystemInterval)
-        {
-            substanceSystemTimer -= substanceSystemInterval;
-           //this.substanceInteractionSystem.UpdateSubstances(activeChunks);
-        }
+        //substanceSystemTimer += Time.deltaTime;
+        //if(substanceSystemTimer >= substanceSystemInterval)
+        //{
+        //    substanceSystemTimer -= substanceSystemInterval;
+        //   //this.substanceInteractionSystem.UpdateSubstances(activeChunks);
+        //}
 
-        temperatureSystemTimer += Time.deltaTime;
-        if(temperatureSystemTimer >= temperatureSystemInterval)
-        {
-            temperatureSystemTimer -= temperatureSystemInterval;
-            //this.temperatureSystem.UpdateTemperatures(activeChunks);
-        }
+        //temperatureSystemTimer += Time.deltaTime;
+        //if(temperatureSystemTimer >= temperatureSystemInterval)
+        //{
+        //    temperatureSystemTimer -= temperatureSystemInterval;
+        //    //this.temperatureSystem.UpdateTemperatures(activeChunks);
+        //}
 
         fluidFlowSystemTimer += Time.deltaTime;
         if (fluidFlowSystemTimer >= fluidFlowSystemInterval)
@@ -121,26 +121,26 @@ public class World : MonoBehaviour
             this.fluidFlowSystem.UpdateFluidFlow(activeChunks);
         }
 
-        gasFlowSystemTimer += Time.deltaTime;
-        if (gasFlowSystemTimer >= gasFlowSystemInterval)
-        {
-            gasFlowSystemTimer -= gasFlowSystemInterval;
-            this.gasSystem.UpdateGasFlow(activeChunks);
-        }
+        //gasFlowSystemTimer += Time.deltaTime;
+        //if (gasFlowSystemTimer >= gasFlowSystemInterval)
+        //{
+        //    gasFlowSystemTimer -= gasFlowSystemInterval;
+        //    this.gasSystem.UpdateGasFlow(activeChunks);
+        //}
 
-        wCycleSystemTimer += Time.deltaTime;
-        if(wCycleSystemTimer >= wCycleystemInterval)
-        {
-            wCycleSystemTimer -= wCycleystemInterval;
-            this.waterCycleSystem.UpdateWaterCycle(activeChunks);
-        }
+        //wCycleSystemTimer += Time.deltaTime;
+        //if(wCycleSystemTimer >= wCycleystemInterval)
+        //{
+        //    wCycleSystemTimer -= wCycleystemInterval;
+        //    this.waterCycleSystem.UpdateWaterCycle(activeChunks);
+        //}
 
-        fireTimer += Time.deltaTime;
-        if (fireTimer >= fireInterval)
-        {
-            fireTimer -= fireInterval;
-            this.fireManager.UpdateFires(activeChunks);
-        }
+        //fireTimer += Time.deltaTime;
+        //if (fireTimer >= fireInterval)
+        //{
+        //    fireTimer -= fireInterval;
+        //    this.fireManager.UpdateFires(activeChunks);
+        //}
 
 
 
