@@ -50,11 +50,17 @@ public class TownGeneration
     // Gate dimensions
     static int gateHeight = 8, gateWidth = 12;
     static List<Vector3Int> towerLocations;
+    World world;
 
    
     public static List<TownData> WorldTownsData = new List<TownData>();
     public static List<Vector3Int> towerLocs;
     public static List<Vector3Int> wallPositionsAll = new List<Vector3Int>();
+
+    public TownGeneration(World _world)
+    {
+        world = _world;
+    }
 
     public void GenerateTowers(Substance[,,] terrain, int[,] terrainHeights, int floorValue, float scale, float heightScale, int maxTowerCount)
     {
