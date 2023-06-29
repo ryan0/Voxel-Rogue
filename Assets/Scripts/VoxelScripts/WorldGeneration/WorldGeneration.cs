@@ -46,8 +46,8 @@ public class WorldGeneration
         GenerateClouds(terrain, 30);
 
         int maxTowerCount = 40; // Adjust the value as needed
-        TownGeneration townGenerator = new TownGeneration();
-        townGenerator.GenerateTowers(terrain, terrainHeights, floorValue, scale, heightScale, maxTowerCount);
+        //TownGeneration townGenerator = new TownGeneration();
+        //townGenerator.GenerateTowers(terrain, terrainHeights, floorValue, scale, heightScale, maxTowerCount);
 
         GenerateTrees(width, depth, scale, heightScale, floorValue, treeProbability, terrain, random);
 

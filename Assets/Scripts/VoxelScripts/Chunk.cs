@@ -16,20 +16,14 @@ public class Chunk : MonoBehaviour {
     public const int height = 16;
     public const int depth = 16;
 
-    //public int widthPub = 16;//publically accessible fields
-    //public int heightPub = 16;
-    //public int depthPub = 16;
-
-    public int xIndex = 0;
-    public int yIndex = 0;
-    public int zIndex = 0;
+    public Vector3Int index = new();
 
     private float biomeTemperature;
 
     private bool signalToRegenMesh = false;
 
     private Voxel[,,] voxels = new Voxel[width, height, depth];
-    private ChunkMesh mesh = new ();
+    private ChunkMesh mesh = new();
 
     public static Chunk CreateChunk(int xIndex, int yIndex, int zIndex, Substance[,,] terrainData, float biomeTemprature, World world)
     {
@@ -37,9 +31,9 @@ public class Chunk : MonoBehaviour {
         Chunk chunk = obj.AddComponent<Chunk>();
         chunk.world = world;
         chunk.biomeTemperature = biomeTemprature;
-        chunk.xIndex = xIndex;
-        chunk.yIndex = yIndex;
-        chunk.zIndex = zIndex;
+        chunk.index.x = xIndex;
+        chunk.index.y = yIndex;
+        chunk.index.z = zIndex;
 
         int xOffset = xIndex * width;
         int yOffset = yIndex * height;
@@ -62,20 +56,17 @@ public class Chunk : MonoBehaviour {
 
     public Vector3Int GetIndex()
     {
-        return new Vector3Int(xIndex, yIndex, zIndex);
+        return index;
     }
 
     private void Start()
     {
-        mesh.GenerateMesh(voxels, xIndex, yIndex, zIndex);
+        mesh.GenerateMesh(voxels, index, world);
     }
 
     public void createVoxelAt(int x, int y, int z, Substance substance, int mote)
     {
-        // Create a new voxel at the specified position
         voxels[x, y, z] = new Voxel(x, y, z, this, substance, biomeTemperature, mote);
-
-        // Signal that the mesh needs to be regenerated due to voxel changes
         SignalMeshRegen();
     }
 
@@ -84,21 +75,13 @@ public class Chunk : MonoBehaviour {
         this.signalToRegenMesh = true;
     }
 
-    private const float meshBatchInterval = 1f;//optimization
-    private float meshBatchTimer = 0.0f;//batching regen meshes for performance
-    private void FixedUpdate()
+    private void Update()
     {
-
-        meshBatchTimer += Time.deltaTime;
-        if (meshBatchTimer >= meshBatchInterval)
+        if (signalToRegenMesh)
         {
-            meshBatchTimer -= meshBatchInterval;
-            if (signalToRegenMesh)
-            {
-                signalToRegenMesh = false;
-                mesh.DestroyMesh();
-                mesh.GenerateMesh(voxels, xIndex, yIndex, zIndex);
-            }
+            signalToRegenMesh = false;
+            mesh.DestroyMesh();
+            mesh.GenerateMesh(voxels, index, world);
         }
     }
 
@@ -107,13 +90,14 @@ public class Chunk : MonoBehaviour {
         return voxels;
     }
 
-    public Voxel GetVoxel(int x, int y, int z)
+    public Voxel GetVoxelAt(int x, int y, int z)
     {
-        // Add boundary checks
-        if (x < 0 || x >= width || y < 0 || y >= height || z < 0 || z >= depth)
-            return null;
-
         return voxels[x, y, z];
+    }
+
+    public Voxel GetVoxelAt(Vector3Int pos)
+    {
+        return voxels[pos.x, pos.y, pos.z];
     }
 
 
@@ -205,8 +189,7 @@ public class Chunk : MonoBehaviour {
         voxels[x, y, z].substance = Substance.air;
 
         mesh.DestroyMesh();
-        mesh.GenerateMesh(voxels, xIndex, yIndex, zIndex);
-
+        mesh.GenerateMesh(voxels, index, world);
     }
 
 
@@ -224,23 +207,23 @@ public class Chunk : MonoBehaviour {
         mesh.GenerateMesh(voxels, xIndex, yIndex, zIndex);
         */
         //highlight bottom voxel       
-        Voxel[] adjVoxels = GetVoxelsAdjacentTo(x, y, z);
-        {
-            Voxel voxelBelow = adjVoxels[4];//voxel.chunk.bottomNeighbour.getVoxels()[x, voxel.chunk.heightPub - 1, z];//adjacentVoxels.Find(v => v.chunk.yIndex < chunk.yIndex); // Neighbor below has a lower y-coordinate
-            voxelBelow.substance = Substance.debug;
-        }
-        foreach (Chunk c in neighbors)
-        {//need to regen neighboring chunks to show neighboring interactions
-            if (c != null)
-            {
-                c.mesh.DestroyMesh();
-                c.mesh.GenerateMesh(c.voxels, c.xIndex, c.yIndex, c.zIndex);
-            }
-        }
-        mesh.DestroyMesh();
-        mesh.GenerateMesh(voxels, xIndex, yIndex, zIndex);
-        mesh.DestroyMesh();
-        mesh.GenerateMesh(voxels, xIndex, yIndex, zIndex);
+        //Voxel[] adjVoxels = GetVoxelsAdjacentTo(x, y, z);
+        //{
+        //    Voxel voxelBelow = adjVoxels[4];//voxel.chunk.bottomNeighbour.getVoxels()[x, voxel.chunk.heightPub - 1, z];//adjacentVoxels.Find(v => v.chunk.yIndex < chunk.yIndex); // Neighbor below has a lower y-coordinate
+        //    voxelBelow.substance = Substance.debug;
+        //}
+        //foreach (Chunk c in neighbors)
+        //{//need to regen neighboring chunks to show neighboring interactions
+        //    if (c != null)
+        //    {
+        //        c.mesh.DestroyMesh();
+        //        c.mesh.GenerateMesh(c.voxels, c.xIndex, c.yIndex, c.zIndex);
+        //    }
+        //}
+        //mesh.DestroyMesh();
+        //mesh.GenerateMesh(voxels, xIndex, yIndex, zIndex);
+        //mesh.DestroyMesh();
+        //mesh.GenerateMesh(voxels, xIndex, yIndex, zIndex);
     }
 }
 
@@ -267,7 +250,7 @@ public class ChunkComparer : IComparer<Chunk>
             }
             else
             {
-                return x.yIndex.CompareTo(y.yIndex);
+                return x.index.y.CompareTo(y.index.y);
             }
         }
     }

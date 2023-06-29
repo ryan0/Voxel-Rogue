@@ -49,7 +49,10 @@ public class GasFlowSystem
     public bool Flow(Voxel voxel, Chunk chunk, Voxel[,,] voxels, int x, int y, int z, Substance gasType)
     {
         // Gas will "fall up", but will not exceed MAX_GAS_HEIGHT
-        if (voxel.globalY < MAX_GAS_HEIGHT)
+
+        int globalY = y + chunk.index.y * Chunk.height;
+
+        if (globalY < MAX_GAS_HEIGHT)
         {
             Voxel voxelAbove = chunk.GetVoxelsAdjacentTo(x,y,z)[1];//top neighbor
             if (voxelAbove != null && voxelAbove.substance.id == Substance.air.id)
