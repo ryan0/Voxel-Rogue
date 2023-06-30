@@ -6,7 +6,7 @@ public class GasFlowSystem
     private HashSet<Chunk> activeChunks;
     private HashSet<Voxel> staticVoxels;
     private Dictionary<Chunk, int> chunkUpdateIndices = new Dictionary<Chunk, int>();//cycling index update for optimization
-    public static int MAX_GAS_HEIGHT = 128; // Set this to your desired maximum gas height
+    public static int MAX_GAS_HEIGHT = 100; // Set this to your desired maximum gas height
 
     public GasFlowSystem()
     {

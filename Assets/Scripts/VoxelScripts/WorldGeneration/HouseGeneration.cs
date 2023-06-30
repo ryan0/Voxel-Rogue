@@ -120,7 +120,7 @@ public class HouseGeneration
                 {
                     for (int hy = averageHeight + 1; hy < averageHeight + houseHeight; hy++)
                     {
-                        if (hx >= 0 && hx <= maxX && hy >= 0 && hy <= maxY && hz >= 0 && hz <= maxZ) // Check bounds
+                        if (hx >= 0 && hx < maxX && hy >= 0 && hy < maxY && hz >= 0 && hz < maxZ) // Improved boundary check  
                         {
                             if (hx == x || hx == x + houseWidth - 1 || hz == z || hz == z + houseDepth - 1)
                             {
@@ -148,12 +148,10 @@ public class HouseGeneration
                     int slopeHeight = houseWidth / 2 - Mathf.Abs(rx - (x + houseWidth / 2));
                     for (int rh = 0; rh <= slopeHeight; rh++)
                     {
-                        if (rx >= 0 && rx < terrain.GetLength(0) &&
-                            roofBaseHeight + rh >= 0 && roofBaseHeight + rh < terrain.GetLength(1) &&
-                            rz >= 0 && rz < terrain.GetLength(2))
-                        {
-                            terrain[rx, roofBaseHeight + rh, rz] = Substance.wood;
-                        }
+                    if (rx >= 0 && rx < maxX &&
+            roofBaseHeight + rh >= 0 && roofBaseHeight + rh < maxY &&
+            rz >= 0 && rz < maxZ) // Improved boundary check
+                        terrain[rx, roofBaseHeight + rh, rz] = Substance.wood;
                     }
                 }
             }
@@ -176,7 +174,10 @@ public class HouseGeneration
             {
                 for (int dy = 0; dy < doorHeight; dy++)
                 {
-                    terrain[doorX + dx, averageHeight + 1 + dy, doorZ] = Substance.air;
+                    if (doorX + dx >= 0 && doorX + dx < maxX && averageHeight + 1 + dy >= 0 && averageHeight + 1 + dy < maxY && doorZ >= 0 && doorZ < maxZ) // ADDITIONAL CHECK HERE
+                    {
+                        terrain[doorX + dx, averageHeight + 1 + dy, doorZ] = Substance.air;
+                    }
                 }
             }
 

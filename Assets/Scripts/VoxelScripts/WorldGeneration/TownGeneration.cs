@@ -114,7 +114,7 @@ public class TownGeneration
         // Assuming you have some logic to determine townType
         TownType townType = TownType.village; // Example town type
 
-        (List<RectInt> lots, List<Vector3Int> roadPositions) = CreateLots(townCenter, floorValue, townType, new List<RectInt>());
+        (List<RectInt> lots, List<Vector3Int> roadPositions) = CreateLotsSquare(townCenter, floorValue, townType, new List<RectInt>());
         int averageHeight = DrawLots(lots, roadPositions, townCenter);
         HouseGeneration houseGen = new HouseGeneration();
         List<HouseData>  houses = houseGen.LayHouses(terrain, townCenter, averageHeight, lots, roadPositions, townDensity);
@@ -123,13 +123,64 @@ public class TownGeneration
 
     }
 
+    private (List<RectInt>, List<Vector3Int>) CreateLotsClustered(Vector3Int center, int floorValue, TownType type, List<RectInt> lots)
+    {
+        int maxClusters = (type == TownType.village) ? 2 : 5;
+        int lotsPerCluster = (type == TownType.village) ? 2 : 4;
+        int lotSize = 7;
+        int roadWidth = 3;
+        int cellSize = lotSize + roadWidth;
+        int clusterRadius = 4 * cellSize;
 
-    private (List<RectInt>, List<Vector3Int>) CreateLots(Vector3Int center, int floorValue, TownType type, List<RectInt> lots)
+        List<Vector3Int> roadPositions = new List<Vector3Int>();
+
+        System.Random random = new System.Random();
+
+        // Iterate through clusters
+        for (int c = 0; c < maxClusters; c++)
+        {
+            // Random central position for this cluster
+            int centerX = center.x + random.Next(-clusterRadius, clusterRadius + 1);
+            int centerZ = center.z + random.Next(-clusterRadius, clusterRadius + 1);
+
+            // Iterate through lots within this cluster
+            for (int l = 0; l < lotsPerCluster; l++)
+            {
+                // Random position for this lot within the cluster
+                int offsetX = random.Next(-cellSize, cellSize + 1);
+                int offsetZ = random.Next(-cellSize, cellSize + 1);
+
+                int lotX = centerX + offsetX;
+                int lotZ = centerZ + offsetZ;
+
+                // Place the lot
+                lots.Add(new RectInt(lotX, lotZ, lotSize, lotSize));
+
+                // Place roads around the lot
+                for (int x = lotX - roadWidth; x <= lotX + lotSize; x++)
+                {
+                    for (int z = lotZ - roadWidth; z <= lotZ + lotSize; z++)
+                    {
+                        if (x < lotX || x >= lotX + lotSize || z < lotZ || z >= lotZ + lotSize)
+                        {
+                            roadPositions.Add(new Vector3Int(x, floorValue, z));
+                        }
+                    }
+                }
+            }
+        }
+
+        return (lots, roadPositions);
+    }
+
+
+
+    private (List<RectInt>, List<Vector3Int>) CreateLotsSquare(Vector3Int center, int floorValue, TownType type, List<RectInt> lots)
     {
         int townSize = (type == TownType.village) ? 4 : 10; // example sizes in num of lots
         int halfTownSize = townSize / 2;
-        int lotSize = 7;
-        int roadWidth = 2; // Width of the roads
+        int lotSize = 8;
+        int roadWidth = 4; // Width of the roads
         int cellSize = lotSize + roadWidth; // Size of cell (lot + road)
 
         List<Vector3Int> roadPositions = new List<Vector3Int>(); // List to keep track of road positions
@@ -231,10 +282,12 @@ public class TownGeneration
                         terrain[x, averageHeight, z] = Substance.debug;
 
                         // Set tiles above to air
-                        for (int y = averageHeight + 1; y < maxCloudHeight; y++)
+                        int terrainHeight = terrain.GetLength(1);
+                        for (int y = averageHeight + 1; y < maxCloudHeight && y < terrainHeight; y++)
                         {
                             terrain[x, y, z] = Substance.air;
                         }
+
                     }
                 }
             }
@@ -250,7 +303,8 @@ public class TownGeneration
                 terrain[roadPos.x, averageHeight, roadPos.z] = Substance.asphalt;
 
                 // Set tiles above to air
-                for (int y = averageHeight + 1; y < maxCloudHeight; y++)
+                int terrainHeight = terrain.GetLength(1);
+                for (int y = averageHeight + 1; y < maxCloudHeight && y < terrainHeight; y++)
                 {
                     terrain[roadPos.x, y, roadPos.z] = Substance.air;
                 }
