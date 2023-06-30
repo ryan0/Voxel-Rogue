@@ -118,62 +118,11 @@ public class TownGeneration
         int averageHeight = DrawLots(lots, roadPositions, townCenter);
         HouseGeneration houseGen = new HouseGeneration();
         List<HouseData>  houses = houseGen.LayHouses(terrain, townCenter, averageHeight, lots, roadPositions, townDensity);
+        BuildWallsAroundTown(lots, 16);
         TownData townData = new TownData(townCenter, houses, lots, roadPositions);
         WorldGeneration.worldTownsData.Add(townData);
 
     }
-
-    private (List<RectInt>, List<Vector3Int>) CreateLotsClustered(Vector3Int center, int floorValue, TownType type, List<RectInt> lots)
-    {
-        int maxClusters = (type == TownType.village) ? 2 : 5;
-        int lotsPerCluster = (type == TownType.village) ? 2 : 4;
-        int lotSize = 7;
-        int roadWidth = 3;
-        int cellSize = lotSize + roadWidth;
-        int clusterRadius = 4 * cellSize;
-
-        List<Vector3Int> roadPositions = new List<Vector3Int>();
-
-        System.Random random = new System.Random();
-
-        // Iterate through clusters
-        for (int c = 0; c < maxClusters; c++)
-        {
-            // Random central position for this cluster
-            int centerX = center.x + random.Next(-clusterRadius, clusterRadius + 1);
-            int centerZ = center.z + random.Next(-clusterRadius, clusterRadius + 1);
-
-            // Iterate through lots within this cluster
-            for (int l = 0; l < lotsPerCluster; l++)
-            {
-                // Random position for this lot within the cluster
-                int offsetX = random.Next(-cellSize, cellSize + 1);
-                int offsetZ = random.Next(-cellSize, cellSize + 1);
-
-                int lotX = centerX + offsetX;
-                int lotZ = centerZ + offsetZ;
-
-                // Place the lot
-                lots.Add(new RectInt(lotX, lotZ, lotSize, lotSize));
-
-                // Place roads around the lot
-                for (int x = lotX - roadWidth; x <= lotX + lotSize; x++)
-                {
-                    for (int z = lotZ - roadWidth; z <= lotZ + lotSize; z++)
-                    {
-                        if (x < lotX || x >= lotX + lotSize || z < lotZ || z >= lotZ + lotSize)
-                        {
-                            roadPositions.Add(new Vector3Int(x, floorValue, z));
-                        }
-                    }
-                }
-            }
-        }
-
-        return (lots, roadPositions);
-    }
-
-
 
     private (List<RectInt>, List<Vector3Int>) CreateLotsSquare(Vector3Int center, int floorValue, TownType type, List<RectInt> lots)
     {
@@ -313,61 +262,6 @@ public class TownGeneration
         return averageHeight;
     }
 
-
-    private List<Vector3Int> GenerateConvexHull(int worldX, int worldZ, TownType townType)
-    {
-        // Parameters for convex hull generation
-        int villageLots = 10; // Number of lots in a village
-        int minDistanceBetweenLots = 5; // Minimum distance between lots
-
-        // Determine the number of lots based on the town type
-        int numberOfLots;
-        switch (townType)
-        {
-            case TownType.village:
-                numberOfLots = villageLots;
-                break;
-            case TownType.city:
-                numberOfLots = villageLots * 2;
-                break;
-            default:
-                numberOfLots = villageLots;
-                break;
-        }
-
-        // Generate random points for lots
-        List<Vector3Int> lots = new List<Vector3Int>();
-        while (lots.Count < numberOfLots)
-        {
-            // Randomly select a point within the chunk
-            int x = UnityEngine.Random.Range(worldX, worldX + chunkSize);
-            int z = UnityEngine.Random.Range(worldZ, worldZ + chunkSize);
-            Vector3Int newLot = new Vector3Int(x, 0, z);
-
-            // Check if it is at least minDistanceBetweenLots from all other lots
-            bool tooClose = false;
-            foreach (var lot in lots)
-            {
-                if (Vector3Int.Distance(newLot, lot) < minDistanceBetweenLots)
-                {
-                    tooClose = true;
-                    break;
-                }
-            }
-
-            // If it's not too close to any other lot, add it
-            if (!tooClose)
-            {
-                lots.Add(newLot);
-            }
-        }
-
-        // Calculate the convex hull using the Graham's scan algorithm
-
-        return GrahamScan.ConvexHull(lots);
-    }
-
-
     // Method for flattening the terrain
     public int FlattenTerrainInsideTown(int[,] terrainHeights, List<Vector3Int> convexHull, int floorValue, Substance foundationType, int padding)
     {
@@ -418,6 +312,68 @@ public class TownGeneration
         return averageHeight;
     }
 
+    public void BuildWallsAroundTown(List<RectInt> lots, int wallHeight)
+    {
+        // Convert the lots to a list of points
+        List<Vector3Int> points = new List<Vector3Int>();
+        foreach (var lot in lots)
+        {
+            points.Add(new Vector3Int(lot.x, 0, lot.y));
+            points.Add(new Vector3Int(lot.x + lot.width, 0, lot.y));
+            points.Add(new Vector3Int(lot.x, 0, lot.y + lot.height));
+            points.Add(new Vector3Int(lot.x + lot.width, 0, lot.y + lot.height));
+        }
+
+        // Find the convex hull around the points
+        List<Vector3Int> convexHull = geo.FindConvexHull(points);
+
+        // Build the walls around the convex hull
+        for (int i = 0; i < convexHull.Count; i++)
+        {
+            Vector3Int start = convexHull[i];
+            Vector3Int end = convexHull[(i + 1) % convexHull.Count]; // Get the next point, wrapping around
+
+            // Build wall segment between start and end
+            BuildWallSegment(start, end, wallHeight);
+        }
+    }
+
+    public void BuildWallSegment(Vector3Int start, Vector3Int end, int height)
+    {
+        Vector3 direction = ((Vector3)(end - start)).normalized;
+        float length = Vector3Int.Distance(start, end);
+        int terrainWidth = terrainHeights.GetLength(0);
+        int terrainDepth = terrainHeights.GetLength(1);
+
+        for (float i = 0; i < length; i += 0.5f) // 0.5f step for denser interpolation
+        {
+            int x = Mathf.RoundToInt(start.x + direction.x * i);
+            int z = Mathf.RoundToInt(start.z + direction.z * i);
+
+            if (x >= 0 && x < terrainWidth && z >= 0 && z < terrainDepth)
+            {
+                int baseHeight = terrainHeights[x, z];
+
+                for (int y = baseHeight + 1; y <= baseHeight + height; y++)
+                {
+                    if (IsWithinBounds(x, y, z)) // Check if the position is within the terrain bounds
+                    {
+                        // Set the wall block, for example, use Substance.wall or whatever you use for walls
+                        terrain[x, y, z] = Substance.stone;
+                    }
+                }
+            }
+        }
+    }
+
+
+    public bool IsWithinBounds(int x, int y, int z)
+    {
+        // Check if x, y, z are within the bounds of the terrain array
+        return x >= 0 && x < terrain.GetLength(0) &&
+               y >= 0 && y < terrain.GetLength(1) &&
+               z >= 0 && z < terrain.GetLength(2);
+    }
 
 
 }

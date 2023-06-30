@@ -49,7 +49,7 @@ public class FluidFlowSystem
                 chunk.SignalMeshRegen();
             }
         }
-        Debug.Log(flowCalls);
+        //Debug.Log(flowCalls);
 
         //remove no longer active
         foreach (Voxel v in noLongerActive)
