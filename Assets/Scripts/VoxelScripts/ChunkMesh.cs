@@ -22,15 +22,18 @@ public class ChunkMesh
         meshData = new Dictionary<int, GameObject>();
     }
 
-    public void GenerateMesh(Voxel[,,] voxels, int chunkIndexX, int chunkIndexY, int chunkIndexZ)
+    public void GenerateMesh(Voxel[,,] voxels, Vector3Int chunkIndex, World world)
     {
         int width = voxels.GetLength(0);
         int height = voxels.GetLength(1);
         int depth = voxels.GetLength(2);
 
-        Dictionary<int, List<Vector3>> verticesData = new Dictionary<int, List<Vector3>>();
-        Dictionary<int, List<int>> trianglesData = new Dictionary<int, List<int>>();
-        Dictionary<int, List<Vector2>> uvData = new Dictionary<int, List<Vector2>>(); // Add this line
+        //Dictionary<int, List<Vector3>> verticesData = new Dictionary<int, List<Vector3>>();
+
+        List<int> substanceIds = new();
+        List<Vector3>[] verticesData = new List<Vector3>[Substance.NumberSubstances()];
+        List<int>[] trianglesData = new List<int>[Substance.NumberSubstances()];
+        List<Vector2>[] uvData = new List<Vector2>[Substance.NumberSubstances()]; // Add this line
 
         for (int x = 0; x < width; x++)
         {
@@ -42,34 +45,34 @@ public class ChunkMesh
 
                     if (substance.id != Substance.air.id)
                     {
-                        createVoxelRepresentationAt(voxels, verticesData, trianglesData, uvData, substance, x, y, z); // Pass uvData here                
+                        createVoxelRepresentationAt(substanceIds, voxels, verticesData, trianglesData, uvData, substance, x, y, z); // Pass uvData here                
                     }
                 }
             }
         }
 
 
-        foreach (KeyValuePair<int, List<Vector3>> entry in verticesData)
+        foreach (int i in substanceIds)
         {
             Mesh mesh = new Mesh();
 
-            mesh.vertices = entry.Value.ToArray();
-            mesh.triangles = trianglesData[entry.Key].ToArray();
-            mesh.uv = uvData[entry.Key].ToArray(); // Add UV data to the mesh
+            mesh.vertices = verticesData[i].ToArray();
+            mesh.triangles = trianglesData[i].ToArray();
+            mesh.uv = uvData[i].ToArray(); // Add UV data to the mesh
             mesh.RecalculateNormals();
 
-            float xOffset = chunkIndexX * width * s;
-            float yOffset = chunkIndexY * height * s;
-            float zOffset = chunkIndexZ * depth * s;
+            float xOffset = chunkIndex.x * width * s;
+            float yOffset = chunkIndex.y * height * s;
+            float zOffset = chunkIndex.z * depth * s;
 
             GameObject chunkMesh = new GameObject("chunkMesh");
             MeshFilter meshFilter = chunkMesh.AddComponent<MeshFilter>();
             meshFilter.mesh = mesh;
 
-            string mat = "Materials/" + Substance.getById(entry.Key).name;
+            string mat = "Materials/" + Substance.getById(i).name;
             Material meshMat = Resources.Load<Material>(mat);
 
-            if (Substance.getById(entry.Key).state == State.SOLID)
+            if (Substance.getById(i).state == State.SOLID)
             {
                 chunkMesh.AddComponent<MeshCollider>();
             }
@@ -77,19 +80,18 @@ public class ChunkMesh
             meshRenderer.material = meshMat;
             //meshRenderer.material = Resources.Load<Material>("Shaders/SmoothVoxelMaterial");
             chunkMesh.transform.position = new Vector3(xOffset, yOffset, zOffset);
-            meshData.Add(entry.Key, chunkMesh);
+            meshData.Add(i, chunkMesh);
         }
     }
 
 
-
-    private void createVoxelRepresentationAt(Voxel[,,] voxels, Dictionary<int, List<Vector3>> verticesData, Dictionary<int, List<int>> trianglesData, Dictionary<int, List<Vector2>> uvData, Substance substance, int x, int y, int z)
+    private void createVoxelRepresentationAt(List<int> substanceIds, Voxel[,,] voxels, List<Vector3>[] verticesData, List<int>[] trianglesData, List<Vector2>[] uvData, Substance substance, int x, int y, int z)
     {
         List<Vector3> vertices;
         List<int> triangles;
         List<Vector2> uvs; // Add this line
 
-        if (verticesData.ContainsKey(substance.id))
+        if (verticesData[substance.id] != null)
         {
             vertices = verticesData[substance.id];
             triangles = trianglesData[substance.id];
@@ -97,12 +99,13 @@ public class ChunkMesh
         }
         else
         {
+            substanceIds.Add(substance.id);
             vertices = new List<Vector3>();
-            verticesData.Add(substance.id, vertices);
+            verticesData[substance.id] = vertices;
             triangles = new List<int>();
-            trianglesData.Add(substance.id, triangles);
+            trianglesData[substance.id] = triangles;
             uvs = new List<Vector2>(); // Add this line
-            uvData.Add(substance.id, uvs); // Add this line
+            uvData[substance.id] =  uvs; // Add this line
         }
 
         int width = voxels.GetLength(0);

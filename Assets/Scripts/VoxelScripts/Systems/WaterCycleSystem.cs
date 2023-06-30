@@ -56,7 +56,7 @@ public class WaterCycleSystem
                             if (liquidForm != null)
                             {
                                 //voxel.substance = liquidForm;
-                                Voxel belowV = chunk.GetVoxelsAdjacentTo(voxel.x, voxel.y, voxel.z)[4] ;//bottom voxel
+                                Voxel belowV = chunk.GetVoxelsAdjacentTo(x, yIndex, z)[4] ;//bottom voxel
                                 belowV.substance = liquidForm;
                                 belowV.motes = PRECIPITATION_AMOUNT;
                                 voxel.motes -= PRECIPITATION_AMOUNT;
@@ -90,7 +90,7 @@ public class WaterCycleSystem
             int count = 0;
             foreach (Chunk c in activeChunks)
             {
-                if (c.yIndex >= currentChunk.yIndex && c.xIndex == currentChunk.xIndex && c.zIndex == currentChunk.zIndex)
+                if (c.index.y >= currentChunk.index.y && c.index.x == currentChunk.index.x && c.index.z == currentChunk.index.z)
                 {
                     count++;
                 }
@@ -100,7 +100,7 @@ public class WaterCycleSystem
             count = 0;
             foreach (Chunk c in activeChunks)
             {
-                if (c.yIndex >= currentChunk.yIndex && c.xIndex == currentChunk.xIndex && c.zIndex == currentChunk.zIndex)
+                if (c.index.y >= currentChunk.index.y && c.index.x == currentChunk.index.x && c.index.z == currentChunk.index.z)
                 {
                     aboveChunks[count] = c;
                     count++;
@@ -119,7 +119,7 @@ public class WaterCycleSystem
                         //Chunk currentChunk = currentChunk.world.getChunks()[chunk.xIndex, chunk.yIndex, chunk.zIndex];
                         if (currentChunk != null)
                         {
-                            Voxel voxel = currentChunk.GetVoxel(x, yIndex, z);
+                            Voxel voxel = currentChunk.GetVoxelAt(x, yIndex, z);
                             if (voxel.substance.state == State.LIQUID && voxel.getNeighbors()[4].substance.id != Substance.air.id && voxel.substance.GetGasForm()!=null)//don't evap falling blocks
                             {
                                 bool isClearPath = true;
@@ -134,10 +134,10 @@ public class WaterCycleSystem
                                         //Debug.Log("above chunk");
                                         for (int upperY = 0; upperY < Chunk.height; upperY++)
                                         {
-                                            voxelAbove = aboveChunk.GetVoxel(x, upperY, z);
-                                            int compareUpperY = upperY + (Chunk.height* aboveChunk.yIndex);
-                                            int compareCurrentY = yIndex + (Chunk.height * currentChunk.yIndex);
-                                            if ((aboveChunk.yIndex <= currentChunk.yIndex && compareUpperY <= compareCurrentY))
+                                            voxelAbove = aboveChunk.GetVoxelAt(x, upperY, z);
+                                            int compareUpperY = upperY + (Chunk.height* aboveChunk.index.y);
+                                            int compareCurrentY = yIndex + (Chunk.height * currentChunk.index.y);
+                                            if ((aboveChunk.index.y <= currentChunk.index.y && compareUpperY <= compareCurrentY))
                                             {
                                                 //do nothing, this is below in the current chunk
                                             }

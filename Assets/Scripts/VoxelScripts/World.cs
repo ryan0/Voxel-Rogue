@@ -4,9 +4,9 @@ using UnityEngine;
 
 public class World : MonoBehaviour
 {
-    public const int chunksX = 6;
+    public const int chunksX = 12;
     public const int chunksY = 8;
-    public const int chunksZ = 6;
+    public const int chunksZ = 12;
 
     [SerializeField]
     private GameObject player;
@@ -23,7 +23,7 @@ public class World : MonoBehaviour
     private const float temperatureSystemInterval = 5.0f;
     private float temperatureSystemTimer = 0.5f;
 
-    private const float fluidFlowSystemInterval = .2f;
+    private const float fluidFlowSystemInterval = .1f;
     private float fluidFlowSystemTimer = 0.0f;
 
 
@@ -37,13 +37,18 @@ public class World : MonoBehaviour
     private float fireTimer = 0.0f;
 
 
-    FluidFlowSystem fluidFlowSystem = new ();
+    FluidFlowSystem fluidFlowSystem;
     SubstanceInteractionSystem substanceInteractionSystem = new();
     TemperatureSystem temperatureSystem = new();
     GasFlowSystem gasSystem = new ();
     WaterCycleSystem waterCycleSystem = new ();
     FireManager fireManager = new ();
 
+
+    public World()
+    {
+        fluidFlowSystem = new FluidFlowSystem();
+    }
 
     // Start is called before the first frame update
     void Start()
@@ -147,10 +152,14 @@ public class World : MonoBehaviour
 
     }
 
-    public Chunk getChunkAt(Vector3Int pos)
+    public Chunk GetChunkAt(Vector3Int pos)
     {
-        Debug.Log(pos.x + " " + pos.y + " " + pos.z);
         return chunks[pos.x, pos.y, pos.z];
+    }
+
+    public Voxel GetVoxelAt(Vector3Int chunkPos, Vector3Int voxelPos)
+    {
+        return GetChunkAt(chunkPos).GetVoxelAt(voxelPos);
     }
 
     public Chunk getChunkPlayerIsIn()
@@ -161,7 +170,7 @@ public class World : MonoBehaviour
         int playerY = (int) (playerPosition.y / Chunk.height);
         int playerZ = (int) (playerPosition.z / Chunk.depth);
 
-        return getChunkAt(new Vector3Int(playerX, playerY, playerZ));
+        return GetChunkAt(new Vector3Int(playerX, playerY, playerZ));
     }
 
     public HashSet<Chunk> getActiveChunks()

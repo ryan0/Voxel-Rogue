@@ -32,6 +32,7 @@ public class FluidFlowSystem
         }
 
         //Flow logic and determine if regen mesh
+        int flowCalls = 0;
         foreach (Chunk chunk in activeChunks)
         {
             HashSet<Voxel> activeFluidVoxelsForChunk = activeFluidVoxelsMap[chunk.GetIndex()];
@@ -40,6 +41,7 @@ public class FluidFlowSystem
             foreach (Voxel v in activeFluidVoxelsForChunk)
             {
                 signalMeshRegen = Flow(v, chunk, newlyActive, noLongerActive);
+                flowCalls += 1;
             }
 
             if (signalMeshRegen)
@@ -47,6 +49,7 @@ public class FluidFlowSystem
                 chunk.SignalMeshRegen();
             }
         }
+        Debug.Log(flowCalls);
 
         //remove no longer active
         foreach (Voxel v in noLongerActive)
@@ -94,7 +97,7 @@ public class FluidFlowSystem
             {
                 for (int z = 0; z < Chunk.depth; z++)
                 {
-                    Voxel v = chunk.GetVoxel(x, y, z);
+                    Voxel v = chunk.GetVoxelAt(x, y, z);
                     if (v.substance.state == State.LIQUID)
                     {
                         activeFluidVoxelsForChunk.Add(v);
@@ -118,13 +121,11 @@ public class FluidFlowSystem
 
         bool signalMeshRegen = false;
         Voxel[] adjacentVoxels = chunk.GetVoxelsAdjacentTo(x, y, z);
-        Voxel[] horizontallyAdjacent = chunk.GetVoxelsHorizonatllyAdjacentTo(x, y, z);
         Voxel voxelBelow = adjacentVoxels[4];
 
 
         if (voxelBelow != null && voxelBelow.substance.id == Substance.air.id) //if voxel below is air
         {
-            voxel.framesSinceLastChange = 0;
             voxelBelow.motes = voxel.motes;
             voxel.motes = 0;
 
@@ -134,11 +135,10 @@ public class FluidFlowSystem
             signalMeshRegen = true;
 
             noLongerActive.Add(voxel);
-            addAdjacentFluidsToNewlyActive(adjacentVoxels, fluidType, newlyActive);
+            addAdjacentFluidsToNewlyActive(adjacentVoxels, newlyActive);
         } 
         else if (voxelBelow != null && voxelBelow.substance.id == fluidType.id && voxelBelow.motes < MaxMotes) //if fluid is below and not at max pressure
         {
-            voxel.framesSinceLastChange = 0;
             TransferMotesBetweenFLuidVertically(voxel, voxelBelow);
 
             if(voxel.substance.id == Substance.air.id)
@@ -146,12 +146,12 @@ public class FluidFlowSystem
                 signalMeshRegen = true;
 
                 noLongerActive.Add(voxel);
-                addAdjacentFluidsToNewlyActive(adjacentVoxels, fluidType, newlyActive);
+                addAdjacentFluidsToNewlyActive(adjacentVoxels, newlyActive);
             }
         }
-        else if (FlowHorizontally(voxel, horizontallyAdjacent, fluidType, newlyActive)) //horizontal flow
+        else if (voxel.motes > 1 && FlowHorizontally(voxel, fluidType, chunk, x, y, z)) //horizontal flow
         {
-            addAdjacentFluidsToNewlyActive(adjacentVoxels, fluidType, newlyActive);
+            addAdjacentFluidsToNewlyActive(adjacentVoxels, newlyActive);
             signalMeshRegen = true;
         }
         else
@@ -164,43 +164,50 @@ public class FluidFlowSystem
     }
 
 
-    private void addAdjacentFluidsToNewlyActive(Voxel[] adjacentVoxels, Substance fluidType, HashSet<Voxel> newlyActive)
+    private void addAdjacentFluidsToNewlyActive(Voxel[] adjacentVoxels, HashSet<Voxel> newlyActive)
     {
         foreach (Voxel v in adjacentVoxels)
         {
-            if (v != null && v.substance.id == fluidType.id)
+            if (v != null && v.substance.state == State.LIQUID)
             {
                 newlyActive.Add(v);
             }
         }
     }
 
-    private bool FlowHorizontally(Voxel voxel, Voxel[] horizontallyAdjacentVoxels, Substance fluidType, HashSet<Voxel> newlyActive)
+    private bool FlowHorizontally(Voxel voxel, Substance fluidType, Chunk chunk, int x, int y, int z)
     {
         bool flow = false;
 
+        Voxel[] horizontallyAdjacentVoxels = chunk.GetVoxelsHorizonatllyAdjacentTo(x, y, z);
         shuffleVoxelArray(horizontallyAdjacentVoxels);
 
-        foreach (Voxel v in horizontallyAdjacentVoxels)
+        bool canFlow = true;
+        while (canFlow)
         {
-            if(voxel.motes <= 1)
+            canFlow = false;
+            foreach (Voxel v in horizontallyAdjacentVoxels)
             {
-                break;
-            }
+                if (voxel.motes <= 1)
+                {
+                    break;
+                }
 
-            if (v != null && v.substance.id == Substance.air.id)
-            {
-                voxel.motes -= 1;
-                v.motes = 1;
-                v.substance = fluidType;
-                newlyActive.Add(v);
-                flow = true;
-            }
-            else if (v != null && v.substance.id == fluidType.id && v.motes < MaxMotes && v.motes < voxel.motes)
-            {
-                voxel.motes -= 1;
-                v.motes += 1;
-                flow = true;
+                if (v != null && v.substance.id == Substance.air.id)
+                {
+                    voxel.motes -= 1;
+                    v.motes = 1;
+                    v.substance = fluidType;
+                    flow = true;
+                    canFlow = true;
+                }
+                else if (v != null && v.substance.id == fluidType.id && v.motes < MaxMotes && v.motes < voxel.motes)
+                {
+                    voxel.motes -= 1;
+                    v.motes += 1;
+                    flow = true;
+                    canFlow = true;
+                }
             }
         }
 
