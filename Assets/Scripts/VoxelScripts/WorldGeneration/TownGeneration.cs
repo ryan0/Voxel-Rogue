@@ -118,18 +118,18 @@ public class TownGeneration
         int averageHeight = DrawLots(lots, roadPositions, townCenter);
         HouseGeneration houseGen = new HouseGeneration();
         List<HouseData>  houses = houseGen.LayHouses(terrain, townCenter, averageHeight, lots, roadPositions, townDensity);
-        BuildWallsAroundTown(lots, 16);
+        BuildWallsAroundTown(lots, 10, true); // 10 is wall height, 3 is road width, and true means it will build towers.
         TownData townData = new TownData(townCenter, houses, lots, roadPositions);
         WorldGeneration.worldTownsData.Add(townData);
 
     }
 
+    static int lotSize = 8;
+    static int roadWidth = 4; // Width of the roads
     private (List<RectInt>, List<Vector3Int>) CreateLotsSquare(Vector3Int center, int floorValue, TownType type, List<RectInt> lots)
     {
         int townSize = (type == TownType.village) ? 4 : 10; // example sizes in num of lots
         int halfTownSize = townSize / 2;
-        int lotSize = 8;
-        int roadWidth = 4; // Width of the roads
         int cellSize = lotSize + roadWidth; // Size of cell (lot + road)
 
         List<Vector3Int> roadPositions = new List<Vector3Int>(); // List to keep track of road positions
@@ -312,7 +312,7 @@ public class TownGeneration
         return averageHeight;
     }
 
-    public void BuildWallsAroundTown(List<RectInt> lots, int wallHeight)
+    public void BuildWallsAroundTown(List<RectInt> lots, int wallHeight, bool buildTowers = false)
     {
         // Convert the lots to a list of points
         List<Vector3Int> points = new List<Vector3Int>();
@@ -335,15 +335,33 @@ public class TownGeneration
 
             // Build wall segment between start and end
             BuildWallSegment(start, end, wallHeight);
+
+            // If buildTowers is true, build a tower at each corner
+            if (buildTowers)
+            {
+                Vector3 direction = ((Vector3)(end - start)).normalized;
+                Vector3 perpendicular = new Vector3(-direction.z, 0, direction.x); // 90 degrees rotated
+
+                // Offset the tower position by roadWidth in the direction perpendicular to the wall
+                Vector3Int towerPosition = start + Vector3Int.RoundToInt(perpendicular * roadWidth);
+
+                BuildTower(towerPosition, wallHeight * 2); // Assuming tower height to be twice the wall height
+            }
         }
     }
+
 
     public void BuildWallSegment(Vector3Int start, Vector3Int end, int height)
     {
         Vector3 direction = ((Vector3)(end - start)).normalized;
+        Vector3 perpendicular = new Vector3(-direction.z, 0, direction.x); // 90 degrees rotated
         float length = Vector3Int.Distance(start, end);
         int terrainWidth = terrainHeights.GetLength(0);
         int terrainDepth = terrainHeights.GetLength(1);
+
+        // Offset the start and end positions by roadWidth in the direction perpendicular to the wall
+        start += Vector3Int.RoundToInt(perpendicular * roadWidth);
+        end += Vector3Int.RoundToInt(perpendicular * roadWidth);
 
         for (float i = 0; i < length; i += 0.5f) // 0.5f step for denser interpolation
         {
@@ -360,6 +378,38 @@ public class TownGeneration
                     {
                         // Set the wall block, for example, use Substance.wall or whatever you use for walls
                         terrain[x, y, z] = Substance.stone;
+                    }
+                }
+            }
+        }
+    }
+
+
+    public void BuildTower(Vector3Int position, int height)
+    {
+        int terrainWidth = terrainHeights.GetLength(0);
+        int terrainDepth = terrainHeights.GetLength(1);
+
+        // Define tower size
+        int towerSize = 3; // Example size
+
+        // Get the base height from the terrain
+        int baseHeight = terrainHeights[position.x, position.z];
+
+        // Construct the tower
+        for (int x = -towerSize; x <= towerSize; x++)
+        {
+            for (int z = -towerSize; z <= towerSize; z++)
+            {
+                for (int y = baseHeight + 1; y <= baseHeight + height; y++)
+                {
+                    int worldX = position.x + x;
+                    int worldZ = position.z + z;
+
+                    if (worldX >= 0 && worldX < terrainWidth && worldZ >= 0 && worldZ < terrainDepth)
+                    {
+                        // Set the tower block, for example, use Substance.tower or whatever you use for towers
+                        terrain[worldX, y, worldZ] = Substance.stone;
                     }
                 }
             }
