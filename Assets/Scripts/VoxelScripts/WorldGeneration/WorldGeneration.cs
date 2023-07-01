@@ -40,11 +40,11 @@ public class WorldGeneration
 
         GenerateTerrainBlocks(width, height, depth, terrainHeights, terrain);
 
-        GenerateWorms(terrain, 3);
+        //GenerateWorms(terrain, 3);
 
-        GenerateRivers(floorValue, terrain, terrainHeights, 1, Substance.water);
+        //GenerateRivers(floorValue, terrain, terrainHeights, 1, Substance.water);
 
-        GenerateRivers(floorValue, terrain, terrainHeights, 1, Substance.lava, 200);
+        //GenerateRivers(floorValue, terrain, terrainHeights, 1, Substance.lava, 200);
 
         //GenerateClouds(terrain, 30);
 
