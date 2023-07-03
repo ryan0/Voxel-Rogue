@@ -237,3 +237,49 @@ public class GrahamScan
     }
 }
 
+public class Edge
+{
+    public Vector3Int Start;
+    public Vector3Int End;
+    public float Weight;
+    public TownData StartTown;
+    public TownData EndTown;
+
+    public Edge(Vector3Int start, Vector3Int end, float weight, TownData startTown, TownData endTown)
+    {
+        Start = start;
+        End = end;
+        Weight = weight;
+        StartTown = startTown;
+        EndTown = endTown;
+    }
+}
+
+public class UnionFind
+{
+    private int[] parent;
+
+    public UnionFind(int n)
+    {
+        parent = new int[n];
+        for (int i = 0; i < n; i++)
+        {
+            parent[i] = i;
+        }
+    }
+
+    public int Find(int x)
+    {
+        if (parent[x] != x)
+        {
+            parent[x] = Find(parent[x]);
+        }
+        return parent[x];
+    }
+
+    public void Union(int x, int y)
+    {
+        parent[Find(x)] = Find(y);
+    }
+}
+

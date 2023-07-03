@@ -5,7 +5,6 @@ using System.Linq;
 
 public class WorldGeneration
 {
-    public static List<TownData> worldTownsData;
     static Geometry geo;
     private static float PerlinNoise3D(float x, float y, float z)
     {
@@ -26,7 +25,6 @@ public class WorldGeneration
 
     public static Substance[,,] GenerateTerrain()
     {
-        worldTownsData = new List<TownData>();
         geo = new Geometry();
         Substance[,,] terrain = new Substance[width, height, depth];
         float scale = 0.1f * Voxel.size;
@@ -550,6 +548,12 @@ public class WorldGeneration
             }
         }
     }
-     
+
+    public static bool IsWithinBounds(int x, int y, int z)
+    {
+        return x >= 0 && x < width && y >= 0 && y < height && z >= 0 && z < depth;
+    }
+
+
 }
 

@@ -9,8 +9,7 @@ public class PlayerController : MonoBehaviour
 
     private float verticalLookRotation;
     private Vector3 moveDirection;
-
-    private CharacterController characterController;
+        private CharacterController characterController;
     private Transform cameraTransform;
     private float rayDistance = 100f;
 
@@ -30,12 +29,14 @@ public class PlayerController : MonoBehaviour
 
         // Lock the mouse cursor to the center of the screen
         Cursor.lockState = CursorLockMode.Locked;
+
     }
 
     private void Update()
     {
         Look();
-        Move();
+        //Move();
+
         if (Input.GetMouseButtonDown(0))
         {
             BreakVoxel();

@@ -4,18 +4,16 @@ using UnityEngine;
 
 public class World : MonoBehaviour
 {
-    public const int chunksX = 10;
+    public const int chunksX = 12;
     public const int chunksY = 4;
-    public const int chunksZ = 10;
+    public const int chunksZ = 12;
 
     [SerializeField]
     private GameObject player;
 
     private Chunk[,,] chunks = new Chunk[chunksX, chunksY, chunksZ];
-    public Chunk[,,] getChunks()
-    {
-        return chunks;
-    }
+
+    public Chunk[,,] Chunks => chunks;
 
     private const float substanceSystemInterval = .5f;
     private float substanceSystemTimer = 0.0f;
@@ -162,15 +160,18 @@ public class World : MonoBehaviour
         return GetChunkAt(chunkPos).GetVoxelAt(voxelPos);
     }
 
-    public Chunk getChunkPlayerIsIn()
+    public Chunk GetChunkPlayerIsIn()
     {
-        Vector3 playerPosition = player.transform.position * (1 / Voxel.size);
+        Vector3Int chunkPos = WorldCoordToChunkCoord(player.transform.position);
+        return GetChunkAt(chunkPos);
+    }
 
-        int playerX = (int) (playerPosition.x / Chunk.width);
-        int playerY = (int) (playerPosition.y / Chunk.height);
-        int playerZ = (int) (playerPosition.z / Chunk.depth);
-
-        return GetChunkAt(new Vector3Int(playerX, playerY, playerZ));
+    private Vector3Int WorldCoordToChunkCoord(Vector3 worldCoord)
+    {
+        int playerX = (int)(worldCoord.x / (Chunk.width * Voxel.size));
+        int playerY = (int)(worldCoord.y / (Chunk.height * Voxel.size));
+        int playerZ = (int)(worldCoord.z / (Chunk.depth * Voxel.size));
+        return new Vector3Int(playerX, playerY, playerZ);
     }
 
     public HashSet<Chunk> getActiveChunks()
@@ -322,4 +323,21 @@ public class World : MonoBehaviour
     }
 
 
+    public Vector3Int WorldCoordToVoxelCoord(Vector3 worldCoord)
+    {
+        int voxelX = Mathf.FloorToInt(worldCoord.x / Voxel.size);
+        int voxelY = Mathf.FloorToInt(worldCoord.y / Voxel.size);
+        int voxelZ = Mathf.FloorToInt(worldCoord.z / Voxel.size);
+
+        return new Vector3Int(voxelX, voxelY, voxelZ);
+    }
+
+    public Vector3 VoxelCoordToWorldCoord(Vector3Int voxelCoord)
+    {
+        float worldX = voxelCoord.x * Voxel.size;
+        float worldY = voxelCoord.y * Voxel.size;
+        float worldZ = voxelCoord.z * Voxel.size;
+
+        return new Vector3(worldX, worldY, worldZ);
+    }
 }
