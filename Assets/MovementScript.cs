@@ -1,64 +1,125 @@
+using System.Collections;
 using UnityEngine;
 
-public class MovementScript : MonoBehaviour
+public class VoxelBasedMovement : MonoBehaviour
 {
-    public float speed = 5.0f;
-    public int maxMoveDiff = 1;
-    public float gravity = -9.8f;
+    public float maxMoveDiff = 1.0f;
+    public float moveSpeed = 3.0f;
+    public float gravity = 9.8f;
+    public float jumpForce = 5.0f;
 
-    private Vector3 velocity;
-    private CharacterController characterController;
-
-    public World world;
+    private World world;
+    private float verticalSpeed = 0.0f;
+    private bool isMoving = false;
 
     private void Start()
     {
-        characterController = GetComponent<CharacterController>();
+        world = FindObjectOfType<World>();
     }
 
     private void Update()
     {
-        float moveX = Input.GetAxis("Horizontal");
-        float moveZ = Input.GetAxis("Vertical");
+        if (isMoving) return;
 
-        Vector3 move = transform.right * moveX + transform.forward * moveZ;
+        Vector3 moveDirection = Vector3.zero;
 
-        if (characterController.isGrounded && velocity.y < 0)
+        Vector3 cameraForward = Camera.main.transform.forward;
+        Vector3 cameraRight = Camera.main.transform.right;
+
+        cameraForward.y = 0; // Keep only the horizontal component
+        cameraRight.y = 0; // Keep only the horizontal component
+
+        cameraForward.Normalize();
+        cameraRight.Normalize();
+
+        if (Input.GetKey(KeyCode.W))
         {
-            velocity.y = 0f;
+            moveDirection += cameraForward;
+        }
+        else if (Input.GetKey(KeyCode.S))
+        {
+            moveDirection -= cameraForward;
+        }
+        else if (Input.GetKey(KeyCode.A))
+        {
+            moveDirection -= cameraRight;
+        }
+        else if (Input.GetKey(KeyCode.D))
+        {
+            moveDirection += cameraRight;
         }
 
-        if (move != Vector3.zero)
+        if (moveDirection != Vector3.zero)
         {
-            Vector3 horizontalMove = move.normalized * speed * Time.deltaTime;
-            horizontalMove.y = 0; // Ignore vertical component for horizontal movement
-
-            // Apply horizontal movement first
-            characterController.Move(horizontalMove);
-
-            // Calculate the height of the new position
-            Vector3Int newVoxelPosition = Vector3Int.FloorToInt(transform.position);
-
-            // Check if the coordinates are within bounds
-            if (WorldGeneration.IsWithinBounds(newVoxelPosition.x, newVoxelPosition.y, newVoxelPosition.z))
-            {
-                int newVoxelHeight = WorldGeneration.terrainHeights[newVoxelPosition.x, newVoxelPosition.z];
-
-                // Check the height difference in terms of voxels
-                int heightDifference = newVoxelHeight - Mathf.FloorToInt(transform.position.y / Voxel.size);
-                Debug.Log($"Height difference in voxels: {heightDifference}");
-
-                // Apply vertical movement based on height difference
-                if (Mathf.Abs(heightDifference) <= maxMoveDiff)
-                {
-                    Vector3 verticalMove = new Vector3(0, heightDifference * Voxel.size, 0);
-                    characterController.Move(verticalMove);
-                }
-            }
+            Move(moveDirection.normalized);
         }
 
         // Handle gravity
-        velocity.y += gravity * Time.deltaTime;
-        characterController.Move(velocity * Time.deltaTime);
+        bool isGrounded = IsGrounded();
+        if (!isGrounded)
+        {
+            verticalSpeed -= gravity * Time.deltaTime;
+        }
+        else
+        {
+            verticalSpeed = 0;
+
+            // Jump logic
+            if (Input.GetKeyDown(KeyCode.Space))
+            {
+                verticalSpeed = jumpForce;
+            }
+        }
+
+        // Apply vertical movement
+        Vector3 verticalMove = new Vector3(0, verticalSpeed * Time.deltaTime, 0);
+        transform.position += verticalMove;
+    }
+
+    private void Move(Vector3 direction)
+    {
+        Vector3Int currentVoxelCoord = world.WorldCoordToVoxelCoord(transform.position);
+        Vector3Int targetVoxelCoord = currentVoxelCoord + Vector3Int.RoundToInt(direction);
+
+        int heightDifference = targetVoxelCoord.y - currentVoxelCoord.y;
+
+        if (Mathf.Abs(heightDifference) <= maxMoveDiff)
+        {
+            Substance voxelSub = world.GetVoxelType(targetVoxelCoord);
+            State voxelType = voxelSub.state;
+
+            if (voxelType != State.SOLID)
+            {
+                Vector3 heightAdjustment = new Vector3(0, heightDifference * Voxel.size, 0);
+                Vector3 targetWorldPosition = world.VoxelCoordToWorldCoord(targetVoxelCoord) + heightAdjustment;
+                StartCoroutine(SmoothMove(transform.position, targetWorldPosition));
+            }
+        }
+    }
+
+    IEnumerator SmoothMove(Vector3 startpos, Vector3 endpos)
+    {
+        isMoving = true;
+        float t = 0f;
+        while (t < 1f)
+        {
+            t += Time.deltaTime * moveSpeed;
+            transform.position = Vector3.Lerp(startpos, endpos, t);
+            yield return null;
+        }
+        isMoving = false;
+    }
+
+    private bool IsGrounded()
+    {
+        Vector3Int currentVoxelCoord = world.WorldCoordToVoxelCoord(transform.position);
+
+        // Check the voxel directly below the player
+        Vector3Int belowVoxelCoord = new Vector3Int(currentVoxelCoord.x, currentVoxelCoord.y - 1, currentVoxelCoord.z);
+
+        // Check if the voxel below is solid
+        State voxelType = world.GetVoxelType(belowVoxelCoord).state;
+
+        return voxelType == State.SOLID;
     }
 }

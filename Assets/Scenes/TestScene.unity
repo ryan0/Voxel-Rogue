@@ -1149,7 +1149,6 @@ GameObject:
   - component: {fileID: 1156799601}
   - component: {fileID: 1156799600}
   - component: {fileID: 1156799598}
-  - component: {fileID: 1156799604}
   - component: {fileID: 1156799603}
   - component: {fileID: 1156799605}
   m_Layer: 2
@@ -1233,7 +1232,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1156799597}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 50, z: 0}
+  m_LocalPosition: {x: 5, y: 50, z: 5}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -1267,26 +1266,6 @@ CharacterController:
   m_SkinWidth: 0.08
   m_MinMoveDistance: 0.001
   m_Center: {x: 0, y: 0, z: 0}
---- !u!114 &1156799604
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1156799597}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: eef96dbc4bb7c419eb8fc6d73f9cf329, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  speed: 5
-  maxMoveDiff: 1
-  gravity: -9.81
-  groundDistance: 0.2
-  groundMask:
-    serializedVersion: 2
-    m_Bits: 0
-  world: {fileID: 0}
 --- !u!114 &1156799605
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1299,10 +1278,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b485e29c3d7914c3582cf73a74e8d809, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  speed: 5
   maxMoveDiff: 2
-  gravity: -9.8
-  world: {fileID: 0}
+  moveSpeed: 3
+  gravity: 9.8
+  jumpForce: 5
 --- !u!1 &1170188306
 GameObject:
   m_ObjectHideFlags: 0

@@ -48,10 +48,16 @@ public class World : MonoBehaviour
         fluidFlowSystem = new FluidFlowSystem();
     }
 
+    Substance[,,] terrainData;
+    public Substance GetVoxelType(Vector3Int targetVoxelCoord)
+    {
+        return terrainData[targetVoxelCoord.x, targetVoxelCoord.y, targetVoxelCoord.z];
+    }
+
     // Start is called before the first frame update
     void Start()
     {
-        Substance[,,] terrainData = WorldGeneration.GenerateTerrain();
+        terrainData = WorldGeneration.GenerateTerrain();
 
         for (int x = 0; x < chunksX; x++)
         {
