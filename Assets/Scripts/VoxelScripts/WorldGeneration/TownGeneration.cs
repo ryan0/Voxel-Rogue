@@ -118,7 +118,7 @@ public class TownGeneration
         int averageHeight = DrawLots(lots, roadPositions, townCenter);
         HouseGeneration houseGen = new HouseGeneration();
         List<HouseData>  houses = houseGen.LayHouses(terrain, townCenter, averageHeight, lots, roadPositions, townDensity);
-        int towerSize = 5;
+        int towerSize = 3;
         BuildWallsAroundTown(townCenter, lots, 10, averageHeight, towerSize); // 10 is wall height, 3 is road width, and true means it will build towers.
         TownData townData = new TownData(townCenter, houses, lots, roadPositions);
         WorldGeneration.worldTownsData.Add(townData);
@@ -325,18 +325,15 @@ public class TownGeneration
             points.Add(new Vector3Int(lot.x + lot.width, 0, lot.y + lot.height));
         }
 
+
         // Find the convex hull around the points
         List<Vector3Int> convexHull = geo.FindConvexHull(points);
         for (int i = 0; i < convexHull.Count; i++)
         {
             Vector3Int point = convexHull[i];
             Vector3 direction = ((Vector3)(point-townCenter)).normalized;
-            //Vector3 perp = new Vector3(-direction.z, 0, direction.x); // 90 degrees rotated
             Vector3Int offset = Vector3Int.RoundToInt(direction * roadWidth);
             convexHull[i] = point + offset;
-
-
-
         }
 
         // Build the walls around the convex hull
@@ -345,9 +342,21 @@ public class TownGeneration
             Vector3Int start = convexHull[i];
             Vector3Int end = convexHull[(i + 1) % convexHull.Count]; // Get the next point, wrapping around
 
-            // Build wall segment between start and end
+            // If towerSize is greater than 0, build towers at the corners
+            if (towerSize > 0)
+            {
+                // Build tower at the start of the wall segment
+                BuildTower(start,(int)(wallHeight*1.5f), towerSize, averageHeight, townCenter);
+
+                // Adjust the start and end points for the wall segment to not overlap with the tower
+                Vector3 direction = ((Vector3)(end - start)).normalized;
+                start += Vector3Int.RoundToInt(direction * towerSize);
+                end -= Vector3Int.RoundToInt(direction * towerSize);
+            }
+
+            // Build wall segment between the adjusted start and end
             BuildWallSegment(start, end, wallHeight, towerSize);
-         }
+        }
     }
 
 
@@ -382,18 +391,26 @@ public class TownGeneration
 
     public void BuildTower(Vector3Int position, int height, int towerSize, int averageHeight, Vector3Int townCenter)
     {
-        int terrainWidth = terrainHeights.GetLength(0);
-        int terrainDepth = terrainHeights.GetLength(1);
-        int doorWidth = 2, doorHeight = 3;
-        // Calculate the base height (terrain height) at the tower position
+        int doorHeight = 5;
+        int doorWidth = 3; // Set door width appropriately
+                           // Calculate the base height (terrain height) at the tower position
         int baseHeight = terrainHeights[position.x, position.z];
+
+        Vector2Int innerCorner = getTowerInnerCorner(position, towerSize, townCenter);
+
+        // Calculate the inward direction vectors for the inner corner
+        Vector2Int[] inwardDirections =
+        {
+        new Vector2Int(position.x - innerCorner.x, 0),
+        new Vector2Int(0, position.z - innerCorner.y)
+        };
 
         // Iterate through each position in the tower's volume
         for (int x = position.x - towerSize; x <= position.x + towerSize; x++)
         {
             for (int z = position.z - towerSize; z <= position.z + towerSize; z++)
             {
-                for (int y = baseHeight; y <= averageHeight + height; y++)
+                for (int y = baseHeight; y <= baseHeight + height; y++)
                 {
                     // Skip positions that are out of bounds
                     if (!IsWithinBounds(x, y, z)) continue;
@@ -402,10 +419,11 @@ public class TownGeneration
                     bool isWall = x == position.x - towerSize || x == position.x + towerSize ||
                                   z == position.z - towerSize || z == position.z + towerSize;
 
-                    // Determine if the position is at the door level and facing towards the city
-                    bool isDoor = IsFacingCity(x, z, position, townCenter) &&
-                                  y >= averageHeight && y < averageHeight + doorHeight &&
-                                  Mathf.Abs(x - position.x) < doorWidth / 2 && Mathf.Abs(z - position.z) < doorWidth / 2;
+                    // Determine if the position is at the door level and within the door area
+                    bool isDoor = y < baseHeight + doorHeight &&
+                                  ((inwardDirections[0].x * (x - innerCorner.x) >= 0 && Mathf.Abs(x - innerCorner.x) < doorWidth && z == innerCorner.y) ||
+                                   (inwardDirections[1].y * (z - innerCorner.y) >= 0 && Mathf.Abs(z - innerCorner.y) < doorWidth && x == innerCorner.x));
+
 
                     // Skip the position if it's within the tower's inner volume, or is part of the door
                     if ((!isWall && y > baseHeight) || isDoor) continue;
@@ -416,6 +434,40 @@ public class TownGeneration
             }
         }
     }
+
+
+
+
+    private Vector2Int getTowerInnerCorner(Vector3Int towerPosition, int towerSize, Vector3Int townCenter)
+    {
+        Vector3Int[] corners = new Vector3Int[]
+        {
+    new Vector3Int(towerPosition.x - towerSize, towerPosition.y, towerPosition.z - towerSize),
+    new Vector3Int(towerPosition.x + towerSize, towerPosition.y, towerPosition.z - towerSize),
+    new Vector3Int(towerPosition.x - towerSize, towerPosition.y, towerPosition.z + towerSize),
+    new Vector3Int(towerPosition.x + towerSize, towerPosition.y, towerPosition.z + towerSize)
+        };
+
+        Vector3Int innerCorner = corners[0];
+        float minDistanceSq = (innerCorner - townCenter).sqrMagnitude;
+
+        for (int i = 1; i < corners.Length; i++)
+        {
+            float distanceSq = (corners[i] - townCenter).sqrMagnitude;
+            if (distanceSq < minDistanceSq)
+            {
+                innerCorner = corners[i];
+                minDistanceSq = distanceSq;
+            }
+        }
+
+        // innerCorner now contains the x, y, z coordinates of the corner closest to the town center.
+        int innerCornerX = innerCorner.x;
+        int innerCornerZ = innerCorner.z;
+        return new Vector2Int(innerCorner.x, innerCorner.z);
+    }
+
+
     private bool IsFacingCity(int x, int z, Vector3Int towerPosition, Vector3Int townCenter)
     {
         Vector3 towerToCenter = (Vector3)(townCenter - towerPosition);
