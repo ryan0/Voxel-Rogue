@@ -90,6 +90,8 @@ public class VoxelBasedMovement : MonoBehaviour
 
             if (voxelType != State.SOLID)
             {
+                Debug.Log("currentVoxelCoord " + currentVoxelCoord.x + "  " + currentVoxelCoord.y + " " +currentVoxelCoord.z);
+                Debug.Log("targetVoxelCoord " + targetVoxelCoord.x + " " + targetVoxelCoord.y + " " + targetVoxelCoord.z);
                 Vector3 heightAdjustment = new Vector3(0, heightDifference * Voxel.size, 0);
                 Vector3 targetWorldPosition = world.VoxelCoordToWorldCoord(targetVoxelCoord) + heightAdjustment;
                 StartCoroutine(SmoothMove(transform.position, targetWorldPosition));

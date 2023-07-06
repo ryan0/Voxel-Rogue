@@ -236,6 +236,7 @@ public class World : MonoBehaviour
         Substance substance = voxels[voxelX, voxelY, voxelZ].substance;///Debug debug dbeug
         chunks[chunkX, chunkY, chunkZ].destroyVoxelAt(voxelX, voxelY, voxelZ);
         spawnDebrisAt(substance,coord, 3);//DEBUG DEBUG DEBUG*/
+        terrainData[coord.x, coord.y, coord.z] = Substance.air;
         //end of spawn debris chunk
     }
 
@@ -253,6 +254,8 @@ public class World : MonoBehaviour
         Chunk targetChunk = chunks[chunkX, chunkY, chunkZ];
         // Use a method in the Chunk class to create a new voxel at the specified local position
         targetChunk.createVoxelAt(voxelX, voxelY, voxelZ, substance, mote);
+        terrainData[coord.x, coord.y, coord.z] = substance;
+
     }
 
     public void setFireVoxel(Vector3Int coord)
