@@ -349,4 +349,12 @@ public class World : MonoBehaviour
 
         return new Vector3(worldX, worldY, worldZ);
     }
+
+    public static bool IsVoxelInBounds(Vector3Int voxelPosition)
+    {
+        return voxelPosition.x >= 0 && voxelPosition.x < chunksX * Chunk.width &&
+               voxelPosition.y >= 0 && voxelPosition.y < chunksY * Chunk.height &&
+               voxelPosition.z >= 0 && voxelPosition.z < chunksZ * Chunk.depth;
+    }
+
 }
