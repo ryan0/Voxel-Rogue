@@ -1278,10 +1278,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b485e29c3d7914c3582cf73a74e8d809, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  speed: 5
   maxMoveDiff: 2
-  moveSpeed: 3
-  gravity: 9.8
-  jumpForce: 5
+  gravity: -9.8
+  npcHeight: 2
+  world: {fileID: 0}
 --- !u!1 &1170188306
 GameObject:
   m_ObjectHideFlags: 0
