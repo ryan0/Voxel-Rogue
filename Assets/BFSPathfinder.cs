@@ -10,7 +10,7 @@ public class BFSPathfinder
         this.world = world;
     }
 
-    public List<Vector3Int> FindPath(Vector3Int start, Vector3Int target)
+    public List<Vector3Int> FindPath(Vector3Int start, Vector3Int target, int maxMoveDiff)
     {
         Dictionary<Vector3Int, Vector3Int> cameFrom = new Dictionary<Vector3Int, Vector3Int>();
         Queue<Vector3Int> frontier = new Queue<Vector3Int>();
@@ -28,7 +28,7 @@ public class BFSPathfinder
                 return ReconstructPath(cameFrom, current);
             }
 
-            foreach (var neighbor in GetNeighbors(current))
+            foreach (var neighbor in GetNeighbors(current, maxMoveDiff))
             {
                 if (!cameFrom.ContainsKey(neighbor))
                 {
@@ -42,9 +42,10 @@ public class BFSPathfinder
         return null;
     }
 
-    private List<Vector3Int> GetNeighbors(Vector3Int voxel)
+    private List<Vector3Int> GetNeighbors(Vector3Int voxel, int maxMoveDiff)
     {
         List<Vector3Int> neighbors = new List<Vector3Int>();
+        int maxDiff = maxMoveDiff; // you need to reference to the NPC's MovementScript to get maxMoveDiff
 
         for (int x = -1; x <= 1; x++)
         {
@@ -55,20 +56,23 @@ public class BFSPathfinder
                     continue;
                 }
 
-                int newX = voxel.x + x;
-                int newZ = voxel.z + z;
-                int newY = voxel.y; // Only consider flat movement for simplicity
-
-                Vector3Int neighborPosition = new Vector3Int(newX, newY, newZ);
-
-                // Add a check to ensure the neighbor voxel is within world bounds
-                if (World.IsVoxelInBounds(neighborPosition))
+                for (int y = -maxDiff; y <= maxDiff; y++)
                 {
-                    var neighborVoxelType = world.GetVoxelType(neighborPosition);
+                    int newX = voxel.x + x;
+                    int newZ = voxel.z + z;
+                    int newY = voxel.y + y;
 
-                    if (neighborVoxelType != null && neighborVoxelType.state != State.SOLID)
+                    Vector3Int neighborPosition = new Vector3Int(newX, newY, newZ);
+
+                    // Add a check to ensure the neighbor voxel is within world bounds
+                    if (World.IsVoxelInBounds(neighborPosition))
                     {
-                        neighbors.Add(neighborPosition);
+                        var neighborVoxelType = world.GetVoxelType(neighborPosition);
+
+                        if (neighborVoxelType != null && neighborVoxelType.state != State.SOLID)
+                        {
+                            neighbors.Add(neighborPosition);
+                        }
                     }
                 }
             }

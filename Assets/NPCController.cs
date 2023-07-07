@@ -54,7 +54,7 @@ public class NPCController : MonoBehaviour
         }
 
         Vector3 moveDirection = directionToTarget.normalized;
-        Debug.Log("Move direction: " + moveDirection);
+        //Debug.Log("Move direction: " + moveDirection);
         movementScript.MoveCharacter(moveDirection);
     }
 
@@ -63,7 +63,7 @@ public class NPCController : MonoBehaviour
         Vector3Int start = World.WorldCoordToVoxelCoord(transform.position);
         Vector3Int target = World.WorldCoordToVoxelCoord(targetPosition);
 
-        path = pathfinder.FindPath(start, target);  // Using BFS
+        path = pathfinder.FindPath(start, target, GetComponent<MovementScript>().maxMoveDiff);  // Using BFS
         currentPathIndex = 0;
 
         if (path == null)
@@ -89,7 +89,7 @@ public class NPCController : MonoBehaviour
 
         Vector3Int start = World.WorldCoordToVoxelCoord(transform.position);
         Vector3Int target = World.WorldCoordToVoxelCoord(patrolPoints[currentPatrolPointIndex]);
-        Gizmos.DrawCube(World.VoxelCoordToWorldCoord(start), new Vector3(0.5f, 0.5f, 0.5f));
+        //Gizmos.DrawCube(World.VoxelCoordToWorldCoord(start), new Vector3(0.5f, 0.5f, 0.5f));
         Gizmos.DrawCube(World.VoxelCoordToWorldCoord(target), new Vector3(1f, 1f, 1f));
     }
 }
