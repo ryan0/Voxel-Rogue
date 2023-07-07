@@ -38,6 +38,7 @@ public class MovementScript : MonoBehaviour
 
     public void MoveCharacter(Vector3 move)
     {
+       
         if (move != Vector3.zero)
         {
             Vector3 horizontalMove = move.normalized * speed * Time.deltaTime;
