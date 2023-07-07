@@ -4,9 +4,9 @@ using UnityEngine;
 
 public class World : MonoBehaviour
 {
-    public const int chunksX = 12;
+    public const int chunksX = 5;
     public const int chunksY = 4;
-    public const int chunksZ = 12;
+    public const int chunksZ = 5;
 
     [SerializeField]
     private GameObject player;
@@ -332,7 +332,7 @@ public class World : MonoBehaviour
     }
 
 
-    public Vector3Int WorldCoordToVoxelCoord(Vector3 worldCoord)
+    public static Vector3Int WorldCoordToVoxelCoord(Vector3 worldCoord)
     {
         int voxelX = Mathf.FloorToInt(worldCoord.x / Voxel.size);
         int voxelY = Mathf.FloorToInt(worldCoord.y / Voxel.size);
@@ -341,7 +341,7 @@ public class World : MonoBehaviour
         return new Vector3Int(voxelX, voxelY, voxelZ);
     }
 
-    public Vector3 VoxelCoordToWorldCoord(Vector3Int voxelCoord)
+    public static Vector3 VoxelCoordToWorldCoord(Vector3Int voxelCoord)
     {
         float worldX = voxelCoord.x * Voxel.size;
         float worldY = voxelCoord.y * Voxel.size;
