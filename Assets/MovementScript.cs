@@ -5,6 +5,7 @@ public class MovementScript : MonoBehaviour
     public float speed = 5.0f;
     public int maxMoveDiff = 1;
     public float gravity = -9.8f;
+    public int npcHeight = 2; // Example value, set to the height of your character in voxels
 
     private Vector3 velocity;
     private CharacterController characterController;
@@ -20,29 +21,23 @@ public class MovementScript : MonoBehaviour
     private void Update()
     {
 
-        float moveX = Input.GetAxis("Horizontal");
-        float moveZ = Input.GetAxis("Vertical");
-
-        int npcHeight = 2; // Example value, set to the height of your character in voxels
-        
-        // Take into account the camera direction
-        Vector3 cameraForward = Camera.main.transform.forward;
-        Vector3 cameraRight = Camera.main.transform.right;
-
-        cameraForward.y = 0; // Keep only the horizontal component
-        cameraRight.y = 0; // Keep only the horizontal component
-
-        cameraForward.Normalize();
-        cameraRight.Normalize();
-
-        Vector3 move = cameraRight * moveX + cameraForward * moveZ;
-        move = move * Voxel.size; // Normalize the move vector to have a length of 1 voxel.size
-
         if (characterController.isGrounded && velocity.y < 0)
         {
             velocity.y = 0f;
         }
 
+        //MoveCharacter content moved from here
+        // Handle gravity
+        if (!characterController.isGrounded)
+        {
+            velocity.y += gravity * Time.deltaTime;
+            characterController.Move(velocity * Time.deltaTime);
+        }
+
+    }
+
+    public void MoveCharacter(Vector3 move)
+    {
         if (move != Vector3.zero)
         {
             Vector3 horizontalMove = move.normalized * speed * Time.deltaTime;
@@ -99,11 +94,11 @@ public class MovementScript : MonoBehaviour
                     characterController.Move(verticalMove);
                 }
             }
+
         }
 
-        // Handle gravity
-        velocity.y += gravity * Time.deltaTime;
-        characterController.Move(velocity * Time.deltaTime);
+
+
     }
 
 }
