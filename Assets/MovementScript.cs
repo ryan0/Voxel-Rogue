@@ -66,14 +66,14 @@ public class MovementScript : MonoBehaviour
                     //Debug.Log(world.GetVoxelType(newVoxelPosition).state);
                     if (world.GetVoxelType(checkVoxel + new Vector3Int(0,-1,0)).state == State.SOLID)
                     {
-                        Debug.Log(i + " check voxel " + checkVoxel.y);
+                        //Debug.Log(i + " check voxel " + checkVoxel.y);
                         if (WorldGeneration.IsWithinBounds(checkVoxel.x, checkVoxel.y, checkVoxel.z))
                         {
                             bool hasEnoughAirAbove = true;
                             for (int j = 1; j <= npcHeight; j++)
                             {
                                 Vector3Int aboveVoxel = new Vector3Int(checkVoxel.x, checkVoxel.y + j, checkVoxel.z);
-                                Debug.Log(world.GetVoxelType(aboveVoxel).name);
+                                //Debug.Log(world.GetVoxelType(aboveVoxel).name);
                                 if (world.GetVoxelType(aboveVoxel).state == State.SOLID)
                                 {
                                     hasEnoughAirAbove = false;
@@ -87,7 +87,7 @@ public class MovementScript : MonoBehaviour
                                 validVoxelFound = true;
                                 // Check the height difference in terms of voxels
                                 int heightDifference = targetVoxel.y - currentVoxelPos.y;
-                                Debug.Log($"Height difference in voxels: {heightDifference}");
+                                //Debug.Log($"Height difference in voxels: {heightDifference}");
                                 break;
                             }
                         }

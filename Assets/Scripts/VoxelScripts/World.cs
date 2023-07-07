@@ -227,8 +227,8 @@ public class World : MonoBehaviour
         int voxelY = coord.y - (chunkY * Chunk.height);
         int voxelZ = coord.z - (chunkZ * Chunk.depth);
 
-        Debug.Log("hit Voxel: " + voxelX + ", " + voxelY + ", " + voxelZ);
-        Debug.Log("in Chunk: " + chunkX + ", " + chunkY + ", " + chunkZ);
+        //Debug.Log("hit Voxel: " + voxelX + ", " + voxelY + ", " + voxelZ);
+        //Debug.Log("in Chunk: " + chunkX + ", " + chunkY + ", " + chunkZ);
 
 
         //Spawn debris logic
@@ -268,8 +268,8 @@ public class World : MonoBehaviour
         int voxelY = coord.y - (chunkY * Chunk.height);
         int voxelZ = coord.z - (chunkZ * Chunk.depth);
 
-        Debug.Log("hit Voxel: " + voxelX + ", " + voxelY + ", " + voxelZ);
-        Debug.Log("in Chunk: " + chunkX + ", " + chunkY + ", " + chunkZ);
+        //Debug.Log("hit Voxel: " + voxelX + ", " + voxelY + ", " + voxelZ);
+        //Debug.Log("in Chunk: " + chunkX + ", " + chunkY + ", " + chunkZ);
 
 
         //Set fire

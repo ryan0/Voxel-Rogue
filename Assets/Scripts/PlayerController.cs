@@ -183,8 +183,8 @@ public class PlayerController : MonoBehaviour
             Vector3 point = hit.point * (1 / Voxel.size);
             Vector3 normal = hit.normal;
 
-            Debug.Log("Raycast hit: " + point.x + ", " + point.y + ", " + point.z);
-            Debug.Log("Raycast Normal: " + normal.x + ", " + normal.y + ", " + normal.z);
+            //Debug.Log("Raycast hit: " + point.x + ", " + point.y + ", " + point.z);
+            //Debug.Log("Raycast Normal: " + normal.x + ", " + normal.y + ", " + normal.z);
 
             hitCoordinatesRef.x = (int)point.x;
             hitCoordinatesRef.y = (int)point.y;
