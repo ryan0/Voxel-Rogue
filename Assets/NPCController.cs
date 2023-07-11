@@ -7,7 +7,7 @@ public class NPCController : MonoBehaviour
     public float stoppingDistance = 0.1f;
 
     private MovementScript movementScript;
-    private BFSPathfinder pathfinder;  // Changed this line
+    private AStarPathfinder pathfinder;  // Changed this line
     private List<Vector3Int> path;
     private int currentPathIndex;
     private int currentPatrolPointIndex = 0;
@@ -21,7 +21,7 @@ public class NPCController : MonoBehaviour
 
         movementScript = GetComponent<MovementScript>();
         World world = FindObjectOfType<World>();
-        pathfinder = new BFSPathfinder(world);  // Changed this line
+        pathfinder = new AStarPathfinder(world);  // Changed this line
 
         SetNewTarget(patrolPoints[currentPatrolPointIndex]);
     }
