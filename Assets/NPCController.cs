@@ -76,7 +76,7 @@ public class NPCController : MonoBehaviour
         }
     }
 
-    void OnDrawGizmos()
+   /* void OnDrawGizmos()
     {
         if (path != null)
         {
@@ -91,5 +91,33 @@ public class NPCController : MonoBehaviour
         Vector3Int target = World.WorldCoordToVoxelCoord(patrolPoints[currentPatrolPointIndex]);
         //Gizmos.DrawCube(World.VoxelCoordToWorldCoord(start), new Vector3(0.5f, 0.5f, 0.5f));
         Gizmos.DrawCube(World.VoxelCoordToWorldCoord(target), new Vector3(1f, 1f, 1f));
+    }*/
+
+    void OnDrawGizmos()
+    {
+        if (path != null)
+        {
+            Gizmos.color = Color.red;
+            foreach (Vector3Int point in path)
+            {
+                Gizmos.DrawCube(World.VoxelCoordToWorldCoord(point), new Vector3(0.5f, 0.5f, 0.5f));
+            }
+        }
+
+        Vector3Int start = World.WorldCoordToVoxelCoord(transform.position);
+        Vector3Int target = World.WorldCoordToVoxelCoord(patrolPoints[currentPatrolPointIndex]);
+        Gizmos.DrawCube(World.VoxelCoordToWorldCoord(target), new Vector3(1f, 1f, 1f));
+
+        // Draw invalid voxels
+        MovementScript movementScript = GetComponent<MovementScript>();
+        if (movementScript != null)
+        {
+            Gizmos.color = Color.blue;
+            foreach (Vector3Int invalidVoxel in movementScript.InvalidVoxels)
+            {
+                Gizmos.DrawCube(World.VoxelCoordToWorldCoord(invalidVoxel), Vector3.one/2);
+            }
+        }
     }
+
 }

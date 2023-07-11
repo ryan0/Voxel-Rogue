@@ -341,14 +341,25 @@ public class World : MonoBehaviour
         return new Vector3Int(voxelX, voxelY, voxelZ);
     }
 
-    public static Vector3 VoxelCoordToWorldCoord(Vector3Int voxelCoord)
+  /* public static Vector3 VoxelCoordToWorldCoord(Vector3Int voxelCoord)
     {
         float worldX = voxelCoord.x * Voxel.size;
         float worldY = voxelCoord.y * Voxel.size;
         float worldZ = voxelCoord.z * Voxel.size;
 
         return new Vector3(worldX, worldY, worldZ);
+    }*/
+
+    public static Vector3 VoxelCoordToWorldCoord(Vector3Int voxelPosition)
+    {
+        // Assumes each voxel has a size of 1 unit
+        float worldX = voxelPosition.x * Voxel.size + Voxel.size / 2f; // add 0.5 to get center of voxel
+        float worldY = voxelPosition.y * Voxel.size + Voxel.size / 2f;
+        float worldZ = voxelPosition.z * Voxel.size + Voxel.size / 2f;
+
+        return new Vector3(worldX, worldY, worldZ);
     }
+
 
     public static bool IsVoxelInBounds(Vector3Int voxelPosition)
     {

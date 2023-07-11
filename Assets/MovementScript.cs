@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections.Generic;
 
 public class MovementScript : MonoBehaviour
 {
@@ -35,6 +36,9 @@ public class MovementScript : MonoBehaviour
         }
 
     }
+
+
+    public List<Vector3Int> InvalidVoxels = new List<Vector3Int>();// debug
 
     public void MoveCharacter(Vector3 move)
     {
@@ -98,17 +102,33 @@ public class MovementScript : MonoBehaviour
                 {
                     //Vector3 verticalMove = new Vector3(0, (targetVoxel.y - newVoxelPosition.y) * Voxel.size, 0);
                     //characterController.Move(verticalMove);
-                    float newY = (targetVoxel.y - newVoxelPosition.y) * Voxel.size + transform.position.y;
+                    float newY = (targetVoxel.y - newVoxelPosition.y) * Voxel.size + transform.position.y + .01f;
                     transform.position = new Vector3(transform.position.x, newY, transform.position.z);
+                    float outputY = newY + transform.position.y;
+                    Debug.Log("valid move " + move+  "from " + currentVoxelPos + " to " + newVoxelPosition.x + ", "+ outputY + ", " + newVoxelPosition.z);
 
                 }
+                else
+                {
+                    for (int j = 1; j <= npcHeight; j++)
+                    {
+                        Vector3Int checkVoxel = new Vector3Int(newVoxelPosition.x, newVoxelPosition.y, newVoxelPosition.z);
+                        Vector3Int aboveVoxel = new Vector3Int(checkVoxel.x, checkVoxel.y + j, checkVoxel.z);
+                        Debug.Log(world.GetVoxelType(aboveVoxel).name + " , " + checkVoxel.y);
+
+                        // Add the invalid voxel to the list
+                        InvalidVoxels.Add(aboveVoxel);
+                    }
+                    Debug.Log("invalid move " + currentVoxelPos + ", "+ newVoxelPosition);
+                }
+                // ...
+
             }
 
         }
 
-
-
     }
+
 
 
 }
