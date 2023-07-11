@@ -104,7 +104,7 @@ public class MovementScript : MonoBehaviour
                 {
                     //Vector3 verticalMove = new Vector3(0, (targetVoxel.y - newVoxelPosition.y) * Voxel.size, 0);
                     //characterController.Move(verticalMove);
-                    float newY = (targetVoxel.y - newVoxelPosition.y) * Voxel.size + transform.position.y + .01f;
+                    float newY = (targetVoxel.y - newVoxelPosition.y) * Voxel.size + transform.position.y + .1f;//add .xxf to "jump" up to new pos
                     transform.position = new Vector3(transform.position.x, newY, transform.position.z);
                     float outputY = newY + transform.position.y;
                     Debug.Log("valid move " + move+  "from " + currentVoxelPos + " to " + newVoxelPosition.x + ", "+ outputY + ", " + newVoxelPosition.z);
