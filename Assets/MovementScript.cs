@@ -47,6 +47,8 @@ public class MovementScript : MonoBehaviour
         {
             Vector3 horizontalMove = move.normalized * speed * Time.deltaTime;
             horizontalMove.y = 0; // Ignore vertical component for horizontal movement
+            move.x = Mathf.Min(Voxel.size, move.x);//cap movement so it doesnt OVERSHOOT
+            move.z = Mathf.Min(Voxel.size, move.z);//cap movement so it doesnt OVERSHOOT
 
             // Apply horizontal movement first
             characterController.Move(horizontalMove);
