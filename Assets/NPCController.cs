@@ -68,11 +68,11 @@ public class NPCController : MonoBehaviour
 
         if (path == null)
         {
-            Debug.Log("Path is null");
+            //Debug.Log("Path is null");
         }
         else
         {
-            Debug.Log("Path found, length: " + path.Count);
+            //Debug.Log("Path found, length: " + path.Count);
         }
     }
 

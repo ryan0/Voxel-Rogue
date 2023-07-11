@@ -69,13 +69,8 @@ public class BFSPathfinder
                     // Add a check to ensure the neighbor voxel is within world bounds
                     if (World.IsVoxelInBounds(neighborPosition))
                     {
-                        int chunkX = neighborPosition/Chunk.xMax;
-                        int chunkY = neighborPosition/Chunk.yMax;
-                        int chunkZ = neighborPosition/Chunk.zMax;
-
-                        var neighborVoxelType = world.GetVoxelAt(new Vector3Int(chunkX, chunkY,chunkZ), neighborPosition).substance;
-
-                        var belowVoxType = world.GetVoxelAt(new Vector3Int(chunkX, chunkY,chunkZ), belowVox).substance;
+                        var neighborVoxelType = world.GetVoxelAt(neighborPosition).substance;
+                        var belowVoxType = world.GetVoxelAt(belowVox).substance;
 
                         if (neighborVoxelType != null && neighborVoxelType.state != State.SOLID && belowVoxType.state == State.SOLID)
                         {

@@ -48,11 +48,6 @@ public class World : MonoBehaviour
         fluidFlowSystem = new FluidFlowSystem();
     }
 
-   /*public Substance GetVoxelType(Vector3Int targetVoxelCoord)
-    {
-        return terrainData[targetVoxelCoord.x, targetVoxelCoord.y, targetVoxelCoord.z];
-    }*/
-
     // Start is called before the first frame update
     void Start()
     {
@@ -160,6 +155,24 @@ public class World : MonoBehaviour
         return chunks[pos.x, pos.y, pos.z];
     }
 
+    //TODO Delete this method
+    public Voxel GetVoxelAt(Vector3Int voxelPos)
+    {
+        Vector3Int chunkPos = new(
+            voxelPos.x / Chunk.width, 
+            voxelPos.y / Chunk.height, 
+            voxelPos.z / Chunk.depth
+        );
+
+        Vector3Int relativeVoxelPos = new(
+            voxelPos.x % Chunk.width,
+            voxelPos.y % Chunk.height,
+            voxelPos.z % Chunk.depth
+        );
+
+        return GetVoxelAt(chunkPos, relativeVoxelPos);
+    }
+
     public Voxel GetVoxelAt(Vector3Int chunkPos, Vector3Int voxelPos)
     {
         return GetChunkAt(chunkPos).GetVoxelAt(voxelPos);
@@ -235,7 +248,7 @@ public class World : MonoBehaviour
         Substance substance = voxels[voxelX, voxelY, voxelZ].substance;///Debug debug dbeug
         chunks[chunkX, chunkY, chunkZ].destroyVoxelAt(voxelX, voxelY, voxelZ);
         spawnDebrisAt(substance,coord, 3);//DEBUG DEBUG DEBUG*/
-        terrainData[coord.x, coord.y, coord.z] = Substance.air;
+        //terrainData[coord.x, coord.y, coord.z] = Substance.air;
         //end of spawn debris chunk
     }
 
@@ -253,7 +266,7 @@ public class World : MonoBehaviour
         Chunk targetChunk = chunks[chunkX, chunkY, chunkZ];
         // Use a method in the Chunk class to create a new voxel at the specified local position
         targetChunk.createVoxelAt(voxelX, voxelY, voxelZ, substance, mote);
-        terrainData[coord.x, coord.y, coord.z] = substance;
+        //terrainData[coord.x, coord.y, coord.z] = substance;
 
     }
 

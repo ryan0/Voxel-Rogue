@@ -70,7 +70,7 @@ public class MovementScript : MonoBehaviour
                     Vector3Int checkVoxel = new Vector3Int(newVoxelPosition.x, newVoxelPosition.y + i, newVoxelPosition.z);
                     //if the voxel is sometihng you can stand on. i.e., solid
                     //Debug.Log(world.GetVoxelType(newVoxelPosition).state);
-                    if (world.GetVoxelType(checkVoxel + new Vector3Int(0,-1,0)).state == State.SOLID)
+                    if (world.GetVoxelAt(checkVoxel + new Vector3Int(0,-1,0)).substance.state == State.SOLID)
                     {
                         //Debug.Log(i + " check voxel " + checkVoxel.y);
                         if (WorldGeneration.IsWithinBounds(checkVoxel.x, checkVoxel.y, checkVoxel.z))
@@ -80,7 +80,7 @@ public class MovementScript : MonoBehaviour
                             {
                                 Vector3Int aboveVoxel = new Vector3Int(checkVoxel.x, checkVoxel.y + j, checkVoxel.z);
                                 //Debug.Log(world.GetVoxelType(aboveVoxel).name);
-                                if (world.GetVoxelType(aboveVoxel).state == State.SOLID)
+                                if (world.GetVoxelAt(aboveVoxel).substance.state == State.SOLID)
                                 {
                                     hasEnoughAirAbove = false;
                                     break;
