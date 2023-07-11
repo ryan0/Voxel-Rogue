@@ -56,20 +56,28 @@ public class BFSPathfinder
                     continue;
                 }
 
-                for (int y = -maxDiff; y <= maxDiff; y++)
+                for (int y = -maxDiff*3; y <= maxDiff; y++)
                 {
                     int newX = voxel.x + x;
                     int newZ = voxel.z + z;
                     int newY = voxel.y + y;
 
                     Vector3Int neighborPosition = new Vector3Int(newX, newY, newZ);
+                    Vector3Int belowVox = new Vector3Int(newX, newY -1, newZ);
+
 
                     // Add a check to ensure the neighbor voxel is within world bounds
                     if (World.IsVoxelInBounds(neighborPosition))
                     {
-                        var neighborVoxelType = world.GetVoxelType(neighborPosition);
+                        int chunkX = neighborPosition/Chunk.xMax;
+                        int chunkY = neighborPosition/Chunk.yMax;
+                        int chunkZ = neighborPosition/Chunk.zMax;
 
-                        if (neighborVoxelType != null && neighborVoxelType.state != State.SOLID)
+                        var neighborVoxelType = world.GetVoxelAt(new Vector3Int(chunkX, chunkY,chunkZ), neighborPosition).substance;
+
+                        var belowVoxType = world.GetVoxelAt(new Vector3Int(chunkX, chunkY,chunkZ), belowVox).substance;
+
+                        if (neighborVoxelType != null && neighborVoxelType.state != State.SOLID && belowVoxType.state == State.SOLID)
                         {
                             neighbors.Add(neighborPosition);
                         }

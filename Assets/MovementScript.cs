@@ -107,7 +107,7 @@ public class MovementScript : MonoBehaviour
                     float newY = (targetVoxel.y - newVoxelPosition.y) * Voxel.size + transform.position.y + .1f;//add .xxf to "jump" up to new pos
                     transform.position = new Vector3(transform.position.x, newY, transform.position.z);
                     float outputY = newY + transform.position.y;
-                    Debug.Log("valid move " + move+  "from " + currentVoxelPos + " to " + newVoxelPosition.x + ", "+ outputY + ", " + newVoxelPosition.z);
+                    //Debug.Log("valid move " + move+  "from " + currentVoxelPos + " to " + newVoxelPosition.x + ", "+ outputY + ", " + newVoxelPosition.z);
 
                 }
                 else
@@ -116,12 +116,12 @@ public class MovementScript : MonoBehaviour
                     {
                         Vector3Int checkVoxel = new Vector3Int(newVoxelPosition.x, newVoxelPosition.y, newVoxelPosition.z);
                         Vector3Int aboveVoxel = new Vector3Int(checkVoxel.x, checkVoxel.y + j, checkVoxel.z);
-                        Debug.Log(world.GetVoxelType(aboveVoxel).name + " , " + checkVoxel.y);
+                        //Debug.Log(world.GetVoxelType(aboveVoxel).name + " , " + checkVoxel.y);
 
                         // Add the invalid voxel to the list
                         InvalidVoxels.Add(aboveVoxel);
                     }
-                    Debug.Log("invalid move " + currentVoxelPos + ", "+ newVoxelPosition);
+                    //Debug.Log("invalid move " + currentVoxelPos + ", "+ newVoxelPosition);
                 }
                 // ...
 

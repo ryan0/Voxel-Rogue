@@ -48,7 +48,7 @@ public class WorldGeneration
 
         int maxTowerCount = 40; // Adjust the value as needed
         TownGeneration townGenerator = new TownGeneration(terrain, Chunk.width, 1, 1.0f);//town probability is 100
-        //townGenerator.GenerateTowns();
+        townGenerator.GenerateTowns();
 
         //GenerateTrees(width, depth, scale, heightScale, floorValue, treeProbability, terrain, random);
 
