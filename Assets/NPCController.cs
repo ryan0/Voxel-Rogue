@@ -29,6 +29,7 @@ public class NPCController : MonoBehaviour
     private void Update()
     {
         MoveAlongPath();
+        CheckIfStuck();
     }
 
     private void MoveAlongPath()
@@ -90,23 +91,38 @@ private void SetNewTarget(Vector3 targetPosition)
     }
 }
 
+private float stuckThreshold = 1f;  // distance
+private float stuckTime = 5f;  // seconds
+private Vector3 lastPosition;
+private float lastPositionUpdateTime;
 
-   /* void OnDrawGizmos()
-    {
-        if (path != null)
-        {
-            Gizmos.color = Color.red;
-            foreach (Vector3Int point in path)
-            {
-                Gizmos.DrawCube(World.VoxelCoordToWorldCoord(point), new Vector3(0.5f, 0.5f, 0.5f));
-            }
+private void CheckIfStuck() {
+    if (Vector3.Distance(transform.position, lastPosition) < stuckThreshold) {
+        if (Time.time - lastPositionUpdateTime > stuckTime) {
+            // NPC is stuck
+            Unstick();
         }
+    }
+    else {
+        // NPC has moved, update last position
+        lastPosition = transform.position;
+        lastPositionUpdateTime = Time.time;
+    }
+}
 
-        Vector3Int start = World.WorldCoordToVoxelCoord(transform.position);
-        Vector3Int target = World.WorldCoordToVoxelCoord(patrolPoints[currentPatrolPointIndex]);
-        //Gizmos.DrawCube(World.VoxelCoordToWorldCoord(start), new Vector3(0.5f, 0.5f, 0.5f));
-        Gizmos.DrawCube(World.VoxelCoordToWorldCoord(target), new Vector3(1f, 1f, 1f));
-    }*/
+private void Unstick() {
+     // Generate a random direction in the x-z plane
+    Vector3 randomDirection = new Vector3(Random.Range(-1f, 1f), 0f, Random.Range(-1f, 1f)).normalized;
+
+    // Calculate the new position by adding the random direction to the current position
+    Vector3 newPosition = transform.position + randomDirection;
+
+    // Set the new position for the NPC
+    transform.position = newPosition;
+
+    // Calculate a new path to the next patrol point
+    SetNewTarget(patrolPoints[currentPatrolPointIndex]);
+}
 
     void OnDrawGizmos()
     {
