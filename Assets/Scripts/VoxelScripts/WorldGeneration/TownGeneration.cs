@@ -76,7 +76,7 @@ public class TownGeneration
                 double rng = random.NextDouble();
                 if (rng < townProbability)
                 {
-                    Debug.Log(rng);
+                    //Debug.Log(rng);
                     // Check for neighboring towns within townRadius
                     bool canPlaceTown = true;
                     for (int dx = -townRadius; dx <= townRadius; dx++)

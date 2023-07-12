@@ -48,7 +48,7 @@ public class NPCController : MonoBehaviour
 
         if (directionToTarget.magnitude < stoppingDistance)
         {
-            Debug.Log("Reached destination");
+            //Debug.Log("Reached destination");
             currentPathIndex++;
             return;
         }
@@ -58,23 +58,38 @@ public class NPCController : MonoBehaviour
         movementScript.MoveCharacter(moveDirection);
     }
 
-    private void SetNewTarget(Vector3 targetPosition)
+private const int maxAttempts = 10;  // Maximum attempts to calculate a path
+private int currentAttempt = 0;  // Current attempt count
+
+private void SetNewTarget(Vector3 targetPosition)
+{
+    Vector3Int start = World.WorldCoordToVoxelCoord(transform.position);
+    Vector3Int target = World.WorldCoordToVoxelCoord(targetPosition);
+
+    path = pathfinder.FindPath(start, target, GetComponent<MovementScript>().maxMoveDiff);  // Using BFS
+    currentPathIndex = 0;
+
+    if (path == null)
     {
-        Vector3Int start = World.WorldCoordToVoxelCoord(transform.position);
-        Vector3Int target = World.WorldCoordToVoxelCoord(targetPosition);
-
-        path = pathfinder.FindPath(start, target, GetComponent<MovementScript>().maxMoveDiff);  // Using BFS
-        currentPathIndex = 0;
-
-        if (path == null)
+        Debug.Log("Path is null");
+        if (++currentAttempt <= maxAttempts)
         {
-            //Debug.Log("Path is null");
+            Debug.Log("Recalculating path");
+            SetNewTarget(targetPosition);
         }
         else
         {
-            //Debug.Log("Path found, length: " + path.Count);
+            Debug.Log("Exceeded maximum attempts to calculate path");
+            currentAttempt = 0;  // Reset the count for the next time
         }
     }
+    else
+    {
+        Debug.Log("Path found, length: " + path.Count);
+        currentAttempt = 0;  // Reset the count for the next time
+    }
+}
+
 
    /* void OnDrawGizmos()
     {
