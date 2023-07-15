@@ -107,10 +107,22 @@ public class AStarPathfinder
         return null;
     }
 
-    private int Heuristic(Vector3Int a, Vector3Int b)
+  private int Heuristic(Vector3Int a, Vector3Int b)
     {
-        return Mathf.Abs(a.x - b.x) + Mathf.Abs(a.y - b.y) + Mathf.Abs(a.z - b.z);
+    int distance = Mathf.Abs(a.x - b.x) + Mathf.Abs(a.y - b.y) + Mathf.Abs(a.z - b.z);
+    //Vector3Int v = World.WorldCoordToVoxelCoord(a);
+    //Chunk c = world.GetChunkAt(a);
+    // Add a check to see if the voxel is a road voxel
+    Voxel vox = world.GetVoxelAt(a);
+    if (vox.substance == Substance.asphalt)
+    {
+        // Roads are cheaper to traverse, so reduce the heuristic by a factor
+        distance /= 4;
     }
+
+    return distance;
+    }
+
 
     private List<Vector3Int> GetNeighbors(Vector3Int voxel, int maxMoveDiff)
     {
