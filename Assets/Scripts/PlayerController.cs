@@ -9,8 +9,7 @@ public class PlayerController : MonoBehaviour
 
     private float verticalLookRotation;
     private Vector3 moveDirection;
-
-    private CharacterController characterController;
+        private CharacterController characterController;
     private Transform cameraTransform;
     private float rayDistance = 100f;
 
@@ -19,18 +18,30 @@ public class PlayerController : MonoBehaviour
     [SerializeField]
     private InventoryUI inventoryUI;
 
+    private MovementScript movementScript;
+
 
     private void Start()
     {
         characterController = GetComponent<CharacterController>();
         cameraTransform = Camera.main.transform;
+        movementScript = GetComponent<MovementScript>();
+
+        // Hide the mouse cursor
         Cursor.visible = false;
+
+        // Lock the mouse cursor to the center of the screen
+        Cursor.lockState = CursorLockMode.Locked;
+
     }
 
     private void Update()
     {
         Look();
         Move();
+
+
+        ////
         if (Input.GetMouseButtonDown(0))
         {
             BreakVoxel();
@@ -79,6 +90,27 @@ public class PlayerController : MonoBehaviour
     }
 
     private void Move()
+    {
+        float moveX = Input.GetAxis("Horizontal");
+        float moveZ = Input.GetAxis("Vertical");
+
+        // Take into account the camera direction
+        Vector3 cameraForward = Camera.main.transform.forward;
+        Vector3 cameraRight = Camera.main.transform.right;
+
+        cameraForward.y = 0; // Keep only the horizontal component
+        cameraRight.y = 0; // Keep only the horizontal component
+
+        cameraForward.Normalize();
+        cameraRight.Normalize();
+
+        Vector3 move = cameraRight * moveX + cameraForward * moveZ;
+        move = move * Voxel.size; // Normalize the move vector to have a length of 1 voxel.size
+        movementScript.MoveCharacter(move);
+
+    }
+
+    private void GodModeMove()
     {
         float moveX = Input.GetAxisRaw("Horizontal");
         float moveY = Input.GetAxisRaw("Flight");
@@ -151,8 +183,8 @@ public class PlayerController : MonoBehaviour
             Vector3 point = hit.point * (1 / Voxel.size);
             Vector3 normal = hit.normal;
 
-            Debug.Log("Raycast hit: " + point.x + ", " + point.y + ", " + point.z);
-            Debug.Log("Raycast Normal: " + normal.x + ", " + normal.y + ", " + normal.z);
+            //Debug.Log("Raycast hit: " + point.x + ", " + point.y + ", " + point.z);
+            //Debug.Log("Raycast Normal: " + normal.x + ", " + normal.y + ", " + normal.z);
 
             hitCoordinatesRef.x = (int)point.x;
             hitCoordinatesRef.y = (int)point.y;

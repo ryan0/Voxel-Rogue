@@ -5,17 +5,15 @@ using UnityEngine;
 public class World : MonoBehaviour
 {
     public const int chunksX = 12;
-    public const int chunksY = 8;
+    public const int chunksY = 4;
     public const int chunksZ = 12;
 
     [SerializeField]
     private GameObject player;
 
     private Chunk[,,] chunks = new Chunk[chunksX, chunksY, chunksZ];
-    public Chunk[,,] getChunks()
-    {
-        return chunks;
-    }
+
+    public Chunk[,,] Chunks => chunks;
 
     private const float substanceSystemInterval = .5f;
     private float substanceSystemTimer = 0.0f;
@@ -43,6 +41,7 @@ public class World : MonoBehaviour
     GasFlowSystem gasSystem = new ();
     WaterCycleSystem waterCycleSystem = new ();
     FireManager fireManager = new ();
+
 
 
     public World()
@@ -157,20 +156,41 @@ public class World : MonoBehaviour
         return chunks[pos.x, pos.y, pos.z];
     }
 
+    //TODO Delete this method
+    public Voxel GetVoxelAt(Vector3Int voxelPos)
+    {
+        Vector3Int chunkPos = new(
+            voxelPos.x / Chunk.width, 
+            voxelPos.y / Chunk.height, 
+            voxelPos.z / Chunk.depth
+        );
+
+        Vector3Int relativeVoxelPos = new(
+            voxelPos.x % Chunk.width,
+            voxelPos.y % Chunk.height,
+            voxelPos.z % Chunk.depth
+        );
+
+        return GetVoxelAt(chunkPos, relativeVoxelPos);
+    }
+
     public Voxel GetVoxelAt(Vector3Int chunkPos, Vector3Int voxelPos)
     {
         return GetChunkAt(chunkPos).GetVoxelAt(voxelPos);
     }
 
-    public Chunk getChunkPlayerIsIn()
+    public Chunk GetChunkPlayerIsIn()
     {
-        Vector3 playerPosition = player.transform.position * (1 / Voxel.size);
+        Vector3Int chunkPos = WorldCoordToChunkCoord(player.transform.position);
+        return GetChunkAt(chunkPos);
+    }
 
-        int playerX = (int) (playerPosition.x / Chunk.width);
-        int playerY = (int) (playerPosition.y / Chunk.height);
-        int playerZ = (int) (playerPosition.z / Chunk.depth);
-
-        return GetChunkAt(new Vector3Int(playerX, playerY, playerZ));
+    private Vector3Int WorldCoordToChunkCoord(Vector3 worldCoord)
+    {
+        int playerX = (int)(worldCoord.x / (Chunk.width * Voxel.size));
+        int playerY = (int)(worldCoord.y / (Chunk.height * Voxel.size));
+        int playerZ = (int)(worldCoord.z / (Chunk.depth * Voxel.size));
+        return new Vector3Int(playerX, playerY, playerZ);
     }
 
     public HashSet<Chunk> getActiveChunks()
@@ -220,8 +240,8 @@ public class World : MonoBehaviour
         int voxelY = coord.y - (chunkY * Chunk.height);
         int voxelZ = coord.z - (chunkZ * Chunk.depth);
 
-        Debug.Log("hit Voxel: " + voxelX + ", " + voxelY + ", " + voxelZ);
-        Debug.Log("in Chunk: " + chunkX + ", " + chunkY + ", " + chunkZ);
+        //Debug.Log("hit Voxel: " + voxelX + ", " + voxelY + ", " + voxelZ);
+        //Debug.Log("in Chunk: " + chunkX + ", " + chunkY + ", " + chunkZ);
 
 
         //Spawn debris logic
@@ -229,6 +249,7 @@ public class World : MonoBehaviour
         Substance substance = voxels[voxelX, voxelY, voxelZ].substance;///Debug debug dbeug
         chunks[chunkX, chunkY, chunkZ].destroyVoxelAt(voxelX, voxelY, voxelZ);
         spawnDebrisAt(substance,coord, 3);//DEBUG DEBUG DEBUG*/
+        //terrainData[coord.x, coord.y, coord.z] = Substance.air;
         //end of spawn debris chunk
     }
 
@@ -246,6 +267,8 @@ public class World : MonoBehaviour
         Chunk targetChunk = chunks[chunkX, chunkY, chunkZ];
         // Use a method in the Chunk class to create a new voxel at the specified local position
         targetChunk.createVoxelAt(voxelX, voxelY, voxelZ, substance, mote);
+        //terrainData[coord.x, coord.y, coord.z] = substance;
+
     }
 
     public void setFireVoxel(Vector3Int coord)
@@ -258,8 +281,8 @@ public class World : MonoBehaviour
         int voxelY = coord.y - (chunkY * Chunk.height);
         int voxelZ = coord.z - (chunkZ * Chunk.depth);
 
-        Debug.Log("hit Voxel: " + voxelX + ", " + voxelY + ", " + voxelZ);
-        Debug.Log("in Chunk: " + chunkX + ", " + chunkY + ", " + chunkZ);
+        //Debug.Log("hit Voxel: " + voxelX + ", " + voxelY + ", " + voxelZ);
+        //Debug.Log("in Chunk: " + chunkX + ", " + chunkY + ", " + chunkZ);
 
 
         //Set fire
@@ -321,5 +344,41 @@ public class World : MonoBehaviour
         //voxel.substance = Substance.debug;
     }
 
+
+    public static Vector3Int WorldCoordToVoxelCoord(Vector3 worldCoord)
+    {
+        int voxelX = Mathf.FloorToInt(worldCoord.x / Voxel.size);
+        int voxelY = Mathf.FloorToInt(worldCoord.y / Voxel.size);
+        int voxelZ = Mathf.FloorToInt(worldCoord.z / Voxel.size);
+
+        return new Vector3Int(voxelX, voxelY, voxelZ);
+    }
+
+  /* public static Vector3 VoxelCoordToWorldCoord(Vector3Int voxelCoord)
+    {
+        float worldX = voxelCoord.x * Voxel.size;
+        float worldY = voxelCoord.y * Voxel.size;
+        float worldZ = voxelCoord.z * Voxel.size;
+
+        return new Vector3(worldX, worldY, worldZ);
+    }*/
+
+    public static Vector3 VoxelCoordToWorldCoord(Vector3Int voxelPosition)
+    {
+        // Assumes each voxel has a size of 1 unit
+        float worldX = voxelPosition.x * Voxel.size + Voxel.size / 2f; // add 0.5 to get center of voxel
+        float worldY = voxelPosition.y * Voxel.size + Voxel.size / 2f;
+        float worldZ = voxelPosition.z * Voxel.size + Voxel.size / 2f;
+
+        return new Vector3(worldX, worldY, worldZ);
+    }
+
+
+    public static bool IsVoxelInBounds(Vector3Int voxelPosition)
+    {
+        return voxelPosition.x >= 0 && voxelPosition.x < chunksX * Chunk.width &&
+               voxelPosition.y >= 0 && voxelPosition.y < chunksY * Chunk.height &&
+               voxelPosition.z >= 0 && voxelPosition.z < chunksZ * Chunk.depth;
+    }
 
 }

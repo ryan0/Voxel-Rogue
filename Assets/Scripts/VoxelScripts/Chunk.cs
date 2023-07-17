@@ -13,7 +13,7 @@ public class Chunk : MonoBehaviour {
     public World world;
 
     public const int width = 16;
-    public const int height = 16;
+    public const int height = 32;
     public const int depth = 16;
 
     public Vector3Int index = new();
