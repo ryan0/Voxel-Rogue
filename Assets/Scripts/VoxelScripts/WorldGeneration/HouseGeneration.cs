@@ -18,7 +18,7 @@ public class HouseData
     public int Depth;
     public int Height;
     public HouseType houseType;
-    public TownData townAddress;/////TO DO ASSIGN TOWNS TO HOUSES WHEN THEY ARE CREATED
+    public int townAddress;
     // Add more properties as needed for NPCs, stores, etc.
 }
 

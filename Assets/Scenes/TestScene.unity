@@ -1151,6 +1151,7 @@ GameObject:
   - component: {fileID: 1156799598}
   - component: {fileID: 1156799603}
   - component: {fileID: 1156799605}
+  - component: {fileID: 1156799606}
   m_Layer: 2
   m_Name: Player
   m_TagString: Player
@@ -1283,6 +1284,20 @@ MonoBehaviour:
   gravity: -9.8
   npcHeight: 2
   InvalidVoxels: []
+--- !u!114 &1156799606
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1156799597}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 76b170ac827fb49fea789a8626456d51, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Name: Player
+  Health: 100
 --- !u!1 &1170188306
 GameObject:
   m_ObjectHideFlags: 0
@@ -1839,6 +1854,7 @@ GameObject:
   - component: {fileID: 2057952656}
   - component: {fileID: 2057952661}
   - component: {fileID: 2057952662}
+  - component: {fileID: 2057952663}
   m_Layer: 2
   m_Name: Test_NPC
   m_TagString: Player
@@ -1966,6 +1982,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1dd32ca6c9d5942569d244059f1a12bc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  npc: {fileID: 2057952663}
+  state: 0
+  attackTarget: {fileID: 1156799597}
+  aggroRange: 20
   patrolPoints:
   - {x: 26, y: 39, z: 5}
   - {x: 11, y: 39, z: 15}
@@ -1996,6 +2016,20 @@ CapsuleCollider:
   m_Height: 0.2
   m_Direction: 1
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &2057952663
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2057952655}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 76b170ac827fb49fea789a8626456d51, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Name: TestNPC
+  Health: 30
 --- !u!1001 &3686169179445637854
 PrefabInstance:
   m_ObjectHideFlags: 0

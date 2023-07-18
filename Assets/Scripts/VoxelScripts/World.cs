@@ -42,7 +42,7 @@ public class World : MonoBehaviour
     WaterCycleSystem waterCycleSystem = new ();
     FireManager fireManager = new ();
 
-
+    NPCGenerator npcGen = new NPCGenerator ();
 
     public World()
     {
@@ -98,6 +98,18 @@ public class World : MonoBehaviour
                 }
             }
         }
+    
+        foreach(TownData town in TownGeneration.worldTownsData){
+            foreach(HouseData house in town.Houses){
+                /// TO DO spawn npc prefab at house spawn location
+                //spawn prefab
+                //Resources.Load etc.
+                //Create npc data
+                //npc = npcGen.GenerateNPC("Name", 50, new PatrolBehavior(npcController of prefab))
+                //Attach npc to npcController of prefab to link Npc data to the prefab
+                /// END OF TO DO
+            }
+        }
     }
 
     // Update is called once per frame
@@ -145,6 +157,8 @@ public class World : MonoBehaviour
         //    fireTimer -= fireInterval;
         //    this.fireManager.UpdateFires(activeChunks);
         //}
+
+        npcGen.PerformAllNPCActions();
 
 
 

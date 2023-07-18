@@ -5,6 +5,8 @@ using System.Linq;
 
 public class TownData
 {
+    private static int nextId = 0;
+    public int TownID;
     public Vector3Int ClusterCenter { get; set; }
     public List<HouseData> Houses { get; set; }
     public List<RectInt> lots;
@@ -22,7 +24,8 @@ public class TownData
         towerPositions = _towerPositions;
         gatePositions = _gatePositions;
         type = _type;
-
+        TownID = nextId;
+        nextId++;    
     }
 }
 
@@ -134,6 +137,9 @@ public class TownGeneration
         int towerSize = 2;
         (List<Vector3Int> towerPositions, List<Vector3Int> gatePositions) = BuildWallsAroundTown(townCenter, lots, 10, averageHeight, towerSize); // 10 is wall height, 3 is road width, and true means it will build towers.
         TownData townData = new TownData(townCenter, houses, lots, roadPositions, towerPositions, gatePositions);
+        foreach(HouseData house in houses){
+            house.townAddress = townData.TownID;//ASSIGN TOWNS TO HOUSES WHEN THEY ARE CREATED
+        }
         worldTownsData.Add(townData);
 
     }
