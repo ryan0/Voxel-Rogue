@@ -99,15 +99,36 @@ public class World : MonoBehaviour
             }
         }
     
+        int max_NPCSdebug = 4;
+        int c = 0;
         foreach(TownData town in TownGeneration.worldTownsData){
             foreach(HouseData house in town.Houses){
-                /// TO DO spawn npc prefab at house spawn location
-                //spawn prefab
-                //Resources.Load etc.
-                //Create npc data
-                //npc = npcGen.GenerateNPC("Name", 50, new PatrolBehavior(npcController of prefab))
-                //Attach npc to npcController of prefab to link Npc data to the prefab
-                /// END OF TO DO
+                if(c < 4){
+                    // Load the prefab
+                    GameObject npcPrefab = Resources.Load<GameObject>("Prefabs/Test_NPC");
+
+                    // Instantiate the prefab at the house spawn location
+                    GameObject npcObject = Instantiate(npcPrefab, house.SpawnLocation, Quaternion.identity);
+
+                    // Generate NPC data
+                    NPCController npcController = npcObject.GetComponent<NPCController>();
+                    NPC npc = npcGen.GenerateNPC("Name", 50, new PatrolBehavior(npcController), house);
+
+                    // Set NPC's home to be house
+                    npc.home = house;
+
+                    // Set NPC's patrol points to be home and all the gatePositions
+                    npcController.patrolPoints = new Vector3[town.gatePositions.Count + 1];
+                    npcController.patrolPoints[0] = house.SpawnLocation;
+                    for(int i = 0; i < town.gatePositions.Count; i++)
+                    {
+                        npcController.patrolPoints[i+1] = town.gatePositions[i];
+                    }
+
+                    // Assign NPC data to NPCController's npc field
+                    npcController.npc = npc;
+                }
+                c++;
             }
         }
     }

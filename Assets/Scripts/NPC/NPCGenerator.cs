@@ -11,9 +11,10 @@ public class NPCGenerator : MonoBehaviour
         npcs = new List<NPC>();
     }
 
-    public NPC GenerateNPC(string name, int health, IActionBehavior behavior)
+    public NPC GenerateNPC(string name, int health, IActionBehavior behavior, HouseData home)
     {
-        NPC newNPC = new NPC(name, health, behavior);
+        Debug.Log("Creating npc " + name + " " + health + "");
+        NPC newNPC = new NPC(name, health, behavior, true, home);
         npcs.Add(newNPC);
         return newNPC;
     }

@@ -13,12 +13,30 @@ public enum HouseType
 }
 public class HouseData
 {
-    public Vector3Int Position;
+    private static int nextId = 0;
+    public int HouseID;
+    public Vector3Int VoxelPosition;// IN VOXELS
+    public Vector3 WorldPosition;//
+    public Vector3 SpawnLocation;//TO DO, figure this out
+
     public int Width;
     public int Depth;
     public int Height;
     public HouseType houseType;
     public int townAddress;
+  
+    public HouseData(Vector3Int _VoxelPosition, int _Width, int _Height, int _Depth)
+    {   
+        VoxelPosition = _VoxelPosition;
+        WorldPosition = World.VoxelCoordToWorldCoord(_VoxelPosition);
+        SpawnLocation = WorldPosition + new Vector3(0,2f,0);
+        Width = _Width;
+        Height = _Height;
+        Depth =   _Depth;
+
+        HouseID = nextId;
+        nextId++;  
+    }
     // Add more properties as needed for NPCs, stores, etc.
 }
 
@@ -77,13 +95,8 @@ public class HouseGeneration
                 int houseHeight = random.Next(5, 8);
 
                 // Store house data for future use
-                houses.Add(new HouseData
-                {
-                    Position = new Vector3Int(x, averageHeight + 1, z),
-                    Width = houseWidth,
-                    Depth = houseDepth,
-                    Height = houseHeight
-                });
+                houses.Add(new HouseData(new Vector3Int(x, averageHeight + 1, z), houseWidth, houseHeight, houseDepth));
+          
             }
         }
 
@@ -182,13 +195,8 @@ public class HouseGeneration
             }
 
             // Store house data for future use
-            houses.Add(new HouseData
-            {
-                Position = new Vector3Int(x, averageHeight + 1, z),
-                Width = houseWidth,
-                Depth = houseDepth,
-                Height = houseHeight
-            });
+            houses.Add(new HouseData(new Vector3Int(x, averageHeight + 1, z), houseWidth, houseHeight, houseDepth));
+
         }
 
         return houses;

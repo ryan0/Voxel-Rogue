@@ -5,7 +5,6 @@ public class NPCController : MonoBehaviour
 {
     // Store the original patrol path
     private Vector3[] originalPatrolPath;
-
     public NPC npc; //data structure
     public NPCState state;
 
@@ -41,6 +40,7 @@ public class NPCController : MonoBehaviour
 
     private void Update()
     {
+        //handling switching between behaviors
          switch(state)
         {
             case NPCState.Patrol:
@@ -60,7 +60,7 @@ public class NPCController : MonoBehaviour
                 break;
         }
 
-        npc.Behavior.PerformAction();
+        //npc.Behavior.PerformAction(); Handled by npcgenerator/world
     }
 
     public void MoveAlongPath()

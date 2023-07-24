@@ -15,11 +15,16 @@ public class Character
 
     public bool isAlive;
 
+    private static int nextId = 0;
+    public int NPC_ID;
+
     public Character(string name, int health, bool isAlive = true)
     {
         Name = name;
         Health = health;
         this.isAlive = isAlive;
+        NPC_ID = nextId;
+        nextId++;    
     }
 
     public bool IsAlive()
@@ -31,13 +36,15 @@ public class Character
 public class NPC : Character
 {
     // NPC-specific properties go here...
+    public HouseData home;
 
     public IActionBehavior Behavior;
 
-    public NPC(string name, int health, IActionBehavior behavior, bool isAlive = true)
+    public NPC(string name, int health, IActionBehavior behavior, bool isAlive = true, HouseData _home = null)
         : base(name, health, isAlive)  // Call base constructor
     {
         Behavior = behavior;
+        home = _home;
     }
 
     public void PerformAction()
