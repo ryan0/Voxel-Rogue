@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Character
+public class NPC
 {
     //affinity
     //Job
@@ -17,13 +17,18 @@ public class Character
 
     private static int nextId = 0;
     public int NPC_ID;
+    public HouseData home;
 
-    public Character(string name, int health, bool isAlive = true)
+    public IActionBehavior Behavior;
+
+    public NPC(string name, int health, IActionBehavior behavior, bool isAlive = true,  HouseData _home = null)
     {
         Name = name;
         Health = health;
         this.isAlive = isAlive;
         NPC_ID = nextId;
+        Behavior = behavior;
+        home = _home;
         nextId++;    
     }
 
@@ -31,40 +36,12 @@ public class Character
     {
         return isAlive;
     }
-}
-
-public class NPC : Character
-{
-    // NPC-specific properties go here...
-    public HouseData home;
-
-    public IActionBehavior Behavior;
-
-    public NPC(string name, int health, IActionBehavior behavior, bool isAlive = true, HouseData _home = null)
-        : base(name, health, isAlive)  // Call base constructor
-    {
-        Behavior = behavior;
-        home = _home;
-    }
-
-    public void PerformAction()
+       public void PerformAction()
     {
         Behavior.PerformAction();
     }
-    
 }
 
-public class Player : Character
-{
-    // Player-specific properties go here...
-
-    public Player(string name, int health, bool isAlive = true)
-        : base(name, health, isAlive)  // Call base constructor
-    {
-    }
-
-    // Player-specific methods go here...
-}
 
 
 
